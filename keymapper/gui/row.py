@@ -152,6 +152,7 @@ class Row(Gtk.ListBoxRow):
         if new_key == previous_key:
             return
 
+        # TODO move this to user_interface
         # keycode is already set by some other row
         existing = custom_mapping.get_symbol(new_key)
         if existing is not None:
@@ -162,11 +163,7 @@ class Row(Gtk.ListBoxRow):
 
         # it's legal to display the keycode
 
-        # always ask for get_child to set the label, otherwise line breaking
-        # has to be configured again.
-        self.keycode_input.set_label(new_key.beautify())
-
-        self.keycode_input.key = new_key
+        self.keycode_input.set_key(new_key)
 
         symbol = self.get_symbol()
 

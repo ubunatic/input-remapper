@@ -30,7 +30,7 @@ import evdev
 from evdev.ecodes import EV_KEY, EV_ABS
 
 from keymapper.logger import logger
-from keymapper.mapping import DISABLE_CODE
+from keymapper.system_mapping import DISABLE_CODE
 from keymapper import utils
 from keymapper.injection.consumers.consumer import Consumer
 from keymapper.utils import RELEASE

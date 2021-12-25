@@ -28,10 +28,13 @@ import subprocess
 import evdev
 
 from keymapper.logger import logger
-from keymapper.mapping import DISABLE_NAME, DISABLE_CODE
 from keymapper.paths import get_config_path, touch
 from keymapper.utils import is_service
 
+
+DISABLE_NAME = "disable"
+
+DISABLE_CODE = -1
 
 # xkb uses keycodes that are 8 higher than those from evdev
 XKB_KEYCODE_OFFSET = 8

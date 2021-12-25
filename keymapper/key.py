@@ -168,7 +168,7 @@ class Key:
         return permutations
 
     def beautify(self):
-        """A nice to show description of the pressed key."""
+        """Get a human readable string representation."""
         result = ""
 
         for sub_key in self:

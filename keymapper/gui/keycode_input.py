@@ -33,10 +33,7 @@ HOLDING = 1
 
 
 class KeycodeInput(Gtk.ToggleButton):
-    """A button that can be activated and listens for key input.
-
-    It updates its label to show the pressed input combination.
-    """
+    """A button that can be used to represend a Key and has ."""
 
     __gtype_name__ = "ToggleButton"
 
@@ -95,12 +92,14 @@ class KeycodeInput(Gtk.ToggleButton):
         self.set_opacity(1)
 
     def set_key(self, key):
+        """Set the key and display it."""
+        self.key = key
         self.set_label(key.beautify())
 
     def set_label(self, label):
         """Set the label of the keycode input."""
         super().set_label(label)
-        # make the child label widget break lines, important for
+        # Make the child label widget break lines, important for
         # long combinations
         label = self.get_child()
         label.set_line_wrap(True)
