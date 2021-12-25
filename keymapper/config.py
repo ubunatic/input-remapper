@@ -262,5 +262,6 @@ class GlobalConfig(ConfigBase):
             logger.info("Saved config to %s", self.path)
             file.write("\n")
 
+
 migrate()
 config = GlobalConfig()

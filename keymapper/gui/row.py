@@ -160,12 +160,81 @@ IDLE = 0
 HOLDING = 1
 
 
+class KeycodeInput(Gtk.ToggleButton):
+    """A button that can be activated and listens for key input."""
+
+    __gtype_name__ = "ToggleButton"
+
+    def __init__(self, user_interface, key):
+        # TODO docstring
+        super().__init__()
+
+        self.key = key
+        self.user_interface = user_interface
+        self.state = IDLE
+
+        self.set_size_request(140, -1)
+
+        # make the togglebutton go back to its normal state when doing
+        # something else in the UI
+        self.connect("focus-in-event", self.on_keycode_input_focus)
+        self.connect("focus-out-event", self.on_keycode_input_unfocus)
+        # don't leave the input when using arrow keys or tab. wait for the
+        # window to consume the keycode from the reader
+        self.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
+
+    def on_keycode_input_focus(self, *_):
+        """Refresh useful usage information."""
+        reader.clear()
+        self.show_press_key()
+
+        # TODO make the ui connect to the signal instead
+        self.user_interface.can_modify_mapping()
+
+    def on_keycode_input_unfocus(self, *_):
+        """Refresh useful usage information and set some state stuff."""
+        self.show_click_here()
+        self.set_active(False)
+        self.state = IDLE
+
+        # TODO make the ui connect to the signal instead
+        self.user_interface.save_preset()
+
+    def show_click_here(self):
+        """Show 'click here' on the keycode input button."""
+        if self.key is not None:
+            return
+
+        self.set_keycode_input_label("click here")
+        self.set_opacity(0.3)
+
+    def show_press_key(self):
+        """Show 'press key' on the keycode input button."""
+        if self.key is not None:
+            return
+
+        self.set_keycode_input_label("press key")
+        self.set_opacity(1)
+
+    def set_keycode_input_label(self, label):
+        """Set the label of the keycode input."""
+        self.set_label(label)
+        # make the child label widget break lines, important for
+        # long combinations
+        label = self.get_child()
+        label.set_line_wrap(True)
+        label.set_line_wrap_mode(2)
+        label.set_max_width_chars(13)
+        label.set_justify(Gtk.Justification.CENTER)
+        self.set_opacity(1)
+
+
 class Row(Gtk.ListBoxRow):
     """A single, configurable key mapping."""
 
     __gtype_name__ = "ListBoxRow"
 
-    def __init__(self, delete_callback, window, key=None, symbol=None):
+    def __init__(self, delete_callback, user_interface, key=None, symbol=None):
         """Construct a row widget.
 
         Parameters
@@ -176,18 +245,16 @@ class Row(Gtk.ListBoxRow):
             raise TypeError("Expected key to be a Key object")
 
         super().__init__()
-        self.device = window.group
-        self.window = window
+        self.device = user_interface.group
+        self.user_interface = user_interface
         self.delete_callback = delete_callback
 
         self.symbol_input = None
         self.keycode_input = None
 
-        self.key = key
+        self.put_together(key, symbol)
 
-        self.put_together(symbol)
-
-        self._state = IDLE
+        self.keycode_input.key = key
 
     def refresh_state(self):
         """Refresh the state.
@@ -195,32 +262,32 @@ class Row(Gtk.ListBoxRow):
         The state is needed to switch focus when no keys are held anymore,
         but only if the row has been in the HOLDING state before.
         """
-        old_state = self._state
+        old_state = self.keycode_input.state
 
         if not self.keycode_input.is_focus():
-            self._state = IDLE
+            self.keycode_input.state = IDLE
             return
 
         unreleased_keys = reader.get_unreleased_keys()
-        if unreleased_keys is None and old_state == HOLDING and self.key:
+        if unreleased_keys is None and old_state == HOLDING and self.get_key():
             # A key was pressed and then released.
             # Switch to the symbol. idle_add this so that the
             # keycode event won't write into the symbol input as well.
-            window = self.window.window
+            window = self.user_interface.window
             GLib.idle_add(lambda: window.set_focus(self.symbol_input))
 
         if unreleased_keys is not None:
-            self._state = HOLDING
+            self.keycode_input.state = HOLDING
             return
 
-        self._state = IDLE
+        self.keycode_input.state = IDLE
 
     def get_key(self):
         """Get the Key object from the left column.
 
         Or None if no code is mapped on this row.
         """
-        return self.key
+        return self.keycode_input.key
 
     def get_symbol(self):
         """Get the assigned symbol from the middle column."""
@@ -246,7 +313,7 @@ class Row(Gtk.ListBoxRow):
             return
 
         # it might end up being a key combination
-        self._state = HOLDING
+        self.keycode_input.state = HOLDING
 
         # keycode didn't change, do nothing
         if new_key == previous_key:
@@ -257,16 +324,16 @@ class Row(Gtk.ListBoxRow):
         if existing is not None:
             msg = f'"{to_string(new_key)}" already mapped to "{existing}"'
             logger.info(msg)
-            self.window.show_status(CTX_KEYCODE, msg)
+            self.user_interface.show_status(CTX_KEYCODE, msg)
             return
 
         # it's legal to display the keycode
 
         # always ask for get_child to set the label, otherwise line breaking
         # has to be configured again.
-        self.set_keycode_input_label(to_string(new_key))
+        self.keycode_input.set_keycode_input_label(to_string(new_key))
 
-        self.key = new_key
+        self.keycode_input.key = new_key
 
         symbol = self.get_symbol()
 
@@ -293,80 +360,29 @@ class Row(Gtk.ListBoxRow):
         value = store.get_value(tree_iter, 0)
         return key in value.lower()
 
-    def show_click_here(self):
-        """Show 'click here' on the keycode input button."""
-        if self.get_key() is not None:
-            return
-
-        self.set_keycode_input_label("click here")
-        self.keycode_input.set_opacity(0.3)
-
-    def show_press_key(self):
-        """Show 'press key' on the keycode input button."""
-        if self.get_key() is not None:
-            return
-
-        self.set_keycode_input_label("press key")
-        self.keycode_input.set_opacity(1)
-
-    def on_keycode_input_focus(self, *_):
-        """Refresh useful usage information."""
-        reader.clear()
-        self.show_press_key()
-        self.window.can_modify_mapping()
-
-    def on_keycode_input_unfocus(self, *_):
-        """Refresh useful usage information and set some state stuff."""
-        self.show_click_here()
-        self.keycode_input.set_active(False)
-        self._state = IDLE
-        self.window.save_preset()
-
-    def set_keycode_input_label(self, label):
-        """Set the label of the keycode input."""
-        self.keycode_input.set_label(label)
-        # make the child label widget break lines, important for
-        # long combinations
-        label = self.keycode_input.get_child()
-        label.set_line_wrap(True)
-        label.set_line_wrap_mode(2)
-        label.set_max_width_chars(13)
-        label.set_justify(Gtk.Justification.CENTER)
-        self.keycode_input.set_opacity(1)
-
     def on_symbol_input_unfocus(self, symbol_input, _):
         """Save the preset and correct the input casing."""
         symbol = symbol_input.get_text()
         correct_case = system_mapping.correct_case(symbol)
         if symbol != correct_case:
             symbol_input.set_text(correct_case)
-        self.window.save_preset()
+        self.user_interface.save_preset()
 
-    def put_together(self, symbol):
+    def put_together(self, key, symbol):
         """Create all child GTK widgets and connect their signals."""
         delete_button = Gtk.EventBox()
-        delete_button.add(
-            Gtk.Image.new_from_icon_name("window-close", Gtk.IconSize.BUTTON)
-        )
+        close_image = Gtk.Image.new_from_icon_name("window-close", Gtk.IconSize.BUTTON)
+        delete_button.add(close_image)
         delete_button.connect("button-press-event", self.on_delete_button_clicked)
         delete_button.set_size_request(50, -1)
 
-        keycode_input = Gtk.ToggleButton()
+        keycode_input = KeycodeInput(self.user_interface, key)
         self.keycode_input = keycode_input
-        keycode_input.set_size_request(140, -1)
 
-        if self.key is not None:
-            self.set_keycode_input_label(to_string(self.key))
+        if key is not None:
+            self.keycode_input.set_keycode_input_label(to_string(key))
         else:
-            self.show_click_here()
-
-        # make the togglebutton go back to its normal state when doing
-        # something else in the UI
-        keycode_input.connect("focus-in-event", self.on_keycode_input_focus)
-        keycode_input.connect("focus-out-event", self.on_keycode_input_unfocus)
-        # don't leave the input when using arrow keys or tab. wait for the
-        # window to consume the keycode from the reader
-        keycode_input.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
+            self.keycode_input.show_click_here()
 
         symbol_input = Gtk.Entry()
         self.symbol_input = symbol_input
@@ -404,6 +420,12 @@ class Row(Gtk.ListBoxRow):
             custom_mapping.clear(key)
 
         self.symbol_input.set_text("")
-        self.set_keycode_input_label("")
-        self.key = None
+        self.keycode_input.set_keycode_input_label("")
+        self.keycode_input.key = None
         self.delete_callback(self)
+
+
+class AdvancedRow(Row):
+    def put_together(self):
+        # TODO
+        pass

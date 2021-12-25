@@ -53,7 +53,7 @@ from keymapper.config import config, WHEEL, MOUSE, BUTTONS
 from keymapper.gui.reader import reader
 from keymapper.injection.injector import RUNNING, FAILED, UNKNOWN
 from keymapper.gui.row import Row, to_string, HOLDING, IDLE
-from keymapper.gui.window import Window
+from keymapper.gui.user_interface import Window
 from keymapper.key import Key
 from keymapper.daemon import Daemon
 from keymapper.groups import groups
@@ -95,7 +95,7 @@ def launch(argv=None):
     if not argv:
         argv = ["-d"]
 
-    with patch("keymapper.gui.window.Window.setup_timeouts", lambda *args: None):
+    with patch("keymapper.gui.user_interface.Window.setup_timeouts", lambda *args: None):
         with patch.object(sys, "argv", [""] + [str(arg) for arg in argv]):
             loader = SourceFileLoader("__main__", bin_path)
             spec = spec_from_loader("__main__", loader)
@@ -219,7 +219,7 @@ class TestGroupsFromHelper(unittest.TestCase):
         os.system = cls.original_os_system
         Daemon.connect = cls.original_connect
 
-    @patch("keymapper.gui.window.Window.on_select_preset")
+    @patch("keymapper.gui.user_interface.Window.on_select_preset")
     def test_knows_devices(self, on_select_preset_patch):
         # verify that it is working as expected
         gtk_iteration()

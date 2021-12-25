@@ -65,21 +65,21 @@ if __name__ == '__main__':
     logger.debug('Using locale directory: {}'.format(LOCALE_DIR))
 
     # import key-mapper stuff after setting the log verbosity
-    from keymapper.gui.window import Window
+    from keymapper.gui.user_interface import UserInterface
     from keymapper.daemon import Daemon
     from keymapper.daemon import config
 
     config.load_config()
 
-    window = Window()
+    user_interface = UserInterface()
 
     def stop():
-        if isinstance(window.dbus, Daemon):
+        if isinstance(user_interface.dbus, Daemon):
             # it created its own temporary daemon inside the process
             # because none was running
-            window.dbus.stop_all()
+            user_interface.dbus.stop_all()
 
-        window.on_close()
+        user_interface.on_close()
 
     atexit.register(stop)
 

@@ -26,7 +26,7 @@ import math
 import os
 import sys
 
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk, GtkSource, Gdk, GLib, GObject
 
 from keymapper.data import get_data_path
 from keymapper.paths import get_config_path
@@ -63,6 +63,13 @@ def gtk_iteration():
     """Iterate while events are pending."""
     while Gtk.events_pending():
         Gtk.main_iteration()
+
+
+# TODO add to .deb and AUR dependencies
+# https://cjenkins.wordpress.com/2012/05/08/use-gtksourceview-widget-in-glade/
+GObject.type_register(GtkSource.View)
+# GtkSource.View() also works:
+# https://stackoverflow.com/questions/60126579/gtk-builder-error-quark-invalid-object-type-webkitwebview
 
 
 CTX_SAVE = 0
@@ -134,7 +141,7 @@ def on_close_about(about, _):
     return True
 
 
-class Window:
+class UserInterface:
     """User Interface."""
 
     def __init__(self):
@@ -463,21 +470,28 @@ class Window:
 
         # inform the currently selected row about the new keycode
         row, focused = self.get_focused_row()
-        if key is not None:
-            if isinstance(focused, Gtk.ToggleButton):
-                row.set_new_key(key)
 
-            if key.is_problematic() and isinstance(focused, Gtk.ToggleButton):
-                self.show_status(
-                    CTX_WARNING,
-                    "ctrl, alt and shift may not combine properly",
-                    "Your system might reinterpret combinations "
-                    + "with those after they are injected, and by doing so "
-                    + "break them.",
-                )
+        if row is None:
+            return True
 
-        if row is not None:
-            row.refresh_state()
+        row.refresh_state()
+
+        if key is None:
+            return True
+
+        if not row.keycode_input.is_focus():
+            return True
+
+        row.set_new_key(key)
+
+        if key.is_problematic():
+            self.show_status(
+                CTX_WARNING,
+                "ctrl, alt and shift may not combine properly",
+                "Your system might reinterpret combinations "
+                + "with those after they are injected, and by doing so "
+                + "break them.",
+            )
 
         return True
 
@@ -762,7 +776,10 @@ class Window:
         key_list = self.get("key_list")
         for key, output in custom_mapping:
             single_key_mapping = Row(
-                window=self, delete_callback=self.on_row_removed, key=key, symbol=output
+                user_interface=self,
+                delete_callback=self.on_row_removed,
+                key=key,
+                symbol=output,
             )
             key_list.insert(single_key_mapping, -1)
 
@@ -799,9 +816,15 @@ class Window:
 
     def add_empty(self):
         """Add one empty row for a single mapped key."""
-        empty = Row(window=self, delete_callback=self.on_row_removed)
+        empty = Row(user_interface=self, delete_callback=self.on_row_removed)
         key_list = self.get("key_list")
         key_list.insert(empty, -1)
+
+        key_list_advanced = self.get("key_list_advanced")
+        key_button = Gtk.Button()
+        key_button.set_label("new entry")
+        key_button.show_all()
+        key_list_advanced.insert(key_button, -1)
 
     def on_row_removed(self, single_key_mapping):
         """Stuff to do when a row was removed
@@ -858,3 +881,14 @@ class Window:
         gdk_keycode = event.get_keyval()[1]
         if gdk_keycode == Gdk.KEY_Escape:
             self.about.hide()
+
+    def toggle_advanced_editor_toggled(self, button):
+        """Show the advanced editor."""
+        show_advanced_editor = button.get_active()
+        editor_stack = self.get("editor-stack")
+        children = editor_stack.get_children()
+
+        if show_advanced_editor:
+            editor_stack.set_visible_child(children[1])
+        else:
+            editor_stack.set_visible_child(children[0])
