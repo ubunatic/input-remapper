@@ -142,6 +142,138 @@ def on_close_about(about, _):
     return True
 
 
+class AdvancedEditor:
+    """Maintains the widgets of the advanced editor."""
+    def __init__(self, builder):
+        """TODO"""
+        self.builder = builder
+        self.window = self.get("window")
+        self.advanced_editor = self.get("advanced_editor")
+        self.timeout = GLib.timeout_add(100, self.check_add_new_key)
+        self.active_key_button = None
+
+    def get(self, name):
+        """Get a widget from the window"""
+        return self.builder.get_object(name)
+
+    def consume_newest_keycode(self, key):
+        """TODO"""
+        return True
+
+        if self.get("advanced_change_key_button").get_active():
+            # TODO get the button in the key list and update it
+            pass
+
+        return True
+
+    def check_add_new_key(self):
+        """TODO"""
+        # TODO
+        # TODO connect to the key button that self.active_key_button should be
+        #  overwritten with it
+        pass
+
+    def on_key_button_clicked(self, button):
+        """One of the mapping keys was clicked.
+
+        Load a different mapping into the editor.
+        """
+        self.active_key_button = button
+        # TODO save?
+
+    # TODO on code editor unfocus save
+
+
+class SimpleEditor:
+    """Maintains the widgets of the simple editor."""
+
+    def __init__(self, builder):
+        """TODO"""
+        self.builder = builder
+        self.window = self.get("window")
+        self.timeout = GLib.timeout_add(100, self.check_add_row)
+
+    def get(self, name):
+        """Get a widget from the window"""
+        return self.builder.get_object(name)
+
+    def get_focused_row(self):
+        """Get the Row and its child that is currently in focus."""
+        focused = self.window.get_focus()
+        if focused is None:
+            return None, None
+
+        box = focused.get_parent()
+        if box is None:
+            return None, None
+
+        row = box.get_parent()
+        if not isinstance(row, Row):
+            return None, None
+
+        return row, focused
+
+    def check_add_row(self):
+        """Ensure that one empty row is available at all times."""
+        rows = self.get("mapping_list").get_children()
+
+        # verify that all mappings are displayed.
+        # One of them is possibly the empty row
+        num_rows = len(rows)
+        num_maps = len(custom_mapping)
+        if num_rows < num_maps or num_rows > num_maps + 1:
+            # good for finding bugs early on during development
+            logger.error(
+                "custom_mapping contains %d rows, but %d are displayed",
+                len(custom_mapping),
+                num_rows,
+            )
+            logger.spam("Mapping %s", list(custom_mapping))
+            logger.spam(
+                "Rows    %s", [(row.get_key(), row.get_symbol()) for row in rows]
+            )
+
+        # iterating over that 10 times per second is a bit wasteful,
+        # but the old approach which involved just counting the number of
+        # mappings and rows didn't seem very robust.
+        for row in rows:
+            if row.get_key() is None or row.get_symbol() is None:
+                # unfinished row found
+                break
+        else:
+            self.add_empty()
+
+        return True
+
+    def consume_newest_keycode(self, key):
+        """To capture events from keyboards, mice and gamepads.
+
+        Parameters
+        ----------
+        key : Key or None
+            If None will unfocus the input widget
+        """
+        # TODO highlight if a row for that key exists or something
+
+        # inform the currently selected row about the new keycode
+        row, focused = self.get_focused_row()
+
+        if row is None:
+            return True
+
+        row.refresh_state()
+
+        if key is None:
+            return True
+
+        if not row.keycode_input.is_focus():
+            return True
+
+        row.set_key(key)
+
+        return True
+
+
 class UserInterface:
     """The key mapper gtk window."""
 
@@ -213,6 +345,11 @@ class UserInterface:
 
         self.populate_devices()
 
+        self.editors = [
+            SimpleEditor(builder),
+            AdvancedEditor(builder),
+        ]
+
         self.timeouts = []
         self.setup_timeouts()
 
@@ -229,7 +366,6 @@ class UserInterface:
     def setup_timeouts(self):
         """Setup all GLib timeouts."""
         self.timeouts = [
-            GLib.timeout_add(100, self.check_add_row),
             GLib.timeout_add(1000 / 30, self.consume_newest_keycode),
         ]
 
@@ -263,7 +399,7 @@ class UserInterface:
 
         This has nothing to do with the keycode reader.
         """
-        _, focused = self.get_focused_row()
+        focused = self.window.get_focus()
         if isinstance(focused, Gtk.ToggleButton):
             return
 
@@ -332,40 +468,9 @@ class UserInterface:
         for timeout in self.timeouts:
             GLib.source_remove(timeout)
             self.timeouts = []
+        # TODO on_close in editors as well?
         reader.terminate()
         Gtk.main_quit()
-
-    def check_add_row(self):
-        """Ensure that one empty row is available at all times."""
-        rows = self.get("key_list").get_children()
-
-        # verify that all mappings are displayed.
-        # One of them is possibly the empty row
-        num_rows = len(rows)
-        num_maps = len(custom_mapping)
-        if num_rows < num_maps or num_rows > num_maps + 1:
-            # good for finding bugs early on during development
-            logger.error(
-                "custom_mapping contains %d rows, but %d are displayed",
-                len(custom_mapping),
-                num_rows,
-            )
-            logger.spam("Mapping %s", list(custom_mapping))
-            logger.spam(
-                "Rows    %s", [(row.get_key(), row.get_symbol()) for row in rows]
-            )
-
-        # iterating over that 10 times per second is a bit wasteful,
-        # but the old approach which involved just counting the number of
-        # mappings and rows didn't seem very robust.
-        for row in rows:
-            if row.get_key() is None or row.get_symbol() is None:
-                # unfinished row found
-                break
-        else:
-            self.add_empty()
-
-        return True
 
     def select_newest_preset(self):
         """Find and select the newest preset (and its device)."""
@@ -424,8 +529,8 @@ class UserInterface:
 
     def clear_mapping_table(self):
         """Remove all rows from the mappings table."""
-        key_list = self.get("key_list")
-        key_list.forall(key_list.remove)
+        mapping_list = self.get("mapping_list")
+        mapping_list.forall(mapping_list.remove)
         custom_mapping.empty()
 
     def can_modify_mapping(self, *_):
@@ -437,22 +542,6 @@ class UserInterface:
         # therefore the original keycode inaccessible
         logger.info("Cannot change keycodes while injecting")
         self.show_status(CTX_ERROR, 'Use "Restore Defaults" to stop before editing')
-
-    def get_focused_row(self):
-        """Get the Row and its child that is currently in focus."""
-        focused = self.window.get_focus()
-        if focused is None:
-            return None, None
-
-        box = focused.get_parent()
-        if box is None:
-            return None, None
-
-        row = box.get_parent()
-        if not isinstance(row, Row):
-            return None, None
-
-        return row, focused
 
     def consume_newest_keycode(self):
         """To capture events from keyboards, mice and gamepads."""
@@ -468,40 +557,26 @@ class UserInterface:
         if reader.are_new_devices_available():
             self.populate_devices()
 
-        # TODO highlight if a row for that key exists or something
-
-        # inform the currently selected row about the new keycode
-        row, focused = self.get_focused_row()
-
-        if row is None:
-            return True
-
-        row.refresh_state()
-
-        if key is None:
-            return True
-
-        if not row.keycode_input.is_focus():
-            return True
-
         # keycode is already set by some other row
-        existing = custom_mapping.get_symbol(key)
-        if existing is not None:
-            msg = f'"{key.beautify()}" already mapped to "{existing}"'
-            logger.info(msg)
-            self.show_status(CTX_KEYCODE, msg)
-            return True
+        if key is not None:
+            existing = custom_mapping.get_symbol(key)
+            if existing is not None:
+                msg = f'"{key.beautify()}" already mapped to "{existing}"'
+                logger.info(msg)
+                self.show_status(CTX_KEYCODE, msg)
+                return True
 
-        row.set_key(key)
+            if key.is_problematic():
+                self.show_status(
+                    CTX_WARNING,
+                    "ctrl, alt and shift may not combine properly",
+                    "Your system might reinterpret combinations "
+                    + "with those after they are injected, and by doing so "
+                    + "break them.",
+                )
 
-        if key.is_problematic():
-            self.show_status(
-                CTX_WARNING,
-                "ctrl, alt and shift may not combine properly",
-                "Your system might reinterpret combinations "
-                + "with those after they are injected, and by doing so "
-                + "break them.",
-            )
+        for editor in self.editors:
+            editor.consume_newest_keycode(key)
 
         return True
 
@@ -783,7 +858,7 @@ class UserInterface:
 
         custom_mapping.load(self.group.get_preset_path(preset))
 
-        key_list = self.get("key_list")
+        mapping_list = self.get("mapping_list")
         for key, output in custom_mapping:
             single_key_mapping = Row(
                 user_interface=self,
@@ -791,9 +866,13 @@ class UserInterface:
                 key=key,
                 symbol=output,
             )
-            single_key_mapping.keycode_input.connect("focus-in-event", self.can_modify_mapping)
-            single_key_mapping.keycode_input.connect("focus-out-event", self.save_preset)
-            key_list.insert(single_key_mapping, -1)
+            single_key_mapping.keycode_input.connect(
+                "focus-in-event", self.can_modify_mapping
+            )
+            single_key_mapping.keycode_input.connect(
+                "focus-out-event", self.save_preset
+            )
+            mapping_list.insert(single_key_mapping, -1)
 
         autoload_switch = self.get("preset_autoload_switch")
 
@@ -829,14 +908,14 @@ class UserInterface:
     def add_empty(self):
         """Add one empty row for a single mapped key."""
         empty = Row(user_interface=self, delete_callback=self.on_row_removed)
-        key_list = self.get("key_list")
-        key_list.insert(empty, -1)
+        mapping_list = self.get("mapping_list")
+        mapping_list.insert(empty, -1)
 
-        key_list_advanced = self.get("key_list_advanced")
+        mapping_list_advanced = self.get("mapping_list_advanced")
         key_button = Gtk.Button()
         key_button.set_label("new entry")
         key_button.show_all()
-        key_list_advanced.insert(key_button, -1)
+        mapping_list_advanced.insert(key_button, -1)
 
     def on_row_removed(self, single_key_mapping):
         """Stuff to do when a row was removed
@@ -845,9 +924,9 @@ class UserInterface:
         ----------
         single_key_mapping : Row
         """
-        key_list = self.get("key_list")
+        mapping_list = self.get("mapping_list")
         # https://stackoverflow.com/a/30329591/4417769
-        key_list.remove(single_key_mapping)
+        mapping_list.remove(single_key_mapping)
 
     def save_preset(self, *_):
         """Write changes to presets to disk."""

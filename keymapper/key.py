@@ -169,7 +169,7 @@ class Key:
 
     def beautify(self):
         """Get a human readable string representation."""
-        result = ""
+        result = []
 
         for sub_key in self:
             if isinstance(sub_key[0], tuple):
@@ -179,12 +179,12 @@ class Key:
 
             if ev_type not in evdev.ecodes.bytype:
                 logger.error("Unknown key type for %s", sub_key)
-                result += str(code)
+                result.append(str(code))
                 continue
 
             if code not in evdev.ecodes.bytype[ev_type]:
                 logger.error("Unknown key code for %s", sub_key)
-                result += str(code)
+                result.append(str(code))
                 continue
 
             key_name = None
@@ -260,6 +260,6 @@ class Key:
             key_name = key_name.replace("_", " ")
             key_name = key_name.replace("  ", " ")
 
-            result += key_name
+            result.append(key_name)
 
-        return result
+        return " + ".join(result)

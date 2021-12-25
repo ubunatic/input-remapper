@@ -39,7 +39,7 @@ be mostly compliant with pylint.
 - [x] map keys using a `modifier + modifier + ... + key` syntax
 - [x] inject in an additional device instead to avoid clashing capabilities
 - [x] don't run any GUI code as root for improved wayland compatibility
-- [ ] macro editor with easier to read function names
+- [x] advanced editor
 - [ ] plugin support
 - [x] getting it into the official debian repo
 

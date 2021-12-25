@@ -95,7 +95,9 @@ def launch(argv=None):
     if not argv:
         argv = ["-d"]
 
-    with patch("keymapper.gui.user_interface.Window.setup_timeouts", lambda *args: None):
+    with patch(
+        "keymapper.gui.user_interface.Window.setup_timeouts", lambda *args: None
+    ):
         with patch.object(sys, "argv", [""] + [str(arg) for arg in argv]):
             loader = SourceFileLoader("__main__", bin_path)
             spec = spec_from_loader("__main__", loader)
@@ -280,7 +282,7 @@ class TestIntegration(unittest.TestCase):
         clean_up_integration(self)
 
     def get_rows(self):
-        return self.window.get("key_list").get_children()
+        return self.window.get("mapping_list").get_children()
 
     def get_status_text(self):
         status_bar = self.window.get("status_bar")
@@ -469,7 +471,7 @@ class TestIntegration(unittest.TestCase):
         )
 
     def test_row_simple(self):
-        rows = self.window.get("key_list").get_children()
+        rows = self.window.get("mapping_list").get_children()
         self.assertEqual(len(rows), 1)
 
         row = rows[0]
@@ -492,14 +494,14 @@ class TestIntegration(unittest.TestCase):
 
         time.sleep(0.1)
         gtk_iteration()
-        self.assertEqual(len(self.window.get("key_list").get_children()), 1)
+        self.assertEqual(len(self.window.get("mapping_list").get_children()), 1)
 
         row.symbol_input.set_text("Shift_L")
         self.assertEqual(len(custom_mapping), 1)
 
         time.sleep(0.1)
         gtk_iteration()
-        self.assertEqual(len(self.window.get("key_list").get_children()), 2)
+        self.assertEqual(len(self.window.get("mapping_list").get_children()), 2)
 
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 30, 1)), "Shift_L")
         self.assertEqual(row.get_symbol(), "Shift_L")
@@ -1097,12 +1099,12 @@ class TestIntegration(unittest.TestCase):
         )
 
     def test_copy_preset(self):
-        key_list = self.window.get("key_list")
+        mapping_list = self.window.get("mapping_list")
         self.change_empty_row(Key(EV_KEY, 81, 1), "a")
         time.sleep(0.1)
         gtk_iteration()
         self.window.save_preset()
-        self.assertEqual(len(key_list.get_children()), 2)
+        self.assertEqual(len(mapping_list.get_children()), 2)
 
         # should be cleared when creating a new preset
         custom_mapping.set("a.b", 3)
@@ -1111,7 +1113,7 @@ class TestIntegration(unittest.TestCase):
         self.window.on_create_preset_clicked(None)
 
         # the preset should be empty, only one empty row present
-        self.assertEqual(len(key_list.get_children()), 1)
+        self.assertEqual(len(mapping_list.get_children()), 1)
         self.assertIsNone(custom_mapping.get("a.b"), 3)
 
         # add one new row again and a setting
@@ -1119,21 +1121,21 @@ class TestIntegration(unittest.TestCase):
         time.sleep(0.1)
         gtk_iteration()
         self.window.save_preset()
-        self.assertEqual(len(key_list.get_children()), 2)
+        self.assertEqual(len(mapping_list.get_children()), 2)
         custom_mapping.set(["foo", "bar"], 2)
 
         # this time it should be copied
         self.window.on_copy_preset_clicked(None)
         self.assertEqual(self.window.preset_name, "new preset 2 copy")
-        self.assertEqual(len(key_list.get_children()), 2)
-        self.assertEqual(key_list.get_children()[0].get_symbol(), "b")
+        self.assertEqual(len(mapping_list.get_children()), 2)
+        self.assertEqual(mapping_list.get_children()[0].get_symbol(), "b")
         self.assertEqual(custom_mapping.get(["foo", "bar"]), 2)
 
         # make another copy
         self.window.on_copy_preset_clicked(None)
         self.assertEqual(self.window.preset_name, "new preset 2 copy 2")
-        self.assertEqual(len(key_list.get_children()), 2)
-        self.assertEqual(key_list.get_children()[0].get_symbol(), "b")
+        self.assertEqual(len(mapping_list.get_children()), 2)
+        self.assertEqual(mapping_list.get_children()[0].get_symbol(), "b")
         self.assertEqual(len(custom_mapping), 1)
         self.assertEqual(custom_mapping.get("foo.bar"), 2)
 
@@ -1559,27 +1561,27 @@ class TestIntegration(unittest.TestCase):
 
     def test_screw_up_rows(self):
         # add a row that is not present in custom_mapping
-        key_list = self.window.get("key_list")
-        key_list.forall(key_list.remove)
+        mapping_list = self.window.get("mapping_list")
+        mapping_list.forall(mapping_list.remove)
         for i in range(5):
             broken = Row(window=self.window, delete_callback=lambda: None)
             broken.set_key(Key(1, i, 1))
             broken.symbol_input.set_text("a")
-            key_list.insert(broken, -1)
+            mapping_list.insert(broken, -1)
         custom_mapping.empty()
 
         # the ui has 5 rows, the custom_mapping 0. mismatch
-        num_rows_before = len(key_list.get_children())
+        num_rows_before = len(mapping_list.get_children())
         self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(num_rows_before, 5)
 
         # it returns true to keep the glib timeout going
         self.assertTrue(self.window.check_add_row())
         # it still adds a new empty row and won't break
-        num_rows_after = len(key_list.get_children())
+        num_rows_after = len(mapping_list.get_children())
         self.assertEqual(num_rows_after, num_rows_before + 1)
 
-        rows = key_list.get_children()
+        rows = mapping_list.get_children()
         self.assertEqual(rows[0].get_symbol(), "a")
         self.assertEqual(rows[1].get_symbol(), "a")
         self.assertEqual(rows[2].get_symbol(), "a")
@@ -1590,7 +1592,7 @@ class TestIntegration(unittest.TestCase):
     def test_shared_presets(self):
         # devices with the same name (but different key because the key is
         # unique) share the same presets
-        key_list = self.window.get("key_list")
+        mapping_list = self.window.get("mapping_list")
 
         # 1. create a preset
         self.window.on_select_device(FakeDeviceDropdown("Foo Device 2"))
@@ -1605,13 +1607,13 @@ class TestIntegration(unittest.TestCase):
         self.window.on_select_device(FakeDeviceDropdown("Bar Device"))
         self.assertEqual(self.window.preset_name, "new preset")
         self.assertNotIn("asdf.json", os.listdir(get_preset_path("Bar Device")))
-        self.assertIsNone(key_list.get_children()[0].get_symbol(), None)
+        self.assertIsNone(mapping_list.get_children()[0].get_symbol(), None)
 
         # 3. switch to the device with the same name
         self.window.on_select_device(FakeDeviceDropdown("Foo Device"))
         # the newest preset is asdf, it should be automatically selected
         self.assertEqual(self.window.preset_name, "asdf")
-        self.assertEqual(key_list.get_children()[0].get_symbol(), "qux")
+        self.assertEqual(mapping_list.get_children()[0].get_symbol(), "qux")
 
 
 if __name__ == "__main__":

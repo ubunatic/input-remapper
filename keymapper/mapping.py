@@ -125,7 +125,7 @@ class Mapping(ConfigBase):
         key : Key
         """
         if not isinstance(key, Key):
-            raise TypeError("Expected key to be a Key object")
+            raise TypeError(f"Expected key to be a Key object but got {key}")
 
         for permutation in key.get_permutations():
             if permutation in self._mapping:
@@ -242,7 +242,7 @@ class Mapping(ConfigBase):
         key : Key
         """
         if not isinstance(key, Key):
-            raise TypeError("Expected key to be a Key object")
+            raise TypeError(f"Expected key to be a Key object but got {key}")
 
         for permutation in key.get_permutations():
             existing = self._mapping.get(permutation)

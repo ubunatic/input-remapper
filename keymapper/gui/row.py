@@ -154,7 +154,7 @@ class Row(Gtk.ListBoxRow):
         key : Key
         """
         if key is not None and not isinstance(key, Key):
-            raise TypeError("Expected key to be a Key object")
+            raise TypeError(f"Expected key to be a Key object but got {key}")
 
         super().__init__()
         self.device = user_interface.group

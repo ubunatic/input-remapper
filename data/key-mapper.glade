@@ -37,17 +37,17 @@
     <property name="can-focus">False</property>
     <property name="icon-name">gtk-delete</property>
   </object>
+  <object class="GtkImage" id="edit_icon">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="icon-name">input-keyboard</property>
+  </object>
   <object class="GtkImage" id="gtk-redo-icon">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
     <property name="stock">gtk-redo</property>
   </object>
-  <object class="GtkImage" id="image1">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="icon-name">input-keyboard</property>
-  </object>
-  <object class="GtkImage" id="image2">
+  <object class="GtkImage" id="icon-delete-row">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
     <property name="icon-name">window-close</property>
@@ -829,7 +829,7 @@ To give your keys back their original mapping.</property>
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <child>
-                              <object class="GtkListBox" id="key_list">
+                              <object class="GtkListBox" id="mapping_list">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <property name="selection-mode">none</property>
@@ -861,7 +861,7 @@ To give your keys back their original mapping.</property>
                                 <property name="can-focus">False</property>
                                 <property name="shadow-type">none</property>
                                 <child>
-                                  <object class="GtkListBox" id="key_list_advanced">
+                                  <object class="GtkListBox" id="mapping_list_advanced">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
                                     <property name="margin-start">12</property>
@@ -918,13 +918,12 @@ To give your keys back their original mapping.</property>
                                         <property name="can-focus">False</property>
                                         <property name="spacing">12</property>
                                         <child>
-                                          <object class="GtkButton">
+                                          <object class="GtkToggleButton">
                                             <property name="label" translatable="yes">Change key</property>
                                             <property name="visible">True</property>
                                             <property name="can-focus">True</property>
                                             <property name="receives-default">True</property>
-                                            <property name="image">image1</property>
-                                            <property name="always-show-image">True</property>
+                                            <property name="image">edit_icon</property>
                                           </object>
                                           <packing>
                                             <property name="expand">False</property>
@@ -950,7 +949,7 @@ To give your keys back their original mapping.</property>
                                             <property name="visible">True</property>
                                             <property name="can-focus">True</property>
                                             <property name="receives-default">True</property>
-                                            <property name="image">image2</property>
+                                            <property name="image">icon-delete-row</property>
                                             <property name="always-show-image">True</property>
                                           </object>
                                           <packing>
