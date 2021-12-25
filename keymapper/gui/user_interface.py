@@ -49,7 +49,7 @@ from keymapper.groups import (
     TOUCHPAD,
     MOUSE,
 )
-from keymapper.gui.row import Row, to_string
+from keymapper.gui.row import Row
 from keymapper.key import Key
 from keymapper.gui.reader import reader
 from keymapper.gui.helper import is_helper_running
@@ -142,7 +142,7 @@ def on_close_about(about, _):
 
 
 class UserInterface:
-    """User Interface."""
+    """The key mapper gtk window."""
 
     def __init__(self):
         self.dbus = None
@@ -551,7 +551,7 @@ class UserInterface:
             if error is None:
                 continue
 
-            position = to_string(key)
+            position = key.beautify()
             msg = f"Syntax error at {position}, hover for info"
             self.show_status(CTX_MAPPING, msg, error)
 
@@ -895,3 +895,9 @@ class UserInterface:
             editor_stack.set_visible_child(children[1])
         else:
             editor_stack.set_visible_child(children[0])
+
+    def update_advanced_editor(self):
+        """Show the currently selected mapping in the advanced editor."""
+        # TODO put a keycode_input into it
+        # TODO connect handlers to keycode_input
+        # TODO show code

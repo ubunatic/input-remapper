@@ -52,9 +52,9 @@ from keymapper.paths import CONFIG_PATH, get_preset_path, get_config_path
 from keymapper.config import config, WHEEL, MOUSE, BUTTONS
 from keymapper.gui.reader import reader
 from keymapper.injection.injector import RUNNING, FAILED, UNKNOWN
-from keymapper.gui.row import Row, to_string, HOLDING, IDLE
+from keymapper.gui.row import Row, HOLDING, IDLE
 from keymapper.gui.user_interface import Window
-from keymapper.key import Key
+from keymapper.key import Key, to_string
 from keymapper.daemon import Daemon
 from keymapper.groups import groups
 from keymapper.gui.helper import RootHelper
@@ -440,33 +440,31 @@ class TestIntegration(unittest.TestCase):
         # not an integration test, but I have all the row tests here already
         self.assertEqual(to_string(Key(EV_KEY, evdev.ecodes.KEY_A, 1)), "a")
         self.assertEqual(
-            to_string(Key(EV_ABS, evdev.ecodes.ABS_HAT0X, -1)), "DPad Left"
+            Key(EV_ABS, evdev.ecodes.ABS_HAT0X, -1).beautify(), "DPad Left"
         )
         self.assertEqual(to_string(Key(EV_ABS, evdev.ecodes.ABS_HAT0Y, -1)), "DPad Up")
         self.assertEqual(to_string(Key(EV_KEY, evdev.ecodes.BTN_A, 1)), "Button A")
         self.assertEqual(to_string(Key(EV_KEY, 1234, 1)), "1234")
         self.assertEqual(
-            to_string(Key(EV_ABS, evdev.ecodes.ABS_X, 1)), "Joystick Right"
+            Key(EV_ABS, evdev.ecodes.ABS_X, 1).beautify(), "Joystick Right"
         )
         self.assertEqual(
-            to_string(Key(EV_ABS, evdev.ecodes.ABS_RY, 1)), "Joystick 2 Down"
+            Key(EV_ABS, evdev.ecodes.ABS_RY, 1).beautify(), "Joystick 2 Down"
         )
         self.assertEqual(
-            to_string(Key(EV_REL, evdev.ecodes.REL_HWHEEL, 1)), "Wheel Right"
+            Key(EV_REL, evdev.ecodes.REL_HWHEEL, 1).beautify(), "Wheel Right"
         )
         self.assertEqual(
-            to_string(Key(EV_REL, evdev.ecodes.REL_WHEEL, -1)), "Wheel Down"
+            Key(EV_REL, evdev.ecodes.REL_WHEEL, -1).beautify(), "Wheel Down"
         )
 
         # combinations
         self.assertEqual(
-            to_string(
-                Key(
-                    (EV_KEY, evdev.ecodes.BTN_A, 1),
-                    (EV_KEY, evdev.ecodes.BTN_B, 1),
-                    (EV_KEY, evdev.ecodes.BTN_C, 1),
-                )
-            ),
+            Key(
+                (EV_KEY, evdev.ecodes.BTN_A, 1),
+                (EV_KEY, evdev.ecodes.BTN_B, 1),
+                (EV_KEY, evdev.ecodes.BTN_C, 1),
+            ).beautify(),
             "Button A + Button B + Button C",
         )
 
@@ -625,7 +623,7 @@ class TestIntegration(unittest.TestCase):
 
             if expect_success:
                 self.assertEqual(row.get_key(), key)
-                self.assertEqual(row.keycode_input.get_label(), to_string(key))
+                self.assertEqual(row.keycode_input.get_label(), key.beautify())
                 self.assertFalse(row.keycode_input.is_focus())
                 self.assertEqual(len(reader._unreleased), 0)
 

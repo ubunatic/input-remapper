@@ -29,7 +29,7 @@ from keymapper.gui.custom_mapping import custom_mapping
 from keymapper.logger import logger
 from keymapper.key import Key
 from keymapper.gui.reader import reader
-from keymapper.gui.keycode_input import KeycodeInput, to_string, IDLE, HOLDING
+from keymapper.gui.keycode_input import KeycodeInput, IDLE, HOLDING
 
 
 CTX_KEYCODE = 2
@@ -155,7 +155,7 @@ class Row(Gtk.ListBoxRow):
         # keycode is already set by some other row
         existing = custom_mapping.get_symbol(new_key)
         if existing is not None:
-            msg = f'"{to_string(new_key)}" already mapped to "{existing}"'
+            msg = f'"{new_key.beautify()}" already mapped to "{existing}"'
             logger.info(msg)
             self.user_interface.show_status(CTX_KEYCODE, msg)
             return
@@ -164,7 +164,7 @@ class Row(Gtk.ListBoxRow):
 
         # always ask for get_child to set the label, otherwise line breaking
         # has to be configured again.
-        self.keycode_input.set_keycode_input_label(to_string(new_key))
+        self.keycode_input.set_label(new_key.beautify())
 
         self.keycode_input.key = new_key
 
@@ -248,6 +248,6 @@ class Row(Gtk.ListBoxRow):
             custom_mapping.clear(key)
 
         self.symbol_input.set_text("")
-        self.keycode_input.set_keycode_input_label("")
+        self.keycode_input.set_label("")
         self.keycode_input.key = None
         self.delete_callback(self)
