@@ -343,6 +343,7 @@ class UserInterface:
         num_rows = len(rows)
         num_maps = len(custom_mapping)
         if num_rows < num_maps or num_rows > num_maps + 1:
+            # good for finding bugs early on during development
             logger.error(
                 "custom_mapping contains %d rows, but %d are displayed",
                 len(custom_mapping),
@@ -781,6 +782,8 @@ class UserInterface:
                 key=key,
                 symbol=output,
             )
+            single_key_mapping.keycode_input.connect("focus-in-event", self.can_modify_mapping)
+            single_key_mapping.keycode_input.connect("focus-out-event", self.save_preset)
             key_list.insert(single_key_mapping, -1)
 
         autoload_switch = self.get("preset_autoload_switch")
