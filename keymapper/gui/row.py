@@ -22,17 +22,16 @@
 """A single, configurable key mapping."""
 
 
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GLib, Gdk
 
 from keymapper.system_mapping import system_mapping
 from keymapper.gui.custom_mapping import custom_mapping
-from keymapper.logger import logger
 from keymapper.key import Key
 from keymapper.gui.reader import reader
-from keymapper.gui.keycode_input import KeycodeInput, IDLE, HOLDING
 
 
-CTX_KEYCODE = 2
+IDLE = 0
+HOLDING = 1
 
 
 store = Gtk.ListStore(str)
@@ -62,8 +61,88 @@ def populate_store():
 populate_store()
 
 
+class KeycodeInput(Gtk.ToggleButton):
+    """Displays instructions and the current key of a single mapping."""
+
+    __gtype_name__ = "ToggleButton"
+
+    def __init__(self, key):
+        """
+
+        Parameters
+        ----------
+        key : Key
+        """
+        super().__init__()
+
+        self.key = key
+        self.state = IDLE
+
+        self.set_size_request(140, -1)
+
+        # make the togglebutton go back to its normal state when doing
+        # something else in the UI
+        self.connect("focus-in-event", self.on_focus)
+        self.connect("focus-out-event", self.on_unfocus)
+        # don't leave the input when using arrow keys or tab. wait for the
+        # window to consume the keycode from the reader
+        self.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
+
+        if key is not None:
+            self.set_label(key.beautify())
+        else:
+            self.show_click_here()
+
+    def on_focus(self, *_):
+        """Refresh useful usage information."""
+        reader.clear()
+        self.show_press_key()
+
+    def on_unfocus(self, *_):
+        """Refresh useful usage information and set some state stuff."""
+        self.show_click_here()
+        self.set_active(False)
+        self.state = IDLE
+
+    def show_click_here(self):
+        """Show 'click here' on the keycode input button."""
+        if self.key is not None:
+            return
+
+        self.set_label("click here")
+        self.set_opacity(0.3)
+
+    def show_press_key(self):
+        """Show 'press key' on the keycode input button."""
+        if self.key is not None:
+            return
+
+        self.set_label("press key")
+        self.set_opacity(1)
+
+    def set_key(self, key):
+        """Set the key and display it."""
+        self.key = key
+        self.set_label(key.beautify())
+
+    def set_label(self, label):
+        """Set the label of the keycode input."""
+        super().set_label(label)
+        # Make the child label widget break lines, important for
+        # long combinations
+        label = self.get_child()
+        label.set_line_wrap(True)
+        label.set_line_wrap_mode(2)
+        label.set_max_width_chars(13)
+        label.set_justify(Gtk.Justification.CENTER)
+        self.set_opacity(1)
+
+
 class Row(Gtk.ListBoxRow):
-    """A single configurable key mapping of the basic editor."""
+    """A single configurable key mapping of the basic editor.
+
+    Configures an entry in custom_mapping.
+    """
 
     __gtype_name__ = "ListBoxRow"
 
@@ -127,7 +206,7 @@ class Row(Gtk.ListBoxRow):
         symbol = self.symbol_input.get_text()
         return symbol if symbol else None
 
-    def set_new_key(self, new_key):
+    def set_key(self, new_key):
         """Check if a keycode has been pressed and if so, display it.
 
         Parameters
@@ -150,15 +229,6 @@ class Row(Gtk.ListBoxRow):
 
         # keycode didn't change, do nothing
         if new_key == previous_key:
-            return
-
-        # TODO move this to user_interface
-        # keycode is already set by some other row
-        existing = custom_mapping.get_symbol(new_key)
-        if existing is not None:
-            msg = f'"{new_key.beautify()}" already mapped to "{existing}"'
-            logger.info(msg)
-            self.user_interface.show_status(CTX_KEYCODE, msg)
             return
 
         # it's legal to display the keycode

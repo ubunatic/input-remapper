@@ -74,6 +74,7 @@ GObject.type_register(GtkSource.View)
 
 CTX_SAVE = 0
 CTX_APPLY = 1
+CTX_KEYCODE = 2
 CTX_ERROR = 3
 CTX_WARNING = 4
 CTX_MAPPING = 5
@@ -483,7 +484,15 @@ class UserInterface:
         if not row.keycode_input.is_focus():
             return True
 
-        row.set_new_key(key)
+        # keycode is already set by some other row
+        existing = custom_mapping.get_symbol(key)
+        if existing is not None:
+            msg = f'"{key.beautify()}" already mapped to "{existing}"'
+            logger.info(msg)
+            self.show_status(CTX_KEYCODE, msg)
+            return True
+
+        row.set_key(key)
 
         if key.is_problematic():
             self.show_status(
