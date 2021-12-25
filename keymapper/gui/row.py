@@ -61,7 +61,7 @@ def populate_store():
 populate_store()
 
 
-class KeycodeInput(Gtk.ToggleButton):
+class _KeycodeInput(Gtk.ToggleButton):
     """Displays instructions and the current key of a single mapping."""
 
     __gtype_name__ = "ToggleButton"
@@ -276,7 +276,7 @@ class Row(Gtk.ListBoxRow):
         delete_button.connect("button-press-event", self.on_delete_button_clicked)
         delete_button.set_size_request(50, -1)
 
-        keycode_input = KeycodeInput(key)
+        keycode_input = _KeycodeInput(key)
         self.keycode_input = keycode_input
 
         symbol_input = Gtk.Entry()
