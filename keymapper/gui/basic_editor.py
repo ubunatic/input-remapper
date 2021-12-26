@@ -229,6 +229,8 @@ class BasicEditor:
             )
             mapping_list.insert(single_key_mapping, -1)
 
+        self.check_add_row()
+
     def get_focused_row(self):
         """Get the Row and its child that is currently in focus."""
         focused = self.window.get_focus()

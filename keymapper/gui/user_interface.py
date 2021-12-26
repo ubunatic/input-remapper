@@ -710,7 +710,6 @@ class UserInterface:
             autoload_switch.set_active(is_autoloaded)
 
         self.get("preset_name_input").set_text("")
-        self.active_editor.add_empty()
 
         self.initialize_gamepad_config()
 
