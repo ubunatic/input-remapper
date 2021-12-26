@@ -104,8 +104,8 @@ class Mapping(ConfigBase):
             raise ValueError("Expected `symbol` not to be None")
 
         symbol = symbol.strip()
-        logger.debug('%s will map to "%s"', new_key, symbol)
         self.clear(new_key)  # this also clears all equivalent keys
+        logger.debug('%s maps to "%s"', new_key, symbol)
         self._mapping[new_key] = symbol
 
         if previous_key is not None:
@@ -113,7 +113,6 @@ class Mapping(ConfigBase):
             if code_changed:
                 # clear previous mapping of that code, because the line
                 # representing that one will now represent a different one
-                print("mapping change", previous_key, new_key)
                 self.clear(previous_key)
 
         self.changed = True
@@ -130,7 +129,7 @@ class Mapping(ConfigBase):
 
         for permutation in key.get_permutations():
             if permutation in self._mapping:
-                logger.debug("%s will be cleared", permutation)
+                logger.debug("%s cleared", permutation)
                 del self._mapping[permutation]
                 self.changed = True
                 # there should be only one variation of the permutations

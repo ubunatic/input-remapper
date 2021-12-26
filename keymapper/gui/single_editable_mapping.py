@@ -179,11 +179,7 @@ class SingleEditableMapping:
         """When the output symbol for that keycode is typed in."""
         key = self.get_key()
         symbol = self.get_symbol()
-
-        if symbol is None:
-            return
-
-        if key is not None:
+        if symbol is not None and key is not None:
             custom_mapping.change(new_key=key, symbol=symbol, previous_key=None)
 
     def match(self, _, key, tree_iter):
