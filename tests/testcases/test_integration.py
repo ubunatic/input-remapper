@@ -52,9 +52,9 @@ from keymapper.paths import CONFIG_PATH, get_preset_path, get_config_path
 from keymapper.config import config, WHEEL, MOUSE, BUTTONS
 from keymapper.gui.reader import reader
 from keymapper.injection.injector import RUNNING, FAILED, UNKNOWN
-from keymapper.gui.row import Row, HOLDING, IDLE
-from keymapper.gui.user_interface import Window
-from keymapper.key import Key, to_string
+from keymapper.gui.simple_editor import Row, HOLDING, IDLE
+from keymapper.gui.user_interface import UserInterface
+from keymapper.key import Key
 from keymapper.daemon import Daemon
 from keymapper.groups import groups
 from keymapper.gui.helper import RootHelper
@@ -96,7 +96,7 @@ def launch(argv=None):
         argv = ["-d"]
 
     with patch(
-        "keymapper.gui.user_interface.Window.setup_timeouts", lambda *args: None
+        "keymapper.gui.user_interface.UserInterface.setup_timeouts", lambda *args: None
     ):
         with patch.object(sys, "argv", [""] + [str(arg) for arg in argv]):
             loader = SourceFileLoader("__main__", bin_path)
@@ -114,9 +114,9 @@ def launch(argv=None):
     # do it afterwards. Because some tests don't want them to be triggered
     # yet and test the windows initial state. This is only a problem on
     # slow computers that take long for the window import.
-    module.window.setup_timeouts()
+    module.user_interface.setup_timeouts()
 
-    return module.window
+    return module.user_interface
 
 
 class FakeDeviceDropdown(Gtk.ComboBoxText):
@@ -152,22 +152,22 @@ class FakePresetDropdown(Gtk.ComboBoxText):
 
 def clean_up_integration(test):
     if hasattr(test, "original_on_close"):
-        test.window.on_close = test.original_on_close
+        test.user_interface.on_close = test.original_on_close
 
-    test.window.on_restore_defaults_clicked(None)
+    test.user_interface.on_restore_defaults_clicked(None)
     gtk_iteration()
-    test.window.on_close()
-    test.window.window.destroy()
+    test.user_interface.on_close()
+    test.user_interface.window.destroy()
     gtk_iteration()
     cleanup()
 
     # do this now, not when all tests are finished
-    test.window.dbus.stop_all()
-    if isinstance(test.window.dbus, Daemon):
-        atexit.unregister(test.window.dbus.stop_all)
+    test.user_interface.dbus.stop_all()
+    if isinstance(test.user_interface.dbus, Daemon):
+        atexit.unregister(test.user_interface.dbus.stop_all)
 
 
-original_on_select_preset = Window.on_select_preset
+original_on_select_preset = UserInterface.on_select_preset
 
 
 class GtkKeyEvent:
@@ -221,7 +221,7 @@ class TestGroupsFromHelper(unittest.TestCase):
         os.system = cls.original_os_system
         Daemon.connect = cls.original_connect
 
-    @patch("keymapper.gui.user_interface.Window.on_select_preset")
+    @patch("keymapper.gui.user_interface.UserInterface.on_select_preset")
     def test_knows_devices(self, on_select_preset_patch):
         # verify that it is working as expected
         gtk_iteration()
@@ -233,7 +233,7 @@ class TestGroupsFromHelper(unittest.TestCase):
         # perform some iterations so that the gui ends up running
         # consume_newest_keycode, which will make it receive devices.
         # Restore patch, otherwise gtk complains when disabling handlers
-        Window.on_select_preset = original_on_select_preset
+        UserInterface.on_select_preset = original_on_select_preset
         for _ in range(10):
             time.sleep(0.01)
             gtk_iteration()
@@ -262,7 +262,7 @@ class TestIntegration(unittest.TestCase):
             multiprocessing.Process(target=RootHelper).start()
             self.dbus = Daemon()
 
-        Window.start_processes = start_processes
+        UserInterface.start_processes = start_processes
 
     def setUp(self):
         self.user_interface = launch()
@@ -460,13 +460,13 @@ class TestIntegration(unittest.TestCase):
 
     def test_row_keycode_to_string(self):
         # not an integration test, but I have all the row tests here already
-        self.assertEqual(to_string(Key(EV_KEY, evdev.ecodes.KEY_A, 1)), "a")
+        self.assertEqual(Key(EV_KEY, evdev.ecodes.KEY_A, 1).beautify(), "a")
         self.assertEqual(
             Key(EV_ABS, evdev.ecodes.ABS_HAT0X, -1).beautify(), "DPad Left"
         )
-        self.assertEqual(to_string(Key(EV_ABS, evdev.ecodes.ABS_HAT0Y, -1)), "DPad Up")
-        self.assertEqual(to_string(Key(EV_KEY, evdev.ecodes.BTN_A, 1)), "Button A")
-        self.assertEqual(to_string(Key(EV_KEY, 1234, 1)), "1234")
+        self.assertEqual(Key(EV_ABS, evdev.ecodes.ABS_HAT0Y, -1).beautify(), "DPad Up")
+        self.assertEqual(Key(EV_KEY, evdev.ecodes.BTN_A, 1).beautify(), "Button A")
+        self.assertEqual(Key(EV_KEY, 1234, 1).beautify(), "1234")
         self.assertEqual(
             Key(EV_ABS, evdev.ecodes.ABS_X, 1).beautify(), "Joystick Right"
         )
@@ -597,7 +597,7 @@ class TestIntegration(unittest.TestCase):
         row = rows[-1]
         self.assertIsNone(row.get_key())
         self.assertEqual(row.symbol_input.get_text(), "")
-        self.assertEqual(row._state, IDLE)
+        self.assertEqual(row.state, IDLE)
 
         if char and not code_first:
             # set the symbol to make the new row complete
@@ -631,7 +631,7 @@ class TestIntegration(unittest.TestCase):
             # holding down
             self.assertIsNotNone(reader.get_unreleased_keys())
             self.assertGreater(len(reader.get_unreleased_keys()), 0)
-            self.assertEqual(row._state, HOLDING)
+            self.assertEqual(row.state, HOLDING)
             self.assertTrue(row.keycode_input.is_focus())
 
             # release all the keys
@@ -643,7 +643,7 @@ class TestIntegration(unittest.TestCase):
 
             # released
             self.assertIsNone(reader.get_unreleased_keys())
-            self.assertEqual(row._state, IDLE)
+            self.assertEqual(row.state, IDLE)
 
             if expect_success:
                 self.assertEqual(row.get_key(), key)
@@ -654,7 +654,7 @@ class TestIntegration(unittest.TestCase):
         if not expect_success:
             self.assertIsNone(row.get_key())
             self.assertIsNone(row.get_symbol())
-            self.assertEqual(row._state, IDLE)
+            self.assertEqual(row.state, IDLE)
             # it won't switch the focus to the symbol input
             self.assertTrue(row.keycode_input.is_focus())
             self.assertEqual(custom_mapping.changed, changed)
@@ -690,7 +690,7 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
 
         # focus different row
-        self.user_interface.add_empty()
+        self.user_interface.simple_editor.add_empty()
         self.user_interface.window.set_focus(self.get_rows()[1].keycode_input)
         self.assertEqual(reader.get_unreleased_keys(), None)
 
@@ -1126,6 +1126,7 @@ class TestIntegration(unittest.TestCase):
         time.sleep(0.1)
         gtk_iteration()
         self.user_interface.save_preset()
+        # 2 rows: the changed row and an empty row
         self.assertEqual(len(mapping_list.get_children()), 2)
 
         # should be cleared when creating a new preset
@@ -1605,7 +1606,7 @@ class TestIntegration(unittest.TestCase):
         mapping_list = self.user_interface.get("mapping_list")
         mapping_list.forall(mapping_list.remove)
         for i in range(5):
-            broken = Row(window=self.user_interface, delete_callback=lambda: None)
+            broken = Row(user_interface=self.user_interface, delete_callback=lambda: None)
             broken.set_key(Key(1, i, 1))
             broken.symbol_input.set_text("a")
             mapping_list.insert(broken, -1)
@@ -1617,7 +1618,7 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(num_rows_before, 5)
 
         # it returns true to keep the glib timeout going
-        self.assertTrue(self.user_interface.check_add_row())
+        self.assertTrue(self.user_interface.simple_editor.check_add_row())
         # it still adds a new empty row and won't break
         num_rows_after = len(mapping_list.get_children())
         self.assertEqual(num_rows_after, num_rows_before + 1)

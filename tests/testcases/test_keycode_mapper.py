@@ -46,7 +46,8 @@ from keymapper.injection.macros.parse import parse
 from keymapper.injection.context import Context
 from keymapper.utils import RELEASE, PRESS
 from keymapper.config import config, BUTTONS
-from keymapper.mapping import Mapping, DISABLE_CODE
+from keymapper.mapping import Mapping
+from keymapper.system_mapping import DISABLE_CODE
 
 from tests.test import (
     new_event,
