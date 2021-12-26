@@ -102,7 +102,7 @@ class SingleEditableMapping:
         self.delete_callback = delete_callback
 
         self.text_input = None
-        self.keycode_input = None
+        self.key_recording_toggle = None
 
         self.put_together(key, symbol)
 
@@ -209,6 +209,6 @@ class SingleEditableMapping:
             custom_mapping.clear(key)
 
         self.text_input.set_text("")
-        self.keycode_input.set_label("")
-        self.keycode_input.key = None
+        self.key_recording_toggle.set_label("")
+        self.key_recording_toggle.key = None
         self.delete_callback(self)

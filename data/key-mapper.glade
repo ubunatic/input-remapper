@@ -918,7 +918,7 @@ To give your keys back their original mapping.</property>
                                         <property name="can-focus">False</property>
                                         <property name="spacing">12</property>
                                         <child>
-                                          <object class="GtkToggleButton" id="advanced_change_key_button">
+                                          <object class="GtkToggleButton" id="advanced_key_recording_button">
                                             <property name="label" translatable="yes">Change key</property>
                                             <property name="visible">True</property>
                                             <property name="can-focus">True</property>

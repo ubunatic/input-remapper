@@ -326,7 +326,7 @@ class TestIntegration(unittest.TestCase):
         # while keys are being recorded no shortcut should work
         rows = self.get_rows()
         row = rows[-1]
-        self.set_focus(row.keycode_input)
+        self.set_focus(row.key_recording_toggle)
         self.user_interface.key_press(
             self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
         )
@@ -508,14 +508,14 @@ class TestIntegration(unittest.TestCase):
         row.set_key(None)
         self.assertIsNone(row.get_key())
         self.assertEqual(len(custom_mapping), 0)
-        self.assertEqual(row.keycode_input.get_label(), "click here")
+        self.assertEqual(row.key_recording_toggle.get_label(), "click here")
 
         row.set_key(Key(EV_KEY, 30, 1))
         self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(row.get_key(), (EV_KEY, 30, 1))
         # this is KEY_A in linux/input-event-codes.h,
         # but KEY_ is removed from the text
-        self.assertEqual(row.keycode_input.get_label(), "a")
+        self.assertEqual(row.key_recording_toggle.get_label(), "a")
 
         row.set_key(Key(EV_KEY, 30, 1))
         self.assertEqual(len(custom_mapping), 0)
@@ -612,16 +612,16 @@ class TestIntegration(unittest.TestCase):
             row.text_input.set_text(char)
             self.assertEqual(row.get_symbol(), char)
 
-        if row.keycode_input.is_focus():
-            self.assertEqual(row.keycode_input.get_label(), "press key")
+        if row.key_recording_toggle.is_focus():
+            self.assertEqual(row.key_recording_toggle.get_label(), "press key")
         else:
-            self.assertEqual(row.keycode_input.get_label(), "click here")
+            self.assertEqual(row.key_recording_toggle.get_label(), "click here")
 
-        self.set_focus(row.keycode_input)
+        self.set_focus(row.key_recording_toggle)
         gtk_iteration()
         gtk_iteration()
         self.assertIsNone(row.get_key())
-        self.assertEqual(row.keycode_input.get_label(), "press key")
+        self.assertEqual(row.key_recording_toggle.get_label(), "press key")
 
         if key:
             # modifies the keycode in the row not by writing into the input,
@@ -638,7 +638,7 @@ class TestIntegration(unittest.TestCase):
             self.assertIsNotNone(reader.get_unreleased_keys())
             self.assertGreater(len(reader.get_unreleased_keys()), 0)
             self.assertTrue(row.input_has_arrived)
-            self.assertTrue(row.keycode_input.is_focus())
+            self.assertTrue(row.key_recording_toggle.is_focus())
 
             # release all the keys
             for sub_key in key:
@@ -653,8 +653,8 @@ class TestIntegration(unittest.TestCase):
 
             if expect_success:
                 self.assertEqual(row.get_key(), key)
-                self.assertEqual(row.keycode_input.get_label(), key.beautify())
-                self.assertFalse(row.keycode_input.is_focus())
+                self.assertEqual(row.key_recording_toggle.get_label(), key.beautify())
+                self.assertFalse(row.key_recording_toggle.is_focus())
                 self.assertEqual(len(reader._unreleased), 0)
 
         if not expect_success:
@@ -662,7 +662,7 @@ class TestIntegration(unittest.TestCase):
             self.assertIsNone(row.get_symbol())
             self.assertFalse(row.input_has_arrived)
             # it won't switch the focus to the symbol input
-            self.assertTrue(row.keycode_input.is_focus())
+            self.assertTrue(row.key_recording_toggle.is_focus())
             self.assertEqual(custom_mapping.changed, changed)
             return row
 
@@ -684,7 +684,7 @@ class TestIntegration(unittest.TestCase):
         ev_1 = Key(EV_KEY, 41, 1)
 
         # focus
-        self.set_focus(self.get_rows()[0].keycode_input)
+        self.set_focus(self.get_rows()[0].key_recording_toggle)
         send_event_to_reader(new_event(*ev_1.keys[0]))
         reader.read()
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
@@ -698,8 +698,8 @@ class TestIntegration(unittest.TestCase):
         # focus different row
         # TODO .active_editor instead?
         self.user_interface.basic_editor.add_empty()
-        keycode_input = self.get_rows()[1].keycode_input
-        self.set_focus(keycode_input)
+        key_recording_toggle = self.get_rows()[1].key_recording_toggle
+        self.set_focus(key_recording_toggle)
 
         self.assertEqual(reader.get_unreleased_keys(), None)
 

@@ -48,8 +48,8 @@ class AdvancedEditor(SingleEditableMapping):
 
         self.key = None
 
-        self.get("advanced_change_key_button").connect(
-            "focus-out-event", self.on_key_button_unfocus
+        self.get("advanced_key_recording_button").connect(
+            "focus-out-event", self.on_key_recording_button_unfocus
         )
 
         mapping_list = self.get("mapping_list_advanced")
@@ -60,7 +60,7 @@ class AdvancedEditor(SingleEditableMapping):
         # select the first entry
         rows = mapping_list.get_children()
         first_row = rows[0]
-        self.on_key_button_clicked(first_row.get_children()[0])
+        self.on_key_recording_button_clicked(first_row.get_children()[0])
 
     """SingleEditableMapping"""
 
@@ -72,7 +72,7 @@ class AdvancedEditor(SingleEditableMapping):
         super().on_text_input_change()
 
     def is_waiting_for_input(self):
-        return self.get("advanced_change_key_button").get_active()
+        return self.get("advanced_key_recording_button").get_active()
 
     def get_key(self):
         """Get the Key object from the left column.
@@ -121,19 +121,20 @@ class AdvancedEditor(SingleEditableMapping):
 
     def check_add_new_key(self):
         """If needed, add a new empty mapping to the list for the user to configure."""
-        # TODO
+        # TODO. Or a + icon to add a new one?
         pass
 
-    def on_key_button_unfocus(self, button, _):
-        """When the focus switches to the text_input, disable the button."""
-        button.set_active(False)
+    def on_key_recording_button_unfocus(self, *_):
+        """Don't highlight the key-recording-button anymore."""
+        self.get("advanced_key_recording_button").set_active(False)
 
-    def on_key_button_clicked(self, button):
-        """One of the mapping keys was clicked.
+    def on_key_recording_button_clicked(self, button, symbol):
+        """One of the buttons in the left "key" column was clicked.
 
-        Load a different mapping into the editor.
+        Load the information from that mapping entry into the editor.
         """
         self.active_key_button = button
+        self.get("code_editor").get_buffer().set_text("test")
         # TODO update advanced editor widgets
         # TODO save?
 
@@ -143,4 +144,10 @@ class AdvancedEditor(SingleEditableMapping):
         key_button = Gtk.Button()
         key_button.set_label("new entry")
         key_button.show_all()
+        key_button.connect(
+            "clicked", lambda button: self.on_key_recording_button_clicked(button, None)
+        )
         mapping_list_advanced.insert(key_button, -1)
+
+    def load_custom_mapping(self):
+        pass

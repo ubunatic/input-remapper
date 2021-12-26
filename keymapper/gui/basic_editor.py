@@ -31,7 +31,7 @@ from keymapper.gui.single_editable_mapping import SingleEditableMapping, store
 from keymapper.logger import logger
 
 
-class _KeycodeInput(Gtk.ToggleButton):
+class _KeycodeRecordingToggle(Gtk.ToggleButton):
     """Displays instructions and the current key of a single mapping."""
 
     __gtype_name__ = "ToggleButton"
@@ -119,14 +119,14 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         SingleEditableMapping.__init__(self, *args, **kwargs)
 
     def is_waiting_for_input(self):
-        return self.keycode_input.is_focus()
+        return self.key_recording_toggle.is_focus()
 
     def get_key(self):
         """Get the Key object from the left column.
 
         Or None if no code is mapped on this row.
         """
-        return self.keycode_input.key
+        return self.key_recording_toggle.key
 
     def get_symbol(self):
         """Get the assigned symbol from the middle column."""
@@ -135,7 +135,7 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
 
     def display_key(self, key):
         """Show what the user is currently pressing in ther user interface."""
-        self.keycode_input.set_key(key)
+        self.key_recording_toggle.set_key(key)
 
     def put_together(self, key, symbol):
         """Create all child GTK widgets and connect their signals."""
@@ -145,11 +145,11 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         delete_button.connect("button-press-event", self.on_delete_button_clicked)
         delete_button.set_size_request(50, -1)
 
-        keycode_input = _KeycodeInput(key)
-        keycode_input.connect("focus-in-event", self.set_idle)
-        keycode_input.connect("focus-out-event", self.set_idle)
-        self.keycode_input = keycode_input
-        self.keycode_input.key = key
+        key_recording_toggle = _KeycodeRecordingToggle(key)
+        key_recording_toggle.connect("focus-in-event", self.set_idle)
+        key_recording_toggle.connect("focus-out-event", self.set_idle)
+        self.key_recording_toggle = key_recording_toggle
+        self.key_recording_toggle.key = key
 
         text_input = Gtk.Entry()
         self.text_input = text_input
@@ -171,7 +171,7 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         box.set_homogeneous(False)
         box.set_spacing(0)
-        box.pack_start(keycode_input, expand=False, fill=True, padding=0)
+        box.pack_start(key_recording_toggle, expand=False, fill=True, padding=0)
         box.pack_start(text_input, expand=True, fill=True, padding=0)
         box.pack_start(delete_button, expand=False, fill=True, padding=0)
         box.show_all()
@@ -214,10 +214,10 @@ class BasicEditor:
                 key=key,
                 symbol=output,
             )
-            single_key_mapping.keycode_input.connect(
+            single_key_mapping.key_recording_toggle.connect(
                 "focus-in-event", self.user_interface.can_modify_mapping
             )
-            single_key_mapping.keycode_input.connect(
+            single_key_mapping.key_recording_toggle.connect(
                 "focus-out-event", self.user_interface.save_preset
             )
             mapping_list.insert(single_key_mapping, -1)
@@ -294,7 +294,7 @@ class BasicEditor:
         if key is None:
             return True
 
-        if not row.keycode_input.is_focus():
+        if not row.key_recording_toggle.is_focus():
             return True
 
         row.set_key(key)

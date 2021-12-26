@@ -802,15 +802,15 @@ class UserInterface:
         children = editor_stack.get_children()
 
         if show_advanced_editor:
+            self.advanced_editor.load_custom_mapping()
             editor_stack.set_visible_child(children[1])
         else:
+            # refresh the information of the editors
+            self.basic_editor.load_custom_mapping()
             editor_stack.set_visible_child(children[0])
-
-        # refresh the information of the editors
-        self.basic_editor.load_custom_mapping()
 
     def update_advanced_editor(self):
         """Show the currently selected mapping in the advanced editor."""
-        # TODO put a keycode_input into it
-        # TODO connect handlers to keycode_input
+        # TODO put a key_recording_toggle into it
+        # TODO connect handlers to key_recording_toggle
         # TODO show code
