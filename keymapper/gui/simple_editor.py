@@ -96,7 +96,6 @@ class _KeycodeInput(Gtk.ToggleButton):
 
     def on_focus(self, *_):
         """Refresh useful usage information."""
-        print('on_focus, reader.clear()')
         reader.clear()
         self.show_press_key()
 
@@ -377,13 +376,10 @@ class SimpleEditor:
 
     def load_custom_mapping(self):
         """Display the custom mapping."""
-        print('load_custom_mapping', custom_mapping._mapping)
-
         mapping_list = self.get("mapping_list")
         mapping_list.forall(mapping_list.remove)
 
         for key, output in custom_mapping:
-            print('key, output', key, output)
             single_key_mapping = Row(
                 user_interface=self.user_interface,
                 delete_callback=self.on_row_removed,
@@ -396,7 +392,6 @@ class SimpleEditor:
             single_key_mapping.keycode_input.connect(
                 "focus-out-event", self.user_interface.save_preset
             )
-            print('inserting', single_key_mapping.get_key(), single_key_mapping.get_symbol())
             mapping_list.insert(single_key_mapping, -1)
 
     def get_focused_row(self):

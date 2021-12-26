@@ -281,6 +281,14 @@ class TestIntegration(unittest.TestCase):
     def tearDown(self):
         clean_up_integration(self)
 
+    def set_focus(self, widget):
+        self.user_interface.window.set_focus(widget)
+
+        # for whatever miraculous reason it suddenly takes 0.005s before gtk does
+        # anything, even for old code.
+        time.sleep(0.02)
+        gtk_iteration()
+
     def get_rows(self):
         return self.user_interface.get("mapping_list").get_children()
 
@@ -318,14 +326,14 @@ class TestIntegration(unittest.TestCase):
         # while keys are being recorded no shortcut should work
         rows = self.get_rows()
         row = rows[-1]
-        self.user_interface.window.set_focus(row.keycode_input)
+        self.set_focus(row.keycode_input)
         self.user_interface.key_press(
             self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
         )
         self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
         self.assertFalse(closed)
 
-        self.user_interface.window.set_focus(None)
+        self.set_focus(None)
         self.user_interface.key_press(
             self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
         )
@@ -538,7 +546,7 @@ class TestIntegration(unittest.TestCase):
     def test_row_not_focused(self):
         # focus anything that is not the row,
         # no keycode should be inserted into it
-        self.user_interface.window.set_focus(
+        self.set_focus(
             self.user_interface.get("preset_name_input")
         )
         send_event_to_reader(new_event(1, 61, 1))
@@ -552,7 +560,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIsNone(row.get_key())
 
         # focus the text input instead
-        self.user_interface.window.set_focus(row.symbol_input)
+        self.set_focus(row.symbol_input)
         send_event_to_reader(new_event(1, 61, 1))
         self.user_interface.consume_newest_keycode()
 
@@ -610,7 +618,7 @@ class TestIntegration(unittest.TestCase):
         else:
             self.assertEqual(row.keycode_input.get_label(), "click here")
 
-        self.user_interface.window.set_focus(row.keycode_input)
+        self.set_focus(row.keycode_input)
         gtk_iteration()
         gtk_iteration()
         self.assertIsNone(row.get_key())
@@ -667,7 +675,7 @@ class TestIntegration(unittest.TestCase):
             self.assertEqual(row.get_symbol(), char)
 
         # unfocus them to trigger some final logic
-        self.user_interface.window.set_focus(None)
+        self.set_focus(None)
         correct_case = system_mapping.correct_case(char)
         self.assertEqual(row.get_symbol(), correct_case)
         self.assertFalse(custom_mapping.changed)
@@ -678,7 +686,7 @@ class TestIntegration(unittest.TestCase):
         ev_1 = Key(EV_KEY, 41, 1)
 
         # focus
-        self.user_interface.window.set_focus(self.get_rows()[0].keycode_input)
+        self.set_focus(self.get_rows()[0].keycode_input)
         send_event_to_reader(new_event(*ev_1.keys[0]))
         reader.read()
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
@@ -686,17 +694,17 @@ class TestIntegration(unittest.TestCase):
         # unfocus
         # doesn't call reader.clear
         # because otherwise the super key cannot be mapped
-        self.user_interface.window.set_focus(None)
+        self.set_focus(None)
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
 
         # focus different row
         # TODO .active_editor instead?
         self.user_interface.simple_editor.add_empty()
         keycode_input = self.get_rows()[1].keycode_input
-        self.user_interface.window.set_focus(keycode_input)
+        self.set_focus(keycode_input)
 
         # for whatever stupid shit reason it takes 0.005s before gtk does anything.
-        # A few hours ago this wasn't necessary
+        # A few hours ago this wasn't necessary. This even suddenly happens on old code
         time.sleep(0.02)
         gtk_iteration()
 
