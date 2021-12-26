@@ -287,7 +287,6 @@ class TestIntegration(unittest.TestCase):
         # for whatever miraculous reason it suddenly takes 0.005s before gtk does
         # anything, even for old code.
         time.sleep(0.02)
-        # TODO use self.sleep here
         gtk_iteration()
 
     def get_rows(self):
@@ -526,7 +525,7 @@ class TestIntegration(unittest.TestCase):
         gtk_iteration()
         self.assertEqual(len(self.user_interface.get("mapping_list").get_children()), 1)
 
-        row.symbol_input.set_text("Shift_L")
+        row.text_input.set_text("Shift_L")
         self.assertEqual(len(custom_mapping), 1)
 
         time.sleep(0.1)
@@ -560,7 +559,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIsNone(row.get_key())
 
         # focus the text input instead
-        self.set_focus(row.symbol_input)
+        self.set_focus(row.text_input)
         send_event_to_reader(new_event(1, 61, 1))
         self.user_interface.consume_newest_keycode()
 
@@ -604,13 +603,13 @@ class TestIntegration(unittest.TestCase):
         rows = self.get_rows()
         row = rows[-1]
         self.assertIsNone(row.get_key())
-        self.assertEqual(row.symbol_input.get_text(), "")
+        self.assertEqual(row.text_input.get_text(), "")
         self.assertFalse(row.input_has_arrived)
 
         if char and not code_first:
             # set the symbol to make the new row complete
             self.assertIsNone(row.get_symbol())
-            row.symbol_input.set_text(char)
+            row.text_input.set_text(char)
             self.assertEqual(row.get_symbol(), char)
 
         if row.keycode_input.is_focus():
@@ -670,7 +669,7 @@ class TestIntegration(unittest.TestCase):
         if char and code_first:
             # set the symbol to make the new row complete
             self.assertIsNone(row.get_symbol())
-            row.symbol_input.set_text(char)
+            row.text_input.set_text(char)
             self.assertEqual(row.get_symbol(), char)
 
         # unfocus them to trigger some final logic
@@ -737,7 +736,7 @@ class TestIntegration(unittest.TestCase):
         """edit first row"""
 
         row = self.get_rows()[0]
-        row.symbol_input.set_text("c")
+        row.text_input.set_text("c")
 
         self.assertEqual(custom_mapping.get_symbol(ev_1), "c")
         self.assertEqual(custom_mapping.get_symbol(ev_2), "k(b).k(c)")
@@ -1620,7 +1619,7 @@ class TestIntegration(unittest.TestCase):
                 user_interface=self.user_interface, delete_callback=lambda: None
             )
             broken.set_key(Key(1, i, 1))
-            broken.symbol_input.set_text("a")
+            broken.text_input.set_text("a")
             mapping_list.insert(broken, -1)
         custom_mapping.empty()
 

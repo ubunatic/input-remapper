@@ -40,9 +40,9 @@ class AdvancedEditor(SingleEditableMapping):
             user_interface=user_interface,
         )
 
-        self.symbol_input = self.get("code_editor")
-        self.symbol_input.connect("focus-out-event", self.on_symbol_input_unfocus)
-        self.symbol_input.connect("event", self.on_symbol_input_change)
+        self.text_input = self.get("code_editor")
+        self.text_input.connect("focus-out-event", self.on_text_input_unfocus)
+        self.text_input.connect("event", self.on_text_input_change)
 
         self.window = self.get("window")
         self.advanced_editor = self.get("advanced_editor")
@@ -67,12 +67,12 @@ class AdvancedEditor(SingleEditableMapping):
 
     """SingleEditableMapping"""
 
-    def on_symbol_input_change(self, _, event):
+    def on_text_input_change(self, _, event):
         if not event.type in [Gdk.EventType.KEY_PRESS, Gdk.EventType.KEY_RELEASE]:
             # there is no "changed" event for the GtkSourceView editor
             return
 
-        super().on_symbol_input_change()
+        super().on_text_input_change()
 
     def is_waiting_for_input(self):
         return self.get("advanced_change_key_button").get_active()
@@ -86,7 +86,7 @@ class AdvancedEditor(SingleEditableMapping):
 
     def get_symbol(self):
         """Get the assigned symbol from the middle column."""
-        buffer = self.symbol_input.get_buffer()
+        buffer = self.text_input.get_buffer()
         return buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
 
     def display_key(self, key):
@@ -127,7 +127,7 @@ class AdvancedEditor(SingleEditableMapping):
         pass
 
     def on_key_button_unfocus(self, button, _):
-        """When the focus switches to the symbol_input, disable the button."""
+        """When the focus switches to the text_input, disable the button."""
         button.set_active(False)
 
     def on_key_button_clicked(self, button):

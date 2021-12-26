@@ -721,9 +721,8 @@ class UserInterface:
         autoload_switch = self.get("preset_autoload_switch")
 
         with HandlerDisabled(autoload_switch, self.on_autoload_switch):
-            autoload_switch.set_active(
-                config.is_autoloaded(self.group.key, self.preset_name)
-            )
+            is_autoloaded = config.is_autoloaded(self.group.key, self.preset_name)
+            autoload_switch.set_active(is_autoloaded)
 
         self.get("preset_name_input").set_text("")
         self.advanced_editor.add_empty()
