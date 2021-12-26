@@ -207,10 +207,10 @@ class TestGroupsFromHelper(unittest.TestCase):
         os.system = os_system
 
     def setUp(self):
-        self.window = launch()
+        self.user_interface = launch()
         # verify that the ui doesn't have knowledge of any device yet
-        print("test self.assertIsNone(self.window.group)")
-        self.assertIsNone(self.window.group)
+        print("test self.assertIsNone(self.user_interface.group)")
+        self.assertIsNone(self.user_interface.group)
         self.assertEqual(len(groups), 0)
 
     def tearDown(self):
@@ -225,8 +225,8 @@ class TestGroupsFromHelper(unittest.TestCase):
     def test_knows_devices(self, on_select_preset_patch):
         # verify that it is working as expected
         gtk_iteration()
-        self.assertIsNone(self.window.group)
-        self.assertIsNone(self.window.preset_name)
+        self.assertIsNone(self.user_interface.group)
+        self.assertIsNone(self.user_interface.preset_name)
         self.assertEqual(len(groups), 0)
         on_select_preset_patch.assert_not_called()
 
@@ -241,7 +241,7 @@ class TestGroupsFromHelper(unittest.TestCase):
         self.assertIsNotNone(groups.find(key="Foo Device 2"))
         self.assertIsNotNone(groups.find(name="Bar Device"))
         self.assertIsNotNone(groups.find(name="gamepad"))
-        self.assertEqual(self.window.group.name, "Foo Device")
+        self.assertEqual(self.user_interface.group.name, "Foo Device")
 
 
 class TestIntegration(unittest.TestCase):
@@ -265,8 +265,8 @@ class TestIntegration(unittest.TestCase):
         Window.start_processes = start_processes
 
     def setUp(self):
-        self.window = launch()
-        self.original_on_close = self.window.on_close
+        self.user_interface = launch()
+        self.original_on_close = self.user_interface.on_close
 
         self.grab_fails = False
 
@@ -282,15 +282,15 @@ class TestIntegration(unittest.TestCase):
         clean_up_integration(self)
 
     def get_rows(self):
-        return self.window.get("mapping_list").get_children()
+        return self.user_interface.get("mapping_list").get_children()
 
     def get_status_text(self):
-        status_bar = self.window.get("status_bar")
+        status_bar = self.user_interface.get("status_bar")
         return status_bar.get_message_area().get_children()[0].get_label()
 
     def test_can_start(self):
-        self.assertIsNotNone(self.window)
-        self.assertTrue(self.window.window.get_visible())
+        self.assertIsNotNone(self.user_interface)
+        self.assertTrue(self.user_interface.window.get_visible())
 
     def test_ctrl_q(self):
         closed = False
@@ -299,71 +299,71 @@ class TestIntegration(unittest.TestCase):
             nonlocal closed
             closed = True
 
-        self.window.on_close = on_close
+        self.user_interface.on_close = on_close
 
-        self.window.key_press(self.window, GtkKeyEvent(Gdk.KEY_Control_L))
-        self.window.key_press(self.window, GtkKeyEvent(Gdk.KEY_a))
-        self.window.key_release(self.window, GtkKeyEvent(Gdk.KEY_Control_L))
-        self.window.key_release(self.window, GtkKeyEvent(Gdk.KEY_a))
-        self.window.key_press(self.window, GtkKeyEvent(Gdk.KEY_b))
-        self.window.key_press(self.window, GtkKeyEvent(Gdk.KEY_q))
-        self.window.key_release(self.window, GtkKeyEvent(Gdk.KEY_q))
-        self.window.key_release(self.window, GtkKeyEvent(Gdk.KEY_b))
+        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
+        self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+        self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
+        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
+        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+        self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+        self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
         self.assertFalse(closed)
 
         # while keys are being recorded no shortcut should work
         rows = self.get_rows()
         row = rows[-1]
-        self.window.window.set_focus(row.keycode_input)
-        self.window.key_press(self.window, GtkKeyEvent(Gdk.KEY_Control_L))
-        self.window.key_press(self.window, GtkKeyEvent(Gdk.KEY_q))
+        self.user_interface.window.set_focus(row.keycode_input)
+        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
         self.assertFalse(closed)
 
-        self.window.window.set_focus(None)
-        self.window.key_press(self.window, GtkKeyEvent(Gdk.KEY_Control_L))
-        self.window.key_press(self.window, GtkKeyEvent(Gdk.KEY_q))
+        self.user_interface.window.set_focus(None)
+        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
         self.assertTrue(closed)
 
-        self.window.key_release(self.window, GtkKeyEvent(Gdk.KEY_Control_L))
-        self.window.key_release(self.window, GtkKeyEvent(Gdk.KEY_q))
+        self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+        self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
 
     def test_ctrl_r(self):
         with patch.object(reader, "refresh_groups") as reader_get_devices_patch:
-            self.window.key_press(self.window, GtkKeyEvent(Gdk.KEY_Control_L))
-            self.window.key_press(self.window, GtkKeyEvent(Gdk.KEY_r))
+            self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+            self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_r))
             reader_get_devices_patch.assert_called_once()
 
     def test_ctrl_del(self):
-        with patch.object(self.window.dbus, "stop_injecting") as stop_injecting:
-            self.window.key_press(self.window, GtkKeyEvent(Gdk.KEY_Control_L))
-            self.window.key_press(self.window, GtkKeyEvent(Gdk.KEY_Delete))
+        with patch.object(self.user_interface.dbus, "stop_injecting") as stop_injecting:
+            self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+            self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_Delete))
             stop_injecting.assert_called_once()
 
     def test_show_device_mapping_status(self):
         # this function may not return True, otherwise the timeout
         # runs forever
-        self.assertFalse(self.window.show_device_mapping_status())
+        self.assertFalse(self.user_interface.show_device_mapping_status())
 
     def test_autoload(self):
-        with spy(self.window.dbus, "set_config_dir") as set_config_dir:
-            self.window.on_autoload_switch(None, False)
+        with spy(self.user_interface.dbus, "set_config_dir") as set_config_dir:
+            self.user_interface.on_autoload_switch(None, False)
             set_config_dir.assert_called_once()
 
         self.assertFalse(
-            config.is_autoloaded(self.window.group.key, self.window.preset_name)
+            config.is_autoloaded(self.user_interface.group.key, self.user_interface.preset_name)
         )
 
-        self.window.on_select_device(FakeDeviceDropdown("Foo Device 2"))
+        self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device 2"))
         gtk_iteration()
-        self.assertFalse(self.window.get("preset_autoload_switch").get_active())
+        self.assertFalse(self.user_interface.get("preset_autoload_switch").get_active())
 
         # select a preset for the first device
-        self.window.get("preset_autoload_switch").set_active(True)
+        self.user_interface.get("preset_autoload_switch").set_active(True)
         gtk_iteration()
-        self.assertTrue(self.window.get("preset_autoload_switch").get_active())
-        self.assertEqual(self.window.group.key, "Foo Device 2")
-        self.assertEqual(self.window.group.name, "Foo Device")
-        self.assertTrue(config.is_autoloaded(self.window.group.key, "new preset"))
+        self.assertTrue(self.user_interface.get("preset_autoload_switch").get_active())
+        self.assertEqual(self.user_interface.group.key, "Foo Device 2")
+        self.assertEqual(self.user_interface.group.name, "Foo Device")
+        self.assertTrue(config.is_autoloaded(self.user_interface.group.key, "new preset"))
         self.assertFalse(config.is_autoloaded("Bar Device", "new preset"))
         self.assertListEqual(
             list(config.iterate_autoload_presets()), [("Foo Device 2", "new preset")]
@@ -371,18 +371,18 @@ class TestIntegration(unittest.TestCase):
 
         # create a new preset, the switch should be correctly off and the
         # config not changed.
-        self.window.on_create_preset_clicked(None)
+        self.user_interface.on_create_preset_clicked(None)
         gtk_iteration()
-        self.assertEqual(self.window.preset_name, "new preset 2")
-        self.assertFalse(self.window.get("preset_autoload_switch").get_active())
+        self.assertEqual(self.user_interface.preset_name, "new preset 2")
+        self.assertFalse(self.user_interface.get("preset_autoload_switch").get_active())
         self.assertTrue(config.is_autoloaded("Foo Device 2", "new preset"))
         self.assertFalse(config.is_autoloaded("Foo Device", "new preset"))
         self.assertFalse(config.is_autoloaded("Foo Device", "new preset 2"))
         self.assertFalse(config.is_autoloaded("Foo Device 2", "new preset 2"))
 
         # select a preset for the second device
-        self.window.on_select_device(FakeDeviceDropdown("Bar Device"))
-        self.window.get("preset_autoload_switch").set_active(True)
+        self.user_interface.on_select_device(FakeDeviceDropdown("Bar Device"))
+        self.user_interface.get("preset_autoload_switch").set_active(True)
         gtk_iteration()
         self.assertTrue(config.is_autoloaded("Foo Device 2", "new preset"))
         self.assertFalse(config.is_autoloaded("Foo Device", "new preset"))
@@ -393,7 +393,7 @@ class TestIntegration(unittest.TestCase):
         )
 
         # disable autoloading for the second device
-        self.window.get("preset_autoload_switch").set_active(False)
+        self.user_interface.get("preset_autoload_switch").set_active(False)
         gtk_iteration()
         self.assertTrue(config.is_autoloaded("Foo Device 2", "new preset"))
         self.assertFalse(config.is_autoloaded("Foo Device", "new preset"))
@@ -404,12 +404,12 @@ class TestIntegration(unittest.TestCase):
 
     def test_select_device(self):
         # creates a new empty preset when no preset exists for the device
-        self.window.on_select_device(FakeDeviceDropdown("Foo Device"))
+        self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device"))
         custom_mapping.change(Key(EV_KEY, 50, 1), "q")
         custom_mapping.change(Key(EV_KEY, 51, 1), "u")
         custom_mapping.change(Key(EV_KEY, 52, 1), "x")
         self.assertEqual(len(custom_mapping), 3)
-        self.window.on_select_device(FakeDeviceDropdown("Bar Device"))
+        self.user_interface.on_select_device(FakeDeviceDropdown("Bar Device"))
         self.assertEqual(len(custom_mapping), 0)
         # it creates the file for that right away. It may have been possible
         # to write it such that it doesn't (its empty anyway), but it does,
@@ -425,7 +425,7 @@ class TestIntegration(unittest.TestCase):
             raise PermissionError
 
         with patch.object(custom_mapping, "save", save):
-            self.window.on_create_preset_clicked(None)
+            self.user_interface.on_create_preset_clicked(None)
             status = self.get_status_text()
             self.assertIn("Permission denied", status)
 
@@ -433,8 +433,8 @@ class TestIntegration(unittest.TestCase):
         def get_state(_=None):
             return FAILED
 
-        with patch.object(self.window.dbus, "get_state", get_state):
-            self.window.show_injection_result()
+        with patch.object(self.user_interface.dbus, "get_state", get_state):
+            self.user_interface.show_injection_result()
             text = self.get_status_text()
             self.assertIn("Failed", text)
 
@@ -471,7 +471,7 @@ class TestIntegration(unittest.TestCase):
         )
 
     def test_row_simple(self):
-        rows = self.window.get("mapping_list").get_children()
+        rows = self.user_interface.get("mapping_list").get_children()
         self.assertEqual(len(rows), 1)
 
         row = rows[0]
@@ -494,14 +494,14 @@ class TestIntegration(unittest.TestCase):
 
         time.sleep(0.1)
         gtk_iteration()
-        self.assertEqual(len(self.window.get("mapping_list").get_children()), 1)
+        self.assertEqual(len(self.user_interface.get("mapping_list").get_children()), 1)
 
         row.symbol_input.set_text("Shift_L")
         self.assertEqual(len(custom_mapping), 1)
 
         time.sleep(0.1)
         gtk_iteration()
-        self.assertEqual(len(self.window.get("mapping_list").get_children()), 2)
+        self.assertEqual(len(self.user_interface.get("mapping_list").get_children()), 2)
 
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 30, 1)), "Shift_L")
         self.assertEqual(row.get_symbol(), "Shift_L")
@@ -518,9 +518,9 @@ class TestIntegration(unittest.TestCase):
     def test_row_not_focused(self):
         # focus anything that is not the row,
         # no keycode should be inserted into it
-        self.window.window.set_focus(self.window.get("preset_name_input"))
+        self.user_interface.window.set_focus(self.user_interface.get("preset_name_input"))
         send_event_to_reader(new_event(1, 61, 1))
-        self.window.consume_newest_keycode()
+        self.user_interface.consume_newest_keycode()
 
         rows = self.get_rows()
         self.assertEqual(len(rows), 1)
@@ -530,19 +530,19 @@ class TestIntegration(unittest.TestCase):
         self.assertIsNone(row.get_key())
 
         # focus the text input instead
-        self.window.window.set_focus(row.symbol_input)
+        self.user_interface.window.set_focus(row.symbol_input)
         send_event_to_reader(new_event(1, 61, 1))
-        self.window.consume_newest_keycode()
+        self.user_interface.consume_newest_keycode()
 
         # still nothing set
         self.assertIsNone(row.get_key())
 
     def test_show_status(self):
-        self.window.show_status(0, "a" * 100)
+        self.user_interface.show_status(0, "a" * 100)
         text = self.get_status_text()
         self.assertIn("...", text)
 
-        self.window.show_status(0, "b")
+        self.user_interface.show_status(0, "b")
         text = self.get_status_text()
         self.assertNotIn("...", text)
 
@@ -588,7 +588,7 @@ class TestIntegration(unittest.TestCase):
         else:
             self.assertEqual(row.keycode_input.get_label(), "click here")
 
-        self.window.window.set_focus(row.keycode_input)
+        self.user_interface.window.set_focus(row.keycode_input)
         gtk_iteration()
         gtk_iteration()
         self.assertIsNone(row.get_key())
@@ -645,7 +645,7 @@ class TestIntegration(unittest.TestCase):
             self.assertEqual(row.get_symbol(), char)
 
         # unfocus them to trigger some final logic
-        self.window.window.set_focus(None)
+        self.user_interface.window.set_focus(None)
         correct_case = system_mapping.correct_case(char)
         self.assertEqual(row.get_symbol(), correct_case)
         self.assertFalse(custom_mapping.changed)
@@ -656,7 +656,7 @@ class TestIntegration(unittest.TestCase):
         ev_1 = Key(EV_KEY, 41, 1)
 
         # focus
-        self.window.window.set_focus(self.get_rows()[0].keycode_input)
+        self.user_interface.window.set_focus(self.get_rows()[0].keycode_input)
         send_event_to_reader(new_event(*ev_1.keys[0]))
         reader.read()
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
@@ -664,12 +664,12 @@ class TestIntegration(unittest.TestCase):
         # unfocus
         # doesn't call reader.clear
         # because otherwise the super key cannot be mapped
-        self.window.window.set_focus(None)
+        self.user_interface.window.set_focus(None)
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
 
         # focus different row
-        self.window.add_empty()
-        self.window.window.set_focus(self.get_rows()[1].keycode_input)
+        self.user_interface.add_empty()
+        self.user_interface.window.set_focus(self.get_rows()[1].keycode_input)
         self.assertEqual(reader.get_unreleased_keys(), None)
 
     def test_rows(self):
@@ -810,8 +810,8 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(custom_mapping.get_symbol(combination_5), "e")
         self.assertEqual(custom_mapping.get_symbol(combination_6), "e")
 
-        error_icon = self.window.get("error_status_icon")
-        warning_icon = self.window.get("warning_status_icon")
+        error_icon = self.user_interface.get("error_status_icon")
+        warning_icon = self.user_interface.get("warning_status_icon")
 
         self.assertFalse(error_icon.get_visible())
         self.assertFalse(warning_icon.get_visible())
@@ -879,35 +879,35 @@ class TestIntegration(unittest.TestCase):
         text = self.get_status_text()
         self.assertIn("shift", text)
 
-        error_icon = self.window.get("error_status_icon")
-        warning_icon = self.window.get("warning_status_icon")
+        error_icon = self.user_interface.get("error_status_icon")
+        warning_icon = self.user_interface.get("warning_status_icon")
 
         self.assertFalse(error_icon.get_visible())
         self.assertTrue(warning_icon.get_visible())
 
     def test_rename_and_save(self):
-        self.assertEqual(self.window.group.name, "Foo Device")
+        self.assertEqual(self.user_interface.group.name, "Foo Device")
         self.assertFalse(config.is_autoloaded("Foo Device", "new preset"))
 
         custom_mapping.change(Key(EV_KEY, 14, 1), "a", None)
-        self.assertEqual(self.window.preset_name, "new preset")
-        self.window.save_preset()
+        self.assertEqual(self.user_interface.preset_name, "new preset")
+        self.user_interface.save_preset()
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 14, 1)), "a")
         config.set_autoload_preset("Foo Device", "new preset")
         self.assertTrue(config.is_autoloaded("Foo Device", "new preset"))
 
         custom_mapping.change(Key(EV_KEY, 14, 1), "b", None)
-        self.window.get("preset_name_input").set_text("asdf")
-        self.window.save_preset()
-        self.window.on_rename_button_clicked(None)
-        self.assertEqual(self.window.preset_name, "asdf")
+        self.user_interface.get("preset_name_input").set_text("asdf")
+        self.user_interface.save_preset()
+        self.user_interface.on_rename_button_clicked(None)
+        self.assertEqual(self.user_interface.preset_name, "asdf")
         preset_path = f"{CONFIG_PATH}/presets/Foo Device/asdf.json"
         self.assertTrue(os.path.exists(preset_path))
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 14, 1)), "b")
         # after renaming the preset it is still set to autoload
         self.assertTrue(config.is_autoloaded("Foo Device", "asdf"))
 
-        error_icon = self.window.get("error_status_icon")
+        error_icon = self.user_interface.get("error_status_icon")
         self.assertFalse(error_icon.get_visible())
 
         # otherwise save won't do anything
@@ -918,46 +918,46 @@ class TestIntegration(unittest.TestCase):
             raise PermissionError
 
         with patch.object(custom_mapping, "save", save):
-            self.window.save_preset()
+            self.user_interface.save_preset()
             status = self.get_status_text()
             self.assertIn("Permission denied", status)
 
         with patch.object(
-            self.window, "show_confirm_delete", lambda: Gtk.ResponseType.ACCEPT
+            self.user_interface, "show_confirm_delete", lambda: Gtk.ResponseType.ACCEPT
         ):
-            self.window.on_delete_preset_clicked(None)
+            self.user_interface.on_delete_preset_clicked(None)
             self.assertFalse(os.path.exists(preset_path))
 
     def test_rename_create_switch(self):
         # after renaming a preset and saving it, new presets
         # start with "new preset" again
         custom_mapping.change(Key(EV_KEY, 14, 1), "a", None)
-        self.window.get("preset_name_input").set_text("asdf")
-        self.window.save_preset()
-        self.window.on_rename_button_clicked(None)
+        self.user_interface.get("preset_name_input").set_text("asdf")
+        self.user_interface.save_preset()
+        self.user_interface.on_rename_button_clicked(None)
         self.assertEqual(len(custom_mapping), 1)
-        self.assertEqual(self.window.preset_name, "asdf")
+        self.assertEqual(self.user_interface.preset_name, "asdf")
 
-        self.window.on_create_preset_clicked(None)
-        self.assertEqual(self.window.preset_name, "new preset")
+        self.user_interface.on_create_preset_clicked(None)
+        self.assertEqual(self.user_interface.preset_name, "new preset")
         self.assertIsNone(custom_mapping.get_symbol(Key(EV_KEY, 14, 1)))
-        self.window.save_preset()
+        self.user_interface.save_preset()
 
         # selecting the first one again loads the saved mapping
-        self.window.on_select_preset(FakePresetDropdown("asdf"))
+        self.user_interface.on_select_preset(FakePresetDropdown("asdf"))
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 14, 1)), "a")
         config.set_autoload_preset("Foo Device", "new preset")
 
         # renaming a preset to an existing name appends a number
-        self.window.on_select_preset(FakePresetDropdown("new preset"))
-        self.window.get("preset_name_input").set_text("asdf")
-        self.window.on_rename_button_clicked(None)
-        self.assertEqual(self.window.preset_name, "asdf 2")
+        self.user_interface.on_select_preset(FakePresetDropdown("new preset"))
+        self.user_interface.get("preset_name_input").set_text("asdf")
+        self.user_interface.on_rename_button_clicked(None)
+        self.assertEqual(self.user_interface.preset_name, "asdf 2")
         # and that added number is correctly used in the autoload
         # configuration as well
         self.assertTrue(config.is_autoloaded("Foo Device", "asdf 2"))
 
-        self.assertEqual(self.window.get("preset_name_input").get_text(), "")
+        self.assertEqual(self.user_interface.get("preset_name_input").get_text(), "")
 
         # renaming the current preset to itself doesn't append a number and
         # it doesn't do anything on the file system
@@ -966,39 +966,39 @@ class TestIntegration(unittest.TestCase):
             raise AssertionError
 
         with patch.object(os, "rename", _raise):
-            self.window.get("preset_name_input").set_text("asdf 2")
-            self.window.on_rename_button_clicked(None)
-            self.assertEqual(self.window.preset_name, "asdf 2")
+            self.user_interface.get("preset_name_input").set_text("asdf 2")
+            self.user_interface.on_rename_button_clicked(None)
+            self.assertEqual(self.user_interface.preset_name, "asdf 2")
 
-            self.window.get("preset_name_input").set_text("")
-            self.window.on_rename_button_clicked(None)
-            self.assertEqual(self.window.preset_name, "asdf 2")
+            self.user_interface.get("preset_name_input").set_text("")
+            self.user_interface.on_rename_button_clicked(None)
+            self.assertEqual(self.user_interface.preset_name, "asdf 2")
 
     def test_avoids_redundant_saves(self):
         custom_mapping.change(Key(EV_KEY, 14, 1), "abcd", None)
 
         custom_mapping.changed = False
-        self.window.save_preset()
+        self.user_interface.save_preset()
 
         with open(get_preset_path("Foo Device", "new preset")) as f:
             content = f.read()
             self.assertNotIn("abcd", content)
 
         custom_mapping.changed = True
-        self.window.save_preset()
+        self.user_interface.save_preset()
 
         with open(get_preset_path("Foo Device", "new preset")) as f:
             content = f.read()
             self.assertIn("abcd", content)
 
     def test_check_for_unknown_symbols(self):
-        status = self.window.get("status_bar")
-        error_icon = self.window.get("error_status_icon")
-        warning_icon = self.window.get("warning_status_icon")
+        status = self.user_interface.get("status_bar")
+        error_icon = self.user_interface.get("error_status_icon")
+        warning_icon = self.user_interface.get("warning_status_icon")
 
         custom_mapping.change(Key(EV_KEY, 71, 1), "qux", None)
         custom_mapping.change(Key(EV_KEY, 72, 1), "foo", None)
-        self.window.save_preset()
+        self.user_interface.save_preset()
         tooltip = status.get_tooltip_text().lower()
         self.assertIn("qux", tooltip)
         self.assertTrue(error_icon.get_visible())
@@ -1011,33 +1011,33 @@ class TestIntegration(unittest.TestCase):
             self.assertIn("foo", content)
 
         custom_mapping.change(Key(EV_KEY, 71, 1), "a", None)
-        self.window.save_preset()
+        self.user_interface.save_preset()
         tooltip = status.get_tooltip_text().lower()
         self.assertIn("foo", tooltip)
         self.assertTrue(error_icon.get_visible())
         self.assertFalse(warning_icon.get_visible())
 
         custom_mapping.change(Key(EV_KEY, 72, 1), "b", None)
-        self.window.save_preset()
+        self.user_interface.save_preset()
         tooltip = status.get_tooltip_text()
         self.assertIsNone(tooltip)
         self.assertFalse(error_icon.get_visible())
         self.assertFalse(warning_icon.get_visible())
 
     def test_check_macro_syntax(self):
-        status = self.window.get("status_bar")
-        error_icon = self.window.get("error_status_icon")
-        warning_icon = self.window.get("warning_status_icon")
+        status = self.user_interface.get("status_bar")
+        error_icon = self.user_interface.get("error_status_icon")
+        warning_icon = self.user_interface.get("warning_status_icon")
 
         custom_mapping.change(Key(EV_KEY, 9, 1), "k(1))", None)
-        self.window.save_preset()
+        self.user_interface.save_preset()
         tooltip = status.get_tooltip_text().lower()
         self.assertIn("brackets", tooltip)
         self.assertTrue(error_icon.get_visible())
         self.assertFalse(warning_icon.get_visible())
 
         custom_mapping.change(Key(EV_KEY, 9, 1), "k(1)", None)
-        self.window.save_preset()
+        self.user_interface.save_preset()
         tooltip = (status.get_tooltip_text() or "").lower()
         self.assertNotIn("brackets", tooltip)
         self.assertFalse(error_icon.get_visible())
@@ -1051,11 +1051,11 @@ class TestIntegration(unittest.TestCase):
         self.assertTrue(
             os.path.exists(f"{CONFIG_PATH}/presets/Foo Device/new preset.json")
         )
-        self.assertEqual(self.window.group.name, "Foo Device")
-        self.assertEqual(self.window.preset_name, "new preset")
+        self.assertEqual(self.user_interface.group.name, "Foo Device")
+        self.assertEqual(self.user_interface.preset_name, "new preset")
 
         # create another one
-        self.window.on_create_preset_clicked(None)
+        self.user_interface.on_create_preset_clicked(None)
         gtk_iteration()
         self.assertTrue(
             os.path.exists(f"{CONFIG_PATH}/presets/Foo Device/new preset.json")
@@ -1063,11 +1063,11 @@ class TestIntegration(unittest.TestCase):
         self.assertTrue(
             os.path.exists(f"{CONFIG_PATH}/presets/Foo Device/new preset 2.json")
         )
-        self.assertEqual(self.window.preset_name, "new preset 2")
+        self.assertEqual(self.user_interface.preset_name, "new preset 2")
 
-        self.window.on_select_preset(FakePresetDropdown("new preset"))
+        self.user_interface.on_select_preset(FakePresetDropdown("new preset"))
         gtk_iteration()
-        self.assertEqual(self.window.preset_name, "new preset")
+        self.assertEqual(self.user_interface.preset_name, "new preset")
 
         self.assertListEqual(
             sorted(os.listdir(f"{CONFIG_PATH}/presets/Foo Device")),
@@ -1075,17 +1075,17 @@ class TestIntegration(unittest.TestCase):
         )
 
         # now try to change the name
-        self.window.get("preset_name_input").set_text("abc 123")
+        self.user_interface.get("preset_name_input").set_text("abc 123")
         gtk_iteration()
-        self.assertEqual(self.window.preset_name, "new preset")
+        self.assertEqual(self.user_interface.preset_name, "new preset")
         self.assertFalse(
             os.path.exists(f"{CONFIG_PATH}/presets/Foo Device/abc 123.json")
         )
         custom_mapping.change(Key(EV_KEY, 10, 1), "1", None)
-        self.window.save_preset()
-        self.window.on_rename_button_clicked(None)
+        self.user_interface.save_preset()
+        self.user_interface.on_rename_button_clicked(None)
         gtk_iteration()
-        self.assertEqual(self.window.preset_name, "abc 123")
+        self.assertEqual(self.user_interface.preset_name, "abc 123")
         self.assertTrue(
             os.path.exists(f"{CONFIG_PATH}/presets/Foo Device/abc 123.json")
         )
@@ -1099,18 +1099,18 @@ class TestIntegration(unittest.TestCase):
         )
 
     def test_copy_preset(self):
-        mapping_list = self.window.get("mapping_list")
+        mapping_list = self.user_interface.get("mapping_list")
         self.change_empty_row(Key(EV_KEY, 81, 1), "a")
         time.sleep(0.1)
         gtk_iteration()
-        self.window.save_preset()
+        self.user_interface.save_preset()
         self.assertEqual(len(mapping_list.get_children()), 2)
 
         # should be cleared when creating a new preset
         custom_mapping.set("a.b", 3)
         self.assertEqual(custom_mapping.get("a.b"), 3)
 
-        self.window.on_create_preset_clicked(None)
+        self.user_interface.on_create_preset_clicked(None)
 
         # the preset should be empty, only one empty row present
         self.assertEqual(len(mapping_list.get_children()), 1)
@@ -1120,20 +1120,20 @@ class TestIntegration(unittest.TestCase):
         self.change_empty_row(Key(EV_KEY, 81, 1), "b")
         time.sleep(0.1)
         gtk_iteration()
-        self.window.save_preset()
+        self.user_interface.save_preset()
         self.assertEqual(len(mapping_list.get_children()), 2)
         custom_mapping.set(["foo", "bar"], 2)
 
         # this time it should be copied
-        self.window.on_copy_preset_clicked(None)
-        self.assertEqual(self.window.preset_name, "new preset 2 copy")
+        self.user_interface.on_copy_preset_clicked(None)
+        self.assertEqual(self.user_interface.preset_name, "new preset 2 copy")
         self.assertEqual(len(mapping_list.get_children()), 2)
         self.assertEqual(mapping_list.get_children()[0].get_symbol(), "b")
         self.assertEqual(custom_mapping.get(["foo", "bar"]), 2)
 
         # make another copy
-        self.window.on_copy_preset_clicked(None)
-        self.assertEqual(self.window.preset_name, "new preset 2 copy 2")
+        self.user_interface.on_copy_preset_clicked(None)
+        self.assertEqual(self.user_interface.preset_name, "new preset 2 copy 2")
         self.assertEqual(len(mapping_list.get_children()), 2)
         self.assertEqual(mapping_list.get_children()[0].get_symbol(), "b")
         self.assertEqual(len(custom_mapping), 1)
@@ -1145,27 +1145,27 @@ class TestIntegration(unittest.TestCase):
         # but it ONLY fails on right_joystick_purpose for some reason,
         # unblocking the left one works just fine. I should open a bug report
         # on gtk or something probably.
-        self.window.get("left_joystick_purpose").set_active_id(BUTTONS)
-        self.window.get("right_joystick_purpose").set_active_id(BUTTONS)
-        self.window.get("joystick_mouse_speed").set_value(1)
+        self.user_interface.get("left_joystick_purpose").set_active_id(BUTTONS)
+        self.user_interface.get("right_joystick_purpose").set_active_id(BUTTONS)
+        self.user_interface.get("joystick_mouse_speed").set_value(1)
         custom_mapping.changed = False
 
         # select a device that is not a gamepad
-        self.window.on_select_device(FakeDeviceDropdown("Foo Device"))
-        self.assertFalse(self.window.get("gamepad_config").is_visible())
+        self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device"))
+        self.assertFalse(self.user_interface.get("gamepad_config").is_visible())
         self.assertFalse(custom_mapping.changed)
 
         # select a gamepad
-        self.window.on_select_device(FakeDeviceDropdown("gamepad"))
-        self.assertTrue(self.window.get("gamepad_config").is_visible())
+        self.user_interface.on_select_device(FakeDeviceDropdown("gamepad"))
+        self.assertTrue(self.user_interface.get("gamepad_config").is_visible())
         self.assertFalse(custom_mapping.changed)
 
         # set stuff
         gtk_iteration()
-        self.window.get("left_joystick_purpose").set_active_id(WHEEL)
-        self.window.get("right_joystick_purpose").set_active_id(WHEEL)
+        self.user_interface.get("left_joystick_purpose").set_active_id(WHEEL)
+        self.user_interface.get("right_joystick_purpose").set_active_id(WHEEL)
         joystick_mouse_speed = 5
-        self.window.get("joystick_mouse_speed").set_value(joystick_mouse_speed)
+        self.user_interface.get("joystick_mouse_speed").set_value(joystick_mouse_speed)
 
         # it should be stored in custom_mapping, which overwrites the
         # global config
@@ -1181,42 +1181,42 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(pointer_speed, 2 ** joystick_mouse_speed)
 
         # select a device that is not a gamepad again
-        self.window.on_select_device(FakeDeviceDropdown("Foo Device"))
-        self.assertFalse(self.window.get("gamepad_config").is_visible())
+        self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device"))
+        self.assertFalse(self.user_interface.get("gamepad_config").is_visible())
         self.assertFalse(custom_mapping.changed)
 
     def test_wont_start(self):
-        error_icon = self.window.get("error_status_icon")
+        error_icon = self.user_interface.get("error_status_icon")
         preset_name = "foo preset"
         group_name = "Bar Device"
-        self.window.preset_name = preset_name
-        self.window.group = groups.find(name=group_name)
+        self.user_interface.preset_name = preset_name
+        self.user_interface.group = groups.find(name=group_name)
 
         # empty
 
         custom_mapping.empty()
-        self.window.save_preset()
-        self.window.on_apply_preset_clicked(None)
+        self.user_interface.save_preset()
+        self.user_interface.on_apply_preset_clicked(None)
         text = self.get_status_text()
         self.assertIn("add keys", text)
         self.assertTrue(error_icon.get_visible())
-        self.assertNotEqual(self.window.dbus.get_state(self.window.group.key), RUNNING)
+        self.assertNotEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING)
 
         # not empty, but keys are held down
 
         custom_mapping.change(Key(EV_KEY, KEY_A, 1), "a")
-        self.window.save_preset()
+        self.user_interface.save_preset()
         send_event_to_reader(new_event(EV_KEY, KEY_A, 1))
         reader.read()
         self.assertEqual(len(reader._unreleased), 1)
-        self.assertFalse(self.window.unreleased_warn)
-        self.window.on_apply_preset_clicked(None)
+        self.assertFalse(self.user_interface.unreleased_warn)
+        self.user_interface.on_apply_preset_clicked(None)
         text = self.get_status_text()
         self.assertIn("release", text)
         self.assertTrue(error_icon.get_visible())
-        self.assertNotEqual(self.window.dbus.get_state(self.window.group.key), RUNNING)
-        self.assertTrue(self.window.unreleased_warn)
-        self.assertEqual(self.window.get("apply_system_layout").get_opacity(), 0.4)
+        self.assertNotEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING)
+        self.assertTrue(self.user_interface.unreleased_warn)
+        self.assertEqual(self.user_interface.get("apply_system_layout").get_opacity(), 0.4)
 
         # device grabbing fails
 
@@ -1231,8 +1231,8 @@ class TestIntegration(unittest.TestCase):
         for i in range(2):
             # just pressing apply again will overwrite the previous error
             self.grab_fails = True
-            self.window.on_apply_preset_clicked(None)
-            self.assertFalse(self.window.unreleased_warn)
+            self.user_interface.on_apply_preset_clicked(None)
+            self.assertFalse(self.user_interface.unreleased_warn)
             text = self.get_status_text()
             # it takes a little bit of time
             self.assertIn("Starting injection", text)
@@ -1242,7 +1242,7 @@ class TestIntegration(unittest.TestCase):
             self.assertIn("not grabbed", text)
             self.assertTrue(error_icon.get_visible())
             self.assertNotEqual(
-                self.window.dbus.get_state(self.window.group.key), RUNNING
+                self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING
             )
 
             # for the second try, release the key. that should also work
@@ -1254,7 +1254,7 @@ class TestIntegration(unittest.TestCase):
 
         self.grab_fails = False
         custom_mapping.save(get_preset_path(group_name, preset_name))
-        self.window.on_apply_preset_clicked(None)
+        self.user_interface.on_apply_preset_clicked(None)
         text = self.get_status_text()
         self.assertIn("Starting injection", text)
         self.assertFalse(error_icon.get_visible())
@@ -1264,7 +1264,7 @@ class TestIntegration(unittest.TestCase):
         text = self.get_status_text()
         self.assertNotIn("CTRL + DEL", text)  # only shown if btn_left mapped
         self.assertFalse(error_icon.get_visible())
-        self.assertEqual(self.window.dbus.get_state(self.window.group.key), RUNNING)
+        self.assertEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING)
 
         # because this test managed to reproduce some minor bug:
         self.assertNotIn("mapping", custom_mapping._config)
@@ -1272,8 +1272,8 @@ class TestIntegration(unittest.TestCase):
     def test_wont_start_2(self):
         preset_name = "foo preset"
         group_name = "Bar Device"
-        self.window.preset_name = preset_name
-        self.window.group = groups.find(name=group_name)
+        self.user_interface.preset_name = preset_name
+        self.user_interface.group = groups.find(name=group_name)
 
         def wait():
             """Wait for the injector process to finish doing stuff."""
@@ -1285,30 +1285,30 @@ class TestIntegration(unittest.TestCase):
 
         # btn_left mapped
         custom_mapping.change(Key.btn_left(), "a")
-        self.window.save_preset()
+        self.user_interface.save_preset()
 
         # and key held down
         send_event_to_reader(new_event(EV_KEY, KEY_A, 1))
         reader.read()
         self.assertEqual(len(reader._unreleased), 1)
-        self.assertFalse(self.window.unreleased_warn)
+        self.assertFalse(self.user_interface.unreleased_warn)
 
         # first apply, shows btn_left warning
-        self.window.on_apply_preset_clicked(None)
+        self.user_interface.on_apply_preset_clicked(None)
         text = self.get_status_text()
         self.assertIn("click", text)
-        self.assertEqual(self.window.dbus.get_state(self.window.group.key), UNKNOWN)
+        self.assertEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), UNKNOWN)
 
         # second apply, shows unreleased warning
-        self.window.on_apply_preset_clicked(None)
+        self.user_interface.on_apply_preset_clicked(None)
         text = self.get_status_text()
         self.assertIn("release", text)
-        self.assertEqual(self.window.dbus.get_state(self.window.group.key), UNKNOWN)
+        self.assertEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), UNKNOWN)
 
         # third apply, overwrites both warnings
-        self.window.on_apply_preset_clicked(None)
+        self.user_interface.on_apply_preset_clicked(None)
         wait()
-        self.assertEqual(self.window.dbus.get_state(self.window.group.key), RUNNING)
+        self.assertEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING)
         text = self.get_status_text()
         # because btn_left is mapped, shows help on how to stop
         # injecting via the keyboard
@@ -1317,17 +1317,17 @@ class TestIntegration(unittest.TestCase):
     def test_can_modify_mapping(self):
         preset_name = "foo preset"
         group_name = "Bar Device"
-        self.window.preset_name = preset_name
-        self.window.group = groups.find(name=group_name)
+        self.user_interface.preset_name = preset_name
+        self.user_interface.group = groups.find(name=group_name)
 
-        self.assertNotEqual(self.window.dbus.get_state(self.window.group.key), RUNNING)
-        self.window.can_modify_mapping()
+        self.assertNotEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING)
+        self.user_interface.can_modify_mapping()
         text = self.get_status_text()
         self.assertNotIn("Restore Defaults", text)
 
         custom_mapping.change(Key(EV_KEY, KEY_A, 1), "b")
         custom_mapping.save(get_preset_path(group_name, preset_name))
-        self.window.on_apply_preset_clicked(None)
+        self.user_interface.on_apply_preset_clicked(None)
 
         # wait for the injector to start
         for _ in range(10):
@@ -1336,10 +1336,10 @@ class TestIntegration(unittest.TestCase):
             if "Starting" not in self.get_status_text():
                 return
 
-        self.assertEqual(self.window.dbus.get_state(self.window.group.key), RUNNING)
+        self.assertEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING)
 
         # the mapping cannot be changed anymore
-        self.window.can_modify_mapping()
+        self.user_interface.can_modify_mapping()
         text = self.get_status_text()
         self.assertIn("Restore Defaults", text)
 
@@ -1367,13 +1367,13 @@ class TestIntegration(unittest.TestCase):
             os.remove(os.path.join(tmp, XMODMAP_FILENAME))
 
         # select the second Foo device
-        self.window.group = groups.find(key="Foo Device 2")
+        self.user_interface.group = groups.find(key="Foo Device 2")
 
-        with spy(self.window.dbus, "set_config_dir") as spy1:
-            self.window.preset_name = "foo preset"
+        with spy(self.user_interface.dbus, "set_config_dir") as spy1:
+            self.user_interface.preset_name = "foo preset"
 
-            with spy(self.window.dbus, "start_injecting") as spy2:
-                self.window.on_apply_preset_clicked(None)
+            with spy(self.user_interface.dbus, "start_injecting") as spy2:
+                self.user_interface.on_apply_preset_clicked(None)
                 # correctly uses group.key, not group.name
                 spy2.assert_called_once_with("Foo Device 2", "foo preset")
 
@@ -1399,16 +1399,16 @@ class TestIntegration(unittest.TestCase):
 
         # the key-mapper device will not be shown
         groups.refresh()
-        self.window.populate_devices()
-        for entry in self.window.device_store:
+        self.user_interface.populate_devices()
+        for entry in self.user_interface.device_store:
             # whichever attribute contains "key-mapper"
             self.assertNotIn("key-mapper", "".join(entry))
 
     def test_gamepad_purpose_mouse_and_button(self):
-        self.window.on_select_device(FakeDeviceDropdown("gamepad"))
-        self.window.get("right_joystick_purpose").set_active_id(MOUSE)
-        self.window.get("left_joystick_purpose").set_active_id(BUTTONS)
-        self.window.get("joystick_mouse_speed").set_value(6)
+        self.user_interface.on_select_device(FakeDeviceDropdown("gamepad"))
+        self.user_interface.get("right_joystick_purpose").set_active_id(MOUSE)
+        self.user_interface.get("left_joystick_purpose").set_active_id(BUTTONS)
+        self.user_interface.get("joystick_mouse_speed").set_value(6)
         gtk_iteration()
         speed = custom_mapping.get("gamepad.joystick.pointer_speed")
         custom_mapping.set("gamepad.joystick.non_linearity", 1)
@@ -1426,11 +1426,11 @@ class TestIntegration(unittest.TestCase):
         )
 
         custom_mapping.change(Key(EV_ABS, ABS_X, 1), "a")
-        self.window.save_preset()
+        self.user_interface.save_preset()
 
         gtk_iteration()
 
-        self.window.on_apply_preset_clicked(None)
+        self.user_interface.on_apply_preset_clicked(None)
         time.sleep(0.3)
 
         history = []
@@ -1443,7 +1443,7 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(count_button, 1)
         self.assertEqual(count_button + count_mouse, len(history))
 
-        self.assertIn("gamepad", self.window.dbus.injectors)
+        self.assertIn("gamepad", self.user_interface.dbus.injectors)
 
     def test_stop_injecting(self):
         keycode_from = 16
@@ -1459,9 +1459,9 @@ class TestIntegration(unittest.TestCase):
 
         custom_mapping.save(get_preset_path("Bar Device", "foo preset"))
 
-        self.window.group = groups.find(name="Bar Device")
-        self.window.preset_name = "foo preset"
-        self.window.on_apply_preset_clicked(None)
+        self.user_interface.group = groups.find(name="Bar Device")
+        self.user_interface.preset_name = "foo preset"
+        self.user_interface.on_apply_preset_clicked(None)
 
         pipe = uinput_write_history_pipe[0]
         # block until the first event is available, indicating that
@@ -1469,7 +1469,7 @@ class TestIntegration(unittest.TestCase):
         write_history = [pipe.recv()]
 
         # stop
-        self.window.on_restore_defaults_clicked(None)
+        self.user_interface.on_restore_defaults_clicked(None)
 
         # try to receive a few of the events
         time.sleep(0.2)
@@ -1488,61 +1488,61 @@ class TestIntegration(unittest.TestCase):
 
     def test_delete_preset(self):
         custom_mapping.change(Key(EV_KEY, 71, 1), "a", None)
-        self.window.get("preset_name_input").set_text("asdf")
-        self.window.on_rename_button_clicked(None)
+        self.user_interface.get("preset_name_input").set_text("asdf")
+        self.user_interface.on_rename_button_clicked(None)
         gtk_iteration()
-        self.assertEqual(self.window.preset_name, "asdf")
+        self.assertEqual(self.user_interface.preset_name, "asdf")
         self.assertEqual(len(custom_mapping), 1)
-        self.window.save_preset()
+        self.user_interface.save_preset()
         self.assertTrue(os.path.exists(get_preset_path("Foo Device", "asdf")))
 
         with patch.object(
-            self.window, "show_confirm_delete", lambda: Gtk.ResponseType.CANCEL
+            self.user_interface, "show_confirm_delete", lambda: Gtk.ResponseType.CANCEL
         ):
-            self.window.on_delete_preset_clicked(None)
+            self.user_interface.on_delete_preset_clicked(None)
             self.assertTrue(os.path.exists(get_preset_path("Foo Device", "asdf")))
-            self.assertEqual(self.window.preset_name, "asdf")
-            self.assertEqual(self.window.group.name, "Foo Device")
+            self.assertEqual(self.user_interface.preset_name, "asdf")
+            self.assertEqual(self.user_interface.group.name, "Foo Device")
 
         with patch.object(
-            self.window, "show_confirm_delete", lambda: Gtk.ResponseType.ACCEPT
+            self.user_interface, "show_confirm_delete", lambda: Gtk.ResponseType.ACCEPT
         ):
-            self.window.on_delete_preset_clicked(None)
+            self.user_interface.on_delete_preset_clicked(None)
             self.assertFalse(os.path.exists(get_preset_path("Foo Device", "asdf")))
-            self.assertEqual(self.window.preset_name, "new preset")
-            self.assertEqual(self.window.group.name, "Foo Device")
+            self.assertEqual(self.user_interface.preset_name, "new preset")
+            self.assertEqual(self.user_interface.group.name, "Foo Device")
 
     def test_populate_devices(self):
-        preset_selection = self.window.get("preset_selection")
+        preset_selection = self.user_interface.get("preset_selection")
 
         # create two presets
-        self.window.get("preset_name_input").set_text("preset 1")
-        self.window.on_rename_button_clicked(None)
+        self.user_interface.get("preset_name_input").set_text("preset 1")
+        self.user_interface.on_rename_button_clicked(None)
         self.assertEqual(preset_selection.get_active_id(), "preset 1")
 
         # to make sure the next preset has a slightly higher timestamp
         time.sleep(0.1)
-        self.window.on_create_preset_clicked(None)
-        self.window.get("preset_name_input").set_text("preset 2")
-        self.window.on_rename_button_clicked(None)
+        self.user_interface.on_create_preset_clicked(None)
+        self.user_interface.get("preset_name_input").set_text("preset 2")
+        self.user_interface.on_rename_button_clicked(None)
         self.assertEqual(preset_selection.get_active_id(), "preset 2")
 
         # select the older one
         preset_selection.set_active_id("preset 1")
-        self.assertEqual(self.window.preset_name, "preset 1")
+        self.assertEqual(self.user_interface.preset_name, "preset 1")
 
         # add a device that doesn't exist to the dropdown
         unknown_key = "key-1234"
-        self.window.device_store.insert(0, [unknown_key, None, "foo"])
+        self.user_interface.device_store.insert(0, [unknown_key, None, "foo"])
 
-        self.window.populate_devices()
+        self.user_interface.populate_devices()
         # the newest preset should be selected
-        self.assertEqual(self.window.preset_name, "preset 2")
+        self.assertEqual(self.user_interface.preset_name, "preset 2")
 
         # the list contains correct entries
         # and the non-existing entry should be removed
-        entries = [tuple(entry) for entry in self.window.device_store]
-        keys = [entry[0] for entry in self.window.device_store]
+        entries = [tuple(entry) for entry in self.user_interface.device_store]
+        keys = [entry[0] for entry in self.user_interface.device_store]
         self.assertNotIn(unknown_key, keys)
         self.assertIn("Foo Device", keys)
         self.assertIn(("Foo Device", "input-keyboard", "Foo Device"), entries)
@@ -1553,18 +1553,18 @@ class TestIntegration(unittest.TestCase):
         # it won't crash due to "list index out of range"
         # when `types` is an empty list. Won't show an icon
         groups.find(key="Foo Device 2").types = []
-        self.window.populate_devices()
+        self.user_interface.populate_devices()
         self.assertIn(
             ("Foo Device 2", None, "Foo Device 2"),
-            [tuple(entry) for entry in self.window.device_store],
+            [tuple(entry) for entry in self.user_interface.device_store],
         )
 
     def test_screw_up_rows(self):
         # add a row that is not present in custom_mapping
-        mapping_list = self.window.get("mapping_list")
+        mapping_list = self.user_interface.get("mapping_list")
         mapping_list.forall(mapping_list.remove)
         for i in range(5):
-            broken = Row(window=self.window, delete_callback=lambda: None)
+            broken = Row(window=self.user_interface, delete_callback=lambda: None)
             broken.set_key(Key(1, i, 1))
             broken.symbol_input.set_text("a")
             mapping_list.insert(broken, -1)
@@ -1576,7 +1576,7 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(num_rows_before, 5)
 
         # it returns true to keep the glib timeout going
-        self.assertTrue(self.window.check_add_row())
+        self.assertTrue(self.user_interface.check_add_row())
         # it still adds a new empty row and won't break
         num_rows_after = len(mapping_list.get_children())
         self.assertEqual(num_rows_after, num_rows_before + 1)
@@ -1592,27 +1592,27 @@ class TestIntegration(unittest.TestCase):
     def test_shared_presets(self):
         # devices with the same name (but different key because the key is
         # unique) share the same presets
-        mapping_list = self.window.get("mapping_list")
+        mapping_list = self.user_interface.get("mapping_list")
 
         # 1. create a preset
-        self.window.on_select_device(FakeDeviceDropdown("Foo Device 2"))
-        self.window.on_create_preset_clicked(None)
+        self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device 2"))
+        self.user_interface.on_create_preset_clicked(None)
         self.change_empty_row(Key(3, 2, 1), "qux")
-        self.window.get("preset_name_input").set_text("asdf")
-        self.window.on_rename_button_clicked(None)
-        self.window.save_preset()
+        self.user_interface.get("preset_name_input").set_text("asdf")
+        self.user_interface.on_rename_button_clicked(None)
+        self.user_interface.save_preset()
         self.assertIn("asdf.json", os.listdir(get_preset_path("Foo Device")))
 
         # 2. switch to the other device, there should be no preset named asdf
-        self.window.on_select_device(FakeDeviceDropdown("Bar Device"))
-        self.assertEqual(self.window.preset_name, "new preset")
+        self.user_interface.on_select_device(FakeDeviceDropdown("Bar Device"))
+        self.assertEqual(self.user_interface.preset_name, "new preset")
         self.assertNotIn("asdf.json", os.listdir(get_preset_path("Bar Device")))
         self.assertIsNone(mapping_list.get_children()[0].get_symbol(), None)
 
         # 3. switch to the device with the same name
-        self.window.on_select_device(FakeDeviceDropdown("Foo Device"))
+        self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device"))
         # the newest preset is asdf, it should be automatically selected
-        self.assertEqual(self.window.preset_name, "asdf")
+        self.assertEqual(self.user_interface.preset_name, "asdf")
         self.assertEqual(mapping_list.get_children()[0].get_symbol(), "qux")
 
 

@@ -76,7 +76,6 @@ class _KeycodeInput(Gtk.ToggleButton):
         super().__init__()
 
         self.key = key
-        self.state = IDLE
 
         self.set_size_request(140, -1)
 
@@ -102,7 +101,6 @@ class _KeycodeInput(Gtk.ToggleButton):
         """Refresh useful usage information and set some state stuff."""
         self.show_click_here()
         self.set_active(False)
-        self.state = IDLE
 
     def show_click_here(self):
         """Show 'click here' on the keycode input button."""
@@ -166,7 +164,10 @@ class Row(Gtk.ListBoxRow):
 
         self.put_together(key, symbol)
 
-        self.keycode_input.key = key
+        self.state = IDLE
+
+    def is_waiting_for_input(self):
+        return self.keycode_input.is_focus()
 
     def refresh_state(self):
         """Refresh the state.
@@ -174,10 +175,11 @@ class Row(Gtk.ListBoxRow):
         The state is needed to switch focus when no keys are held anymore,
         but only if the row has been in the HOLDING state before.
         """
-        old_state = self.keycode_input.state
+        old_state = self.state
 
-        if not self.keycode_input.is_focus():
-            self.keycode_input.state = IDLE
+        if not self.is_waiting_for_input():
+            # TODO does it still work if I just do `if self.state == IDLE: return`?
+            self.state = IDLE
             return
 
         unreleased_keys = reader.get_unreleased_keys()
@@ -189,10 +191,10 @@ class Row(Gtk.ListBoxRow):
             GLib.idle_add(lambda: window.set_focus(self.symbol_input))
 
         if unreleased_keys is not None:
-            self.keycode_input.state = HOLDING
+            self.state = HOLDING
             return
 
-        self.keycode_input.state = IDLE
+        self.state = IDLE
 
     def get_key(self):
         """Get the Key object from the left column.
@@ -225,7 +227,7 @@ class Row(Gtk.ListBoxRow):
             return
 
         # it might end up being a key combination
-        self.keycode_input.state = HOLDING
+        self.state = HOLDING
 
         # keycode didn't change, do nothing
         if new_key == previous_key:
@@ -260,13 +262,16 @@ class Row(Gtk.ListBoxRow):
         value = store.get_value(tree_iter, 0)
         return key in value.lower()
 
-    def on_symbol_input_unfocus(self, symbol_input, _):
+    def on_symbol_input_unfocus(self, *_):
         """Save the preset and correct the input casing."""
-        symbol = symbol_input.get_text()
+        symbol = self.get_symbol()
         correct_case = system_mapping.correct_case(symbol)
         if symbol != correct_case:
-            symbol_input.set_text(correct_case)
+            self.symbol_input.set_text(correct_case)
         self.user_interface.save_preset()
+
+    def on_keycode_input_unfocus(self):
+        self.state = IDLE
 
     def put_together(self, key, symbol):
         """Create all child GTK widgets and connect their signals."""
@@ -277,7 +282,9 @@ class Row(Gtk.ListBoxRow):
         delete_button.set_size_request(50, -1)
 
         keycode_input = _KeycodeInput(key)
+        keycode_input.connect("focus-out-event", self.on_keycode_input_unfocus)
         self.keycode_input = keycode_input
+        self.keycode_input.key = key
 
         symbol_input = Gtk.Entry()
         self.symbol_input = symbol_input
@@ -293,8 +300,8 @@ class Row(Gtk.ListBoxRow):
         if symbol is not None:
             symbol_input.set_text(symbol)
 
-        symbol_input.connect("changed", self.on_symbol_input_change)
-        symbol_input.connect("focus-out-event", self.on_symbol_input_unfocus)
+        self.symbol_input.connect("changed", self.on_symbol_input_change)
+        self.symbol_input.connect("focus-out-event", self.on_symbol_input_unfocus)
 
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         box.set_homogeneous(False)

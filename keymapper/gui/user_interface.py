@@ -142,36 +142,64 @@ def on_close_about(about, _):
     return True
 
 
-class AdvancedEditor:
+# TODO for consistency, don't inherit from Row but rather have one object that
+#  inherits from Row. To have exactly the same hirarchy as the simple editor
+# TODO move to advanced_editor.py
+class AdvancedEditor(Row):
     """Maintains the widgets of the advanced editor."""
-    def __init__(self, builder):
+    def __init__(self, user_interface):
         """TODO"""
-        self.builder = builder
+        # TODO I need a fucking base class
+        super().__init__(
+            delete_callback=user_interface.on_row_removed,
+            user_interface=user_interface,
+        )
+
+        self.symbol_input = self.get("code_editor")
+        self.symbol_input.connect("focus-out-event", self.on_symbol_input_unfocus)
+
         self.window = self.get("window")
         self.advanced_editor = self.get("advanced_editor")
         self.timeout = GLib.timeout_add(100, self.check_add_new_key)
         self.active_key_button = None
 
+        self.get("advanced_change_key_button").connect("focus-out-event", self.on_key_button_unfocus)
+
+        # select the first entry
+        mapping_list = self.get("mapping_list_advanced")
+        self.on_key_button_clicked(mapping_list.get_children()[0].get_children()[0])
+
     def get(self, name):
         """Get a widget from the window"""
-        return self.builder.get_object(name)
+        return self.user_interface.builder.get_object(name)
+
+    def is_waiting_for_input(self):
+        return self.get("advanced_change_key_button").get_active()
+
+    def get_symbol(self):
+        """Get the assigned symbol from the middle column."""
+        buffer = self.symbol_input.get_buffer()
+        return buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
 
     def consume_newest_keycode(self, key):
         """TODO"""
-        return True
+        self.refresh_state()
 
-        if self.get("advanced_change_key_button").get_active():
-            # TODO get the button in the key list and update it
-            pass
+        if key and self.get("advanced_change_key_button").get_active():
+            self.active_key_button.set_label(key.beautify())
+
+        self.set_key(key)
 
         return True
 
     def check_add_new_key(self):
         """TODO"""
         # TODO
-        # TODO connect to the key button that self.active_key_button should be
-        #  overwritten with it
         pass
+
+    def on_key_button_unfocus(self, button, _):
+        """When the focus switches to the symbol_input, disable the button."""
+        button.set_active(False)
 
     def on_key_button_clicked(self, button):
         """One of the mapping keys was clicked.
@@ -179,23 +207,25 @@ class AdvancedEditor:
         Load a different mapping into the editor.
         """
         self.active_key_button = button
+        # TODO update advanced editor widgets
         # TODO save?
 
     # TODO on code editor unfocus save
 
 
+# TODO move to row.py, rename to simple_editor.py
 class SimpleEditor:
     """Maintains the widgets of the simple editor."""
 
-    def __init__(self, builder):
+    def __init__(self, user_interface):
         """TODO"""
-        self.builder = builder
+        self.user_interface = user_interface
         self.window = self.get("window")
         self.timeout = GLib.timeout_add(100, self.check_add_row)
 
     def get(self, name):
         """Get a widget from the window"""
-        return self.builder.get_object(name)
+        return self.user_interface.builder.get_object(name)
 
     def get_focused_row(self):
         """Get the Row and its child that is currently in focus."""
@@ -346,8 +376,8 @@ class UserInterface:
         self.populate_devices()
 
         self.editors = [
-            SimpleEditor(builder),
-            AdvancedEditor(builder),
+            SimpleEditor(self),
+            AdvancedEditor(self),
         ]
 
         self.timeouts = []
@@ -860,6 +890,7 @@ class UserInterface:
 
         mapping_list = self.get("mapping_list")
         for key, output in custom_mapping:
+            # TODO this needs to move to the SimpleEditor class
             single_key_mapping = Row(
                 user_interface=self,
                 delete_callback=self.on_row_removed,
