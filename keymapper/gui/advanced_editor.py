@@ -24,7 +24,7 @@
 
 from gi.repository import Gtk, GLib, Gdk
 
-from keymapper.gui.simple_editor import SingleEditableMapping
+from keymapper.gui.basic_editor import SingleEditableMapping
 
 
 # TODO I need a fucking base class. Avoiding calls and shit from Row.py is a nightmare

@@ -19,7 +19,7 @@
 # along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""The simple editor with one row per mapping."""
+"""The basic editor with one row per mapping."""
 
 
 from gi.repository import Gtk, GLib, Gdk
@@ -82,7 +82,6 @@ class _KeycodeInput(Gtk.ToggleButton):
 
         # make the togglebutton go back to its normal state when doing
         # something else in the UI
-        print('_KeycodeInput constructor connect')
         self.connect("focus-in-event", self.on_focus)
         self.connect("focus-out-event", self.on_unfocus)
         # don't leave the input when using arrow keys or tab. wait for the
@@ -361,7 +360,7 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         self.show_all()
 
 
-class SimpleEditor:
+class BasicEditor:
     """Maintains the widgets of the simple editor."""
 
     def __init__(self, user_interface):

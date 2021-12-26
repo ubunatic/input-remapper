@@ -49,7 +49,7 @@ from keymapper.groups import (
     TOUCHPAD,
     MOUSE,
 )
-from keymapper.gui.simple_editor import SimpleEditor
+from keymapper.gui.basic_editor import BasicEditor
 from keymapper.gui.advanced_editor import AdvancedEditor
 from keymapper.key import Key
 from keymapper.gui.reader import reader
@@ -170,7 +170,7 @@ class UserInterface:
         builder.connect_signals(self)
         self.builder = builder
 
-        self.simple_editor = SimpleEditor(self)
+        self.basic_editor = BasicEditor(self)
         self.advanced_editor = AdvancedEditor(self)
 
         # set up the device selection
@@ -436,7 +436,7 @@ class UserInterface:
                     + "break them.",
                 )
 
-        self.simple_editor.consume_newest_keycode(key)
+        self.basic_editor.consume_newest_keycode(key)
         self.advanced_editor.consume_newest_keycode(key)
 
         return True
@@ -685,14 +685,12 @@ class UserInterface:
 
         try:
             if copy:
-                print('copy')
                 new_preset = get_available_preset_name(name, preset, copy)
             else:
                 new_preset = get_available_preset_name(name)
                 custom_mapping.empty()
 
             path = self.group.get_preset_path(new_preset)
-            print('save')
             custom_mapping.save(path)
             self.get("preset_selection").append(new_preset, new_preset)
             self.get("preset_selection").set_active_id(new_preset)
@@ -701,9 +699,8 @@ class UserInterface:
             self.show_status(CTX_ERROR, "Permission denied!", error)
             logger.error(error)
 
-    def on_select_preset(self, *_):
+    def on_select_preset(self, dropdown):
         """Show the mappings of the preset."""
-        dropdown = self.get("preset_selection")
         # beware in tests that this function won't be called at all if the
         # active_id stays the same
         self.save_preset()
@@ -711,7 +708,7 @@ class UserInterface:
         if dropdown.get_active_id() == self.preset_name:
             return
 
-        self.simple_editor.clear_mapping_table()  # TODO remove line?
+        self.basic_editor.clear_mapping_table()  # TODO remove line?
 
         preset = dropdown.get_active_text()
         if preset is None:
@@ -722,7 +719,7 @@ class UserInterface:
 
         custom_mapping.load(self.group.get_preset_path(preset))
 
-        self.simple_editor.load_custom_mapping()
+        self.basic_editor.load_custom_mapping()
 
         autoload_switch = self.get("preset_autoload_switch")
 
@@ -733,7 +730,7 @@ class UserInterface:
 
         self.get("preset_name_input").set_text("")
         self.advanced_editor.add_empty()
-        self.simple_editor.add_empty()
+        self.basic_editor.add_empty()
 
         self.initialize_gamepad_config()
 
@@ -814,7 +811,7 @@ class UserInterface:
             editor_stack.set_visible_child(children[0])
 
         # refresh the information of the editors
-        self.on_select_preset()
+        self.on_select_preset(self.get("preset_selection"))
 
     def update_advanced_editor(self):
         """Show the currently selected mapping in the advanced editor."""

@@ -52,7 +52,7 @@ from keymapper.paths import CONFIG_PATH, get_preset_path, get_config_path
 from keymapper.config import config, WHEEL, MOUSE, BUTTONS
 from keymapper.gui.reader import reader
 from keymapper.injection.injector import RUNNING, FAILED, UNKNOWN
-from keymapper.gui.simple_editor import Row, HOLDING, IDLE
+from keymapper.gui.basic_editor import Row, HOLDING, IDLE
 from keymapper.gui.user_interface import UserInterface
 from keymapper.key import Key
 from keymapper.daemon import Daemon
@@ -498,6 +498,7 @@ class TestIntegration(unittest.TestCase):
             "Button A + Button B + Button C",
         )
 
+    # TODO move all Row tests into separate class. TestBasicEditor or something
     def test_row_simple(self):
         rows = self.user_interface.get("mapping_list").get_children()
         self.assertEqual(len(rows), 1)
@@ -699,7 +700,7 @@ class TestIntegration(unittest.TestCase):
 
         # focus different row
         # TODO .active_editor instead?
-        self.user_interface.simple_editor.add_empty()
+        self.user_interface.basic_editor.add_empty()
         keycode_input = self.get_rows()[1].keycode_input
         self.set_focus(keycode_input)
 
@@ -981,7 +982,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIsNone(custom_mapping.get_symbol(Key(EV_KEY, 14, 1)))
         self.user_interface.save_preset()
 
-        # selecting the first one again loads the saved mapping
+        # selecting the first preset again loads the saved mapping
         self.user_interface.on_select_preset(FakePresetDropdown("asdf"))
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 14, 1)), "a")
         config.set_autoload_preset("Foo Device", "new preset")
@@ -1164,10 +1165,8 @@ class TestIntegration(unittest.TestCase):
         custom_mapping.set(["foo", "bar"], 2)
 
         # this time it should be copied
-        print('-----')
         self.user_interface.on_copy_preset_clicked()
         self.assertEqual(self.user_interface.preset_name, "new preset 2 copy")
-        print('assert')
         self.assertEqual(len(mapping_list.get_children()), 2)
         self.assertEqual(mapping_list.get_children()[0].get_symbol(), "b")
         self.assertEqual(custom_mapping.get(["foo", "bar"]), 2)
@@ -1636,7 +1635,7 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(num_rows_before, 5)
 
         # it returns true to keep the glib timeout going
-        self.assertTrue(self.user_interface.simple_editor.check_add_row())
+        self.assertTrue(self.user_interface.basic_editor.check_add_row())
         # it still adds a new empty row and won't break
         num_rows_after = len(mapping_list.get_children())
         self.assertEqual(num_rows_after, num_rows_before + 1)
