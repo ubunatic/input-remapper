@@ -146,8 +146,8 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         delete_button.set_size_request(50, -1)
 
         key_recording_toggle = _KeycodeRecordingToggle(key)
-        key_recording_toggle.connect("focus-in-event", self.set_idle)
-        key_recording_toggle.connect("focus-out-event", self.set_idle)
+        key_recording_toggle.connect("focus-in-event", self.reset)
+        key_recording_toggle.connect("focus-out-event", self.reset)
         self.key_recording_toggle = key_recording_toggle
         self.key_recording_toggle.key = key
 
@@ -179,6 +179,12 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
 
         self.add(box)
         self.show_all()
+
+    def on_delete_button_clicked(self, *_):
+        """Destroy the row and remove it from the config."""
+        super().on_delete_button_clicked()
+        self.key_recording_toggle.set_label("")
+        self.key_recording_toggle.key = None
 
 
 class BasicEditor:

@@ -28,7 +28,11 @@ from keymapper.gui.basic_editor import SingleEditableMapping
 from keymapper.gui.custom_mapping import custom_mapping
 
 
+# TODO test
+
+
 class SelectionLabel(Gtk.Label):
+    """One label per mapping in the preset."""
 
     __gtype_name__ = "Label"
 
@@ -51,6 +55,7 @@ class SelectionLabel(Gtk.Label):
         self.output = output
 
 
+# TODO bass class all functions calls on self.active_editor.
 class AdvancedEditor(SingleEditableMapping):
     """Maintains the widgets of the advanced editor."""
 
@@ -70,6 +75,7 @@ class AdvancedEditor(SingleEditableMapping):
         self.timeout = GLib.timeout_add(100, self.check_add_new_key)
         self.active_selection_label = None
 
+        # TODO show "press key" on button when active
         self.get("advanced_key_recording_button").connect(
             "focus-out-event", self.on_key_recording_button_unfocus
         )

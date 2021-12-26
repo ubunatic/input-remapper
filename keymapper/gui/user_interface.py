@@ -154,6 +154,7 @@ class UserInterface:
         builder.connect_signals(self)
         self.builder = builder
 
+        # TODO read from config which one to show on start
         self.active_editor = BasicEditor(self)
 
         # set up the device selection
@@ -778,8 +779,12 @@ class UserInterface:
         if gdk_keycode == Gdk.KEY_Escape:
             self.about.hide()
 
+    # todo all of them should start with "on" I guess?
     def toggle_advanced_editor_toggled(self, button):
         """Show the advanced editor."""
+        # TODO test
+        # TODO write to config when changed
+
         self.active_editor.destroy()
 
         show_advanced_editor = button.get_active()

@@ -80,29 +80,15 @@ class SingleEditableMapping:
         """Show what the user is currently pressing in ther user interface."""
         raise NotImplementedError
 
-    def put_together(self, key, symbol):
-        """Create all child GTK widgets and connect their signals."""
-        raise NotImplementedError
-
     """Base functionality"""
 
     def __init__(self, delete_callback, user_interface, key=None, symbol=None):
-        """Construct an editable mapping.
-
-        Parameters
-        ----------
-        key : Key
-        symbol : str
-        """
-        if key is not None and not isinstance(key, Key):
-            raise TypeError(f"Expected key to be a Key object but got {key}")
-
+        """Construct an editable mapping."""
         self.device = user_interface.group
         self.user_interface = user_interface
         self.delete_callback = delete_callback
 
         self.text_input = None
-        self.key_recording_toggle = None
 
         self.put_together(key, symbol)
 
@@ -120,7 +106,7 @@ class SingleEditableMapping:
         the focus needs to switch.
         """
         if not self.is_waiting_for_input():
-            self.set_idle()
+            self.reset()
             return
 
         all_keys_released = reader.get_unreleased_keys() is None
@@ -137,7 +123,7 @@ class SingleEditableMapping:
             self.input_has_arrived = True
             return
 
-        self.set_idle()
+        self.reset()
 
     def set_key(self, new_key):
         """Check if a keycode has been pressed and if so, display it.
@@ -195,7 +181,7 @@ class SingleEditableMapping:
             self.text_input.set_text(correct_case)
         self.user_interface.save_preset()
 
-    def set_idle(self, *_):
+    def reset(self, *_):
         self.input_has_arrived = False
 
     def on_delete_button_clicked(self, *_):
@@ -205,6 +191,4 @@ class SingleEditableMapping:
             custom_mapping.clear(key)
 
         self.text_input.set_text("")
-        self.key_recording_toggle.set_label("")
-        self.key_recording_toggle.key = None
         self.delete_callback(self)
