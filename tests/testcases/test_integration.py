@@ -691,13 +691,15 @@ class TestIntegration(unittest.TestCase):
 
         # focus different row
         # TODO .active_editor instead?
-        print('## add empty')
         self.user_interface.simple_editor.add_empty()
         keycode_input = self.get_rows()[1].keycode_input
-        print('## set focus', keycode_input)
         self.user_interface.window.set_focus(keycode_input)
-        print('## is focus', keycode_input.is_focus())
-        print('## assert')
+
+        # for whatever stupid shit reason it takes 0.005s before gtk does anything.
+        # A few hours ago this wasn't necessary
+        time.sleep(0.02)
+        gtk_iteration()
+
         self.assertEqual(reader.get_unreleased_keys(), None)
 
     def test_rows(self):

@@ -330,7 +330,6 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         keycode_input = _KeycodeInput(key)
         keycode_input.connect("focus-out-event", self.on_keycode_input_unfocus)
         self.keycode_input = keycode_input
-        print('put_together', self.keycode_input)
         self.keycode_input.key = key
 
         symbol_input = Gtk.Entry()
