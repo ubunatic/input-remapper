@@ -32,6 +32,7 @@ from keymapper.data import get_data_path
 from keymapper.paths import get_config_path
 from keymapper.system_mapping import system_mapping
 from keymapper.gui.custom_mapping import custom_mapping
+from keymapper.gui.utils import HandlerDisabled
 from keymapper.presets import (
     find_newest_preset,
     get_presets,
@@ -120,23 +121,6 @@ def with_preset_name(func):
     return wrapped
 
 
-class HandlerDisabled:
-    """Safely modify a widget without causing handlers to be called.
-
-    Use in a with statement.
-    """
-
-    def __init__(self, widget, handler):
-        self.widget = widget
-        self.handler = handler
-
-    def __enter__(self):
-        self.widget.handler_block_by_func(self.handler)
-
-    def __exit__(self, *_):
-        self.widget.handler_unblock_by_func(self.handler)
-
-
 def on_close_about(about, _):
     """Hide the about dialog without destroying it."""
     about.hide()
@@ -170,8 +154,7 @@ class UserInterface:
         builder.connect_signals(self)
         self.builder = builder
 
-        self.basic_editor = BasicEditor(self)
-        self.advanced_editor = AdvancedEditor(self)
+        self.active_editor = BasicEditor(self)
 
         # set up the device selection
         # https://python-gtk-3-tutorial.readthedocs.io/en/latest/treeview.html#the-view
@@ -328,6 +311,9 @@ class UserInterface:
         return self.builder.get_object(name)
 
     def on_close(self, *_):
+        self.__del__()
+
+    def __del__(self, *_):
         """Safely close the application."""
         logger.debug("Closing window")
         self.save_preset()
@@ -435,8 +421,7 @@ class UserInterface:
                     + "break them.",
                 )
 
-        self.basic_editor.consume_newest_keycode(key)
-        self.advanced_editor.consume_newest_keycode(key)
+        self.active_editor.consume_newest_keycode(key)
 
         return True
 
@@ -716,7 +701,7 @@ class UserInterface:
 
         custom_mapping.load(self.group.get_preset_path(preset))
 
-        self.basic_editor.load_custom_mapping()
+        self.active_editor.load_custom_mapping()
 
         autoload_switch = self.get("preset_autoload_switch")
 
@@ -725,8 +710,7 @@ class UserInterface:
             autoload_switch.set_active(is_autoloaded)
 
         self.get("preset_name_input").set_text("")
-        self.advanced_editor.add_empty()
-        self.basic_editor.add_empty()
+        self.active_editor.add_empty()
 
         self.initialize_gamepad_config()
 
@@ -797,17 +781,20 @@ class UserInterface:
 
     def toggle_advanced_editor_toggled(self, button):
         """Show the advanced editor."""
+        self.active_editor.destroy()
+
         show_advanced_editor = button.get_active()
         editor_stack = self.get("editor-stack")
         children = editor_stack.get_children()
 
         if show_advanced_editor:
-            self.advanced_editor.load_custom_mapping()
+            self.active_editor = AdvancedEditor(self)
             editor_stack.set_visible_child(children[1])
         else:
-            # refresh the information of the editors
-            self.basic_editor.load_custom_mapping()
+            self.active_editor = BasicEditor(self)
             editor_stack.set_visible_child(children[0])
+
+        self.active_editor.load_custom_mapping()
 
     def update_advanced_editor(self):
         """Show the currently selected mapping in the advanced editor."""

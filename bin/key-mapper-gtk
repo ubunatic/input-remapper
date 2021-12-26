@@ -80,7 +80,7 @@ if __name__ == '__main__':
             # because none was running
             user_interface.dbus.stop_all()
 
-        user_interface.on_close()
+        del user_interface
 
     atexit.register(stop)
 

@@ -209,7 +209,6 @@ class TestGroupsFromHelper(unittest.TestCase):
     def setUp(self):
         self.user_interface = launch()
         # verify that the ui doesn't have knowledge of any device yet
-        print("test self.assertIsNone(self.user_interface.group)")
         self.assertIsNone(self.user_interface.group)
         self.assertEqual(len(groups), 0)
 
@@ -697,7 +696,7 @@ class TestIntegration(unittest.TestCase):
 
         # focus different row
         # TODO .active_editor instead?
-        self.user_interface.basic_editor.add_empty()
+        self.user_interface.active_editor.add_empty()
         key_recording_toggle = self.get_rows()[1].key_recording_toggle
         self.set_focus(key_recording_toggle)
 
@@ -1629,7 +1628,7 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(num_rows_before, 5)
 
         # it returns true to keep the glib timeout going
-        self.assertTrue(self.user_interface.basic_editor.check_add_row())
+        self.assertTrue(self.user_interface.active_editor.check_add_row())
         # it still adds a new empty row and won't break
         num_rows_after = len(mapping_list.get_children())
         self.assertEqual(num_rows_after, num_rows_before + 1)

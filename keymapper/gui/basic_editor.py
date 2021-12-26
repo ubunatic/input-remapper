@@ -189,18 +189,25 @@ class BasicEditor:
         self.window = self.get("window")
         self.timeout = GLib.timeout_add(100, self.check_add_row)
         mapping_list = self.get("mapping_list")
-        mapping_list.connect("destroy", self.on_destroy)
+        mapping_list.connect("destroy", self.__del__)
 
     def get(self, name):
         """Get a widget from the window"""
         return self.user_interface.builder.get_object(name)
 
-    def on_destroy(self, *_):
+    def __del__(self, *_):
         """Clear up all timeouts and resources.
 
         This is especially important for tests.
         """
-        GLib.source_remove(self.timeout)
+        if self.timeout:
+            GLib.source_remove(self.timeout)
+            self.timeout = None
+
+    def destroy(self):
+        """Don't do anything with the widgets anymore."""
+        # TODO should be a base function of an interface for advanced and basic editor
+        self.__del__()
 
     def load_custom_mapping(self):
         """Display the custom mapping."""

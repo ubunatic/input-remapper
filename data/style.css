@@ -29,7 +29,7 @@ list entry {
     box-shadow: none;
 }
 
-list button:not(:focus) {
+list.basic-editor button:not(:focus) {
     border-color: transparent;
     background: transparent;
     box-shadow: none;
@@ -45,6 +45,15 @@ list button {
 
 .copyright {
     font-size: 7pt;
+}
+
+.advanced-editor-key-list label {
+    padding: 6px;
+}
+
+.no-border {
+    border: 0px;
+    box-shadow: none;
 }
 
 /* @theme_bg_color, @theme_fg_color */

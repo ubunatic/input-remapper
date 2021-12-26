@@ -113,6 +113,7 @@ class Mapping(ConfigBase):
             if code_changed:
                 # clear previous mapping of that code, because the line
                 # representing that one will now represent a different one
+                print("mapping change", previous_key, new_key)
                 self.clear(previous_key)
 
         self.changed = True

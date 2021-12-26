@@ -25,6 +25,30 @@
 from gi.repository import Gtk, GLib, Gdk
 
 from keymapper.gui.basic_editor import SingleEditableMapping
+from keymapper.gui.custom_mapping import custom_mapping
+
+
+class SelectionLabel(Gtk.Label):
+
+    __gtype_name__ = "Label"
+
+    def __init__(self):
+        super().__init__()
+        self.key = None
+        self.output = None
+
+    def set_key(self, key):
+        """Set the key this button represents
+
+        Parameters
+        ----------
+        key : Key
+        """
+        self.key = key
+
+    def set_output(self, output):
+        """Set the output/symbol this mapping will attempt to write."""
+        self.output = output
 
 
 class AdvancedEditor(SingleEditableMapping):
@@ -44,15 +68,14 @@ class AdvancedEditor(SingleEditableMapping):
         self.window = self.get("window")
         self.advanced_editor = self.get("advanced_editor")
         self.timeout = GLib.timeout_add(100, self.check_add_new_key)
-        self.active_key_button = None
-
-        self.key = None
+        self.active_selection_label = None
 
         self.get("advanced_key_recording_button").connect(
             "focus-out-event", self.on_key_recording_button_unfocus
         )
 
         mapping_list = self.get("mapping_list_advanced")
+        mapping_list.connect("row-activated", self.on_mapping_selected)
 
         if len(mapping_list.get_children()) == 0:
             self.add_empty()
@@ -74,22 +97,41 @@ class AdvancedEditor(SingleEditableMapping):
 
         Or None if no code is mapped on this row.
         """
-        return self.key
+        if self.active_selection_label is None:
+            return None
+
+        return self.active_selection_label.key
 
     def get_symbol(self):
         """Get the assigned symbol from the middle column."""
         buffer = self.text_input.get_buffer()
-        return buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+        symbol = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+        # TODO make sure to test that this never returns ""
+        return symbol if symbol else None
 
     def display_key(self, key):
         """Show what the user is currently pressing in ther user interface."""
-        self.key = key
-        self.active_key_button.set_label(key.beautify())
+        self.active_selection_label.set_label(key.beautify())
 
     def put_together(self, key, symbol):
         pass
 
     """Editor"""
+
+    def __del__(self, *_):
+        """Clear up all timeouts and resources.
+
+        This is especially important for tests.
+        """
+        # TODO move into base class?
+        if self.timeout:
+            GLib.source_remove(self.timeout)
+            self.timeout = None
+
+    def destroy(self):
+        """Don't do anything with the widgets anymore."""
+        # TODO should be a base function of an interface for advanced and basic editor
+        self.__del__()
 
     def on_mapping_removed(self):
         """The delete button on a single mapped key was clicked."""
@@ -117,38 +159,49 @@ class AdvancedEditor(SingleEditableMapping):
     def check_add_new_key(self):
         """If needed, add a new empty mapping to the list for the user to configure."""
         # TODO. Or a + icon to add a new one?
-        pass
+        return True
 
     def on_key_recording_button_unfocus(self, *_):
         """Don't highlight the key-recording-button anymore."""
         self.get("advanced_key_recording_button").set_active(False)
 
-    def on_key_recording_button_clicked(self, button, symbol):
+    def on_mapping_selected(self, _=None, list_box_row=None):
         """One of the buttons in the left "key" column was clicked.
 
         Load the information from that mapping entry into the editor.
         """
-        self.active_key_button = button
-        self.get("code_editor").get_buffer().set_text("test")
-        # TODO update advanced editor widgets
-        # TODO save?
+        selection_label = list_box_row.get_children()[0]
+        self.active_selection_label = selection_label
+
+        self.get("code_editor").get_buffer().set_text(selection_label.output or "")
+        self.set_key(selection_label.key)
 
     def add_empty(self):
         """Add one empty row for a single mapped key."""
-        mapping_list_advanced = self.get("mapping_list_advanced")
-        key_button = Gtk.Button()
-        key_button.set_label("new entry")
-        key_button.show_all()
-        key_button.connect(
-            "clicked", lambda button: self.on_key_recording_button_clicked(button, None)
-        )
-        mapping_list_advanced.insert(key_button, -1)
+        mapping_list = self.get("mapping_list_advanced")
+        mapping_selection = SelectionLabel()
+        mapping_selection.set_label("new entry")
+        mapping_selection.show_all()
+        mapping_list.insert(mapping_selection, -1)
 
     def load_custom_mapping(self):
+        # with HandlerDisabled(self.text_input, self.on_text_input_change):
         mapping_list = self.get("mapping_list_advanced")
+        mapping_list.forall(mapping_list.remove)
+
+        for key, output in custom_mapping:
+            mapping_selection = SelectionLabel()
+            mapping_selection.set_key(key)
+            mapping_selection.set_output(output)
+            mapping_selection.set_label(key.beautify())
+            # Make the child label widget break lines, important for
+            # long combinations
+            mapping_selection.set_line_wrap(True)
+            mapping_selection.set_line_wrap_mode(2)
+            mapping_selection.set_justify(Gtk.Justification.CENTER)
+            mapping_selection.show_all()
+            mapping_list.insert(mapping_selection, -1)
 
         # select the first entry
         rows = mapping_list.get_children()
-        first_row = rows[0]
-        symbol = None  # TODO
-        self.on_key_recording_button_clicked(first_row.get_children()[0], symbol)
+        mapping_list.select_row(rows[0])
