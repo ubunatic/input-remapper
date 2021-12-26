@@ -57,11 +57,6 @@ class AdvancedEditor(SingleEditableMapping):
         if len(mapping_list.get_children()) == 0:
             self.add_empty()
 
-        # select the first entry
-        rows = mapping_list.get_children()
-        first_row = rows[0]
-        self.on_key_recording_button_clicked(first_row.get_children()[0])
-
     """SingleEditableMapping"""
 
     def on_text_input_change(self, _, event):
@@ -150,4 +145,10 @@ class AdvancedEditor(SingleEditableMapping):
         mapping_list_advanced.insert(key_button, -1)
 
     def load_custom_mapping(self):
-        pass
+        mapping_list = self.get("mapping_list_advanced")
+
+        # select the first entry
+        rows = mapping_list.get_children()
+        first_row = rows[0]
+        symbol = None  # TODO
+        self.on_key_recording_button_clicked(first_row.get_children()[0], symbol)

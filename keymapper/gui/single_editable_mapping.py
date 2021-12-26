@@ -193,7 +193,7 @@ class SingleEditableMapping:
 
     def on_text_input_unfocus(self, *_):
         """Save the preset and correct the input casing."""
-        symbol = self.get_symbol()
+        symbol = self.get_symbol() or ""
         correct_case = system_mapping.correct_case(symbol)
         if symbol != correct_case:
             self.text_input.set_text(correct_case)
