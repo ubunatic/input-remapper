@@ -82,15 +82,13 @@ class SingleEditableMapping:
 
     """Base functionality"""
 
-    def __init__(self, delete_callback, user_interface, key=None, symbol=None):
+    def __init__(self, delete_callback, user_interface):
         """Construct an editable mapping."""
         self.device = user_interface.group
         self.user_interface = user_interface
         self.delete_callback = delete_callback
 
         self.text_input = None
-
-        self.put_together(key, symbol)
 
         # keys were not pressed yet
         self.input_has_arrived = False

@@ -77,7 +77,7 @@ class _KeycodeRecordingToggle(Gtk.ToggleButton):
         if self.key is not None:
             return
 
-        self.set_label("click here")
+        self.set_label("Click here")
         self.set_opacity(0.3)
 
     def show_press_key(self):
@@ -85,7 +85,7 @@ class _KeycodeRecordingToggle(Gtk.ToggleButton):
         if self.key is not None:
             return
 
-        self.set_label("press key")
+        self.set_label("Press key")
         self.set_opacity(1)
 
     def set_key(self, key):
@@ -114,31 +114,20 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
 
     __gtype_name__ = "ListBoxRow"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, key=None, symbol=None, **kwargs):
+        """
+
+        Parameters
+        ----------
+        key : Key
+            The key this row is going to display by default
+        symbol : str
+            The symbol/macro this row is going to display by default
+        """
         Gtk.ListBoxRow.__init__(self)
         SingleEditableMapping.__init__(self, *args, **kwargs)
 
-    def is_waiting_for_input(self):
-        return self.key_recording_toggle.is_focus()
-
-    def get_key(self):
-        """Get the Key object from the left column.
-
-        Or None if no code is mapped on this row.
-        """
-        return self.key_recording_toggle.key
-
-    def get_symbol(self):
-        """Get the assigned symbol from the middle column."""
-        symbol = self.text_input.get_text()
-        return symbol if symbol else None
-
-    def display_key(self, key):
-        """Show what the user is currently pressing in ther user interface."""
-        self.key_recording_toggle.set_key(key)
-
-    def put_together(self, key, symbol):
-        """Create all child GTK widgets and connect their signals."""
+        # create all child GTK widgets and connect their signals
         delete_button = Gtk.EventBox()
         close_image = Gtk.Image.new_from_icon_name("window-close", Gtk.IconSize.BUTTON)
         delete_button.add(close_image)
@@ -179,6 +168,25 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
 
         self.add(box)
         self.show_all()
+
+    def is_waiting_for_input(self):
+        return self.key_recording_toggle.is_focus()
+
+    def get_key(self):
+        """Get the Key object from the left column.
+
+        Or None if no code is mapped on this row.
+        """
+        return self.key_recording_toggle.key
+
+    def get_symbol(self):
+        """Get the assigned symbol from the middle column."""
+        symbol = self.text_input.get_text()
+        return symbol if symbol else None
+
+    def display_key(self, key):
+        """Show what the user is currently pressing in ther user interface."""
+        self.key_recording_toggle.set_key(key)
 
     def on_delete_button_clicked(self, *_):
         """Destroy the row and remove it from the config."""

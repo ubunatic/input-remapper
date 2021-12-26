@@ -507,7 +507,7 @@ class TestIntegration(unittest.TestCase):
         row.set_key(None)
         self.assertIsNone(row.get_key())
         self.assertEqual(len(custom_mapping), 0)
-        self.assertEqual(row.key_recording_toggle.get_label(), "click here")
+        self.assertEqual(row.key_recording_toggle.get_label(), "Click here")
 
         row.set_key(Key(EV_KEY, 30, 1))
         self.assertEqual(len(custom_mapping), 0)
@@ -612,15 +612,15 @@ class TestIntegration(unittest.TestCase):
             self.assertEqual(row.get_symbol(), char)
 
         if row.key_recording_toggle.is_focus():
-            self.assertEqual(row.key_recording_toggle.get_label(), "press key")
+            self.assertEqual(row.key_recording_toggle.get_label(), "Press key")
         else:
-            self.assertEqual(row.key_recording_toggle.get_label(), "click here")
+            self.assertEqual(row.key_recording_toggle.get_label(), "Click here")
 
         self.set_focus(row.key_recording_toggle)
         gtk_iteration()
         gtk_iteration()
         self.assertIsNone(row.get_key())
-        self.assertEqual(row.key_recording_toggle.get_label(), "press key")
+        self.assertEqual(row.key_recording_toggle.get_label(), "Press key")
 
         if key:
             # modifies the keycode in the row not by writing into the input,

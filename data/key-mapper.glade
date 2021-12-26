@@ -921,6 +921,7 @@ To give your keys back their original mapping.</property>
                                 <child>
                                   <object class="GtkToggleButton" id="advanced_key_recording_button">
                                     <property name="label" translatable="yes">Change key</property>
+                                    <property name="width-request">100</property>
                                     <property name="visible">True</property>
                                     <property name="can-focus">True</property>
                                     <property name="receives-default">True</property>

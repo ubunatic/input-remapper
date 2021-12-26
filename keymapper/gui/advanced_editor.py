@@ -60,7 +60,6 @@ class AdvancedEditor(SingleEditableMapping):
     """Maintains the widgets of the advanced editor."""
 
     def __init__(self, user_interface):
-        """TODO"""
         super().__init__(
             delete_callback=self.on_mapping_removed,
             user_interface=user_interface,
@@ -78,6 +77,9 @@ class AdvancedEditor(SingleEditableMapping):
         # TODO show "press key" on button when active
         self.get("advanced_key_recording_button").connect(
             "focus-out-event", self.on_key_recording_button_unfocus
+        )
+        self.get("advanced_key_recording_button").connect(
+            "focus-in-event", self.on_key_recording_button_focus,
         )
 
         mapping_list = self.get("mapping_list_advanced")
@@ -118,9 +120,6 @@ class AdvancedEditor(SingleEditableMapping):
     def display_key(self, key):
         """Show what the user is currently pressing in ther user interface."""
         self.active_selection_label.set_label(key.beautify())
-
-    def put_together(self, key, symbol):
-        pass
 
     """Editor"""
 
@@ -167,8 +166,13 @@ class AdvancedEditor(SingleEditableMapping):
         # TODO. Or a + icon to add a new one?
         return True
 
+    def on_key_recording_button_focus(self, *_):
+        """Don't highlight the key-recording-button anymore."""
+        self.get("advanced_key_recording_button").set_label("Press key")
+
     def on_key_recording_button_unfocus(self, *_):
         """Don't highlight the key-recording-button anymore."""
+        self.get("advanced_key_recording_button").set_label("Change key")
         self.get("advanced_key_recording_button").set_active(False)
 
     def on_mapping_selected(self, _=None, list_box_row=None):
@@ -177,6 +181,7 @@ class AdvancedEditor(SingleEditableMapping):
         Load the information from that mapping entry into the editor.
         """
         selection_label = list_box_row.get_children()[0]
+        print('##### set to', selection_label)
         self.active_selection_label = selection_label
 
         self.get("code_editor").get_buffer().set_text(selection_label.output or "")
