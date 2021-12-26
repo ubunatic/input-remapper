@@ -807,7 +807,7 @@ class UserInterface:
             editor_stack.set_visible_child(children[0])
 
         # refresh the information of the editors
-        self.on_select_preset(self.get("preset_selection"))
+        self.basic_editor.load_custom_mapping()
 
     def update_advanced_editor(self):
         """Show the currently selected mapping in the advanced editor."""
