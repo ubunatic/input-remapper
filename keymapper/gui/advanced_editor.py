@@ -32,7 +32,10 @@ from keymapper.gui.custom_mapping import custom_mapping
 
 
 class SelectionLabel(Gtk.Label):
-    """One label per mapping in the preset."""
+    """One label per mapping in the preset.
+
+    This wrapper serves as a storage for the information the inherited label represents.
+    """
 
     __gtype_name__ = "Label"
 
@@ -94,6 +97,9 @@ class AdvancedEditor(SingleEditableMapping):
         if not event.type in [Gdk.EventType.KEY_PRESS, Gdk.EventType.KEY_RELEASE]:
             # there is no "changed" event for the GtkSourceView editor
             return
+
+        # TODO autocompletion
+        #  - also for words at the cursor position
 
         super().on_text_input_change()
 
@@ -181,7 +187,6 @@ class AdvancedEditor(SingleEditableMapping):
         Load the information from that mapping entry into the editor.
         """
         selection_label = list_box_row.get_children()[0]
-        print('##### set to', selection_label)
         self.active_selection_label = selection_label
 
         self.get("code_editor").get_buffer().set_text(selection_label.output or "")
@@ -216,3 +221,4 @@ class AdvancedEditor(SingleEditableMapping):
         # select the first entry
         rows = mapping_list.get_children()
         mapping_list.select_row(rows[0])
+        self.on_mapping_selected(list_box_row=rows[0])

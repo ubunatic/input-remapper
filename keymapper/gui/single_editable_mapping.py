@@ -80,6 +80,32 @@ class SingleEditableMapping:
         """Show what the user is currently pressing in ther user interface."""
         raise NotImplementedError
 
+    """Connect your widget events to those functions"""
+
+    def on_text_input_change(self, *_):
+        """When the output symbol for that keycode is typed in."""
+        key = self.get_key()
+        symbol = self.get_symbol()
+        if symbol is not None and key is not None:
+            custom_mapping.change(new_key=key, symbol=symbol, previous_key=None)
+
+    def on_text_input_unfocus(self, *_):
+        """Save the preset and correct the input casing."""
+        symbol = self.get_symbol() or ""
+        correct_case = system_mapping.correct_case(symbol)
+        if symbol != correct_case:
+            self.text_input.set_text(correct_case)
+        self.user_interface.save_preset()
+
+    def on_delete_button_clicked(self, *_):
+        """Destroy the row and remove it from the config."""
+        key = self.get_key()
+        if key is not None:
+            custom_mapping.clear(key)
+
+        self.text_input.set_text("")
+        self.delete_callback(self)
+
     """Base functionality"""
 
     def __init__(self, delete_callback, user_interface):
@@ -159,34 +185,10 @@ class SingleEditableMapping:
         # else, the keycode has changed, the symbol is set, all good
         custom_mapping.change(new_key=new_key, symbol=symbol, previous_key=previous_key)
 
-    def on_text_input_change(self, *_):
-        """When the output symbol for that keycode is typed in."""
-        key = self.get_key()
-        symbol = self.get_symbol()
-        if symbol is not None and key is not None:
-            custom_mapping.change(new_key=key, symbol=symbol, previous_key=None)
-
     def match(self, _, key, tree_iter):
         """Search the avilable names."""
         value = store.get_value(tree_iter, 0)
         return key in value.lower()
 
-    def on_text_input_unfocus(self, *_):
-        """Save the preset and correct the input casing."""
-        symbol = self.get_symbol() or ""
-        correct_case = system_mapping.correct_case(symbol)
-        if symbol != correct_case:
-            self.text_input.set_text(correct_case)
-        self.user_interface.save_preset()
-
     def reset(self, *_):
         self.input_has_arrived = False
-
-    def on_delete_button_clicked(self, *_):
-        """Destroy the row and remove it from the config."""
-        key = self.get_key()
-        if key is not None:
-            custom_mapping.clear(key)
-
-        self.text_input.set_text("")
-        self.delete_callback(self)
