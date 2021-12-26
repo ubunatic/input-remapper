@@ -134,6 +134,7 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         return symbol if symbol else None
 
     def display_key(self, key):
+        """Show what the user is currently pressing in ther user interface."""
         self.keycode_input.set_key(key)
 
     def put_together(self, key, symbol):
@@ -180,7 +181,7 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         self.show_all()
 
 
-class BasicEditor():
+class BasicEditor:
     """Maintains the widgets of the simple editor."""
 
     def __init__(self, user_interface):

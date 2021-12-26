@@ -77,6 +77,7 @@ class SingleEditableMapping:
         raise NotImplementedError
 
     def display_key(self, key):
+        """Show what the user is currently pressing in ther user interface."""
         raise NotImplementedError
 
     def put_together(self, key, symbol):

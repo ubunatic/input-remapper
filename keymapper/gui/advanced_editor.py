@@ -27,16 +27,13 @@ from gi.repository import Gtk, GLib, Gdk
 from keymapper.gui.basic_editor import SingleEditableMapping
 
 
-# TODO I need a fucking base class. Avoiding calls and shit from Row.py is a nightmare
-#   because its widgets are quite different. Or maybe I need to add more small functions
-#   that can be overwritten by the advancedEditor to avoid wrong access to the widgets
 class AdvancedEditor(SingleEditableMapping):
     """Maintains the widgets of the advanced editor."""
 
     def __init__(self, user_interface):
         """TODO"""
         super().__init__(
-            delete_callback=self.on_row_removed,
+            delete_callback=self.on_mapping_removed,
             user_interface=user_interface,
         )
 
@@ -90,7 +87,7 @@ class AdvancedEditor(SingleEditableMapping):
         return buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
 
     def display_key(self, key):
-        """TODO"""
+        """Show what the user is currently pressing in ther user interface."""
         self.key = key
         self.active_key_button.set_label(key.beautify())
 
@@ -99,7 +96,8 @@ class AdvancedEditor(SingleEditableMapping):
 
     """Editor"""
 
-    def on_row_removed(self):
+    def on_mapping_removed(self):
+        """The delete button on a single mapped key was clicked."""
         # TODO
         pass
 
@@ -108,7 +106,7 @@ class AdvancedEditor(SingleEditableMapping):
         return self.user_interface.builder.get_object(name)
 
     def consume_newest_keycode(self, key):
-        """TODO"""
+        """To capture events from keyboards, mice and gamepads."""
         self.switch_focus_if_complete()
 
         if key is None:
@@ -122,7 +120,7 @@ class AdvancedEditor(SingleEditableMapping):
         return True
 
     def check_add_new_key(self):
-        """TODO"""
+        """If needed, add a new empty mapping to the list for the user to configure."""
         # TODO
         pass
 
