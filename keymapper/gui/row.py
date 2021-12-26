@@ -166,35 +166,10 @@ class Row(Gtk.ListBoxRow):
 
         self.state = IDLE
 
+    """To be overwritten by inheriting class:"""
+
     def is_waiting_for_input(self):
         return self.keycode_input.is_focus()
-
-    def refresh_state(self):
-        """Refresh the state.
-
-        The state is needed to switch focus when no keys are held anymore,
-        but only if the row has been in the HOLDING state before.
-        """
-        old_state = self.state
-
-        if not self.is_waiting_for_input():
-            # TODO does it still work if I just do `if self.state == IDLE: return`?
-            self.state = IDLE
-            return
-
-        unreleased_keys = reader.get_unreleased_keys()
-        if unreleased_keys is None and old_state == HOLDING and self.get_key():
-            # A key was pressed and then released.
-            # Switch to the symbol. idle_add this so that the
-            # keycode event won't write into the symbol input as well.
-            window = self.user_interface.window
-            GLib.idle_add(lambda: window.set_focus(self.symbol_input))
-
-        if unreleased_keys is not None:
-            self.state = HOLDING
-            return
-
-        self.state = IDLE
 
     def get_key(self):
         """Get the Key object from the left column.
@@ -208,70 +183,8 @@ class Row(Gtk.ListBoxRow):
         symbol = self.symbol_input.get_text()
         return symbol if symbol else None
 
-    def set_key(self, new_key):
-        """Check if a keycode has been pressed and if so, display it.
-
-        Parameters
-        ----------
-        new_key : Key
-        """
-        if new_key is not None and not isinstance(new_key, Key):
-            raise TypeError("Expected new_key to be a Key object")
-
-        # the newest_keycode is populated since the ui regularly polls it
-        # in order to display it in the status bar.
-        previous_key = self.get_key()
-
-        # no input
-        if new_key is None:
-            return
-
-        # it might end up being a key combination
-        self.state = HOLDING
-
-        # keycode didn't change, do nothing
-        if new_key == previous_key:
-            return
-
-        # it's legal to display the keycode
-
-        self.keycode_input.set_key(new_key)
-
-        symbol = self.get_symbol()
-
-        # the symbol is empty and therefore the mapping is not complete
-        if symbol is None:
-            return
-
-        # else, the keycode has changed, the symbol is set, all good
-        custom_mapping.change(new_key=new_key, symbol=symbol, previous_key=previous_key)
-
-    def on_symbol_input_change(self, _):
-        """When the output symbol for that keycode is typed in."""
-        key = self.get_key()
-        symbol = self.get_symbol()
-
-        if symbol is None:
-            return
-
-        if key is not None:
-            custom_mapping.change(new_key=key, symbol=symbol, previous_key=None)
-
-    def match(self, _, key, tree_iter):
-        """Search the avilable names."""
-        value = store.get_value(tree_iter, 0)
-        return key in value.lower()
-
-    def on_symbol_input_unfocus(self, *_):
-        """Save the preset and correct the input casing."""
-        symbol = self.get_symbol()
-        correct_case = system_mapping.correct_case(symbol)
-        if symbol != correct_case:
-            self.symbol_input.set_text(correct_case)
-        self.user_interface.save_preset()
-
-    def on_keycode_input_unfocus(self):
-        self.state = IDLE
+    def display_key(self, key):
+        self.keycode_input.set_key(key)
 
     def put_together(self, key, symbol):
         """Create all child GTK widgets and connect their signals."""
@@ -314,6 +227,97 @@ class Row(Gtk.ListBoxRow):
 
         self.add(box)
         self.show_all()
+
+    """Base functionality:"""
+
+    def refresh_state(self):
+        """Refresh the state.
+
+        The state is needed to switch focus when no keys are held anymore,
+        but only if the row has been in the HOLDING state before.
+        """
+        if not self.is_waiting_for_input():
+            # TODO does it still work if I just do `if self.state == IDLE: return`?
+            self.state = IDLE
+            return
+
+        old_state = self.state
+        all_keys_released = reader.get_unreleased_keys() is None
+        if all_keys_released and old_state == HOLDING and self.get_key():
+            # A key was pressed and then released.
+            # Switch to the symbol. idle_add this so that the
+            # keycode event won't write into the symbol input as well.
+            window = self.user_interface.window
+            GLib.idle_add(lambda: window.set_focus(self.symbol_input))
+
+        if not all_keys_released:
+            self.state = HOLDING
+            return
+
+        self.state = IDLE
+
+    def set_key(self, new_key):
+        """Check if a keycode has been pressed and if so, display it.
+
+        Parameters
+        ----------
+        new_key : Key
+        """
+        if new_key is not None and not isinstance(new_key, Key):
+            raise TypeError("Expected new_key to be a Key object")
+
+        # the newest_keycode is populated since the ui regularly polls it
+        # in order to display it in the status bar.
+        previous_key = self.get_key()
+
+        # no input
+        if new_key is None:
+            return
+
+        # it might end up being a key combination
+        self.state = HOLDING
+
+        # keycode didn't change, do nothing
+        if new_key == previous_key:
+            return
+
+        self.display_key(new_key)
+
+        symbol = self.get_symbol()
+
+        # the symbol is empty and therefore the mapping is not complete
+        if symbol is None:
+            return
+
+        # else, the keycode has changed, the symbol is set, all good
+        custom_mapping.change(new_key=new_key, symbol=symbol, previous_key=previous_key)
+
+    def on_symbol_input_change(self, *_):
+        """When the output symbol for that keycode is typed in."""
+        key = self.get_key()
+        symbol = self.get_symbol()
+
+        if symbol is None:
+            return
+
+        if key is not None:
+            custom_mapping.change(new_key=key, symbol=symbol, previous_key=None)
+
+    def match(self, _, key, tree_iter):
+        """Search the avilable names."""
+        value = store.get_value(tree_iter, 0)
+        return key in value.lower()
+
+    def on_symbol_input_unfocus(self, *_):
+        """Save the preset and correct the input casing."""
+        symbol = self.get_symbol()
+        correct_case = system_mapping.correct_case(symbol)
+        if symbol != correct_case:
+            self.symbol_input.set_text(correct_case)
+        self.user_interface.save_preset()
+
+    def on_keycode_input_unfocus(self):
+        self.state = IDLE
 
     def on_delete_button_clicked(self, *_):
         """Destroy the row and remove it from the config."""

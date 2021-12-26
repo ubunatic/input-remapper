@@ -301,9 +301,13 @@ class TestIntegration(unittest.TestCase):
 
         self.user_interface.on_close = on_close
 
-        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+        self.user_interface.key_press(
+            self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
+        )
         self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
-        self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+        self.user_interface.key_release(
+            self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
+        )
         self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
         self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
         self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
@@ -315,28 +319,40 @@ class TestIntegration(unittest.TestCase):
         rows = self.get_rows()
         row = rows[-1]
         self.user_interface.window.set_focus(row.keycode_input)
-        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+        self.user_interface.key_press(
+            self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
+        )
         self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
         self.assertFalse(closed)
 
         self.user_interface.window.set_focus(None)
-        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+        self.user_interface.key_press(
+            self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
+        )
         self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
         self.assertTrue(closed)
 
-        self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+        self.user_interface.key_release(
+            self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
+        )
         self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
 
     def test_ctrl_r(self):
         with patch.object(reader, "refresh_groups") as reader_get_devices_patch:
-            self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
+            self.user_interface.key_press(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
+            )
             self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_r))
             reader_get_devices_patch.assert_called_once()
 
     def test_ctrl_del(self):
         with patch.object(self.user_interface.dbus, "stop_injecting") as stop_injecting:
-            self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L))
-            self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_Delete))
+            self.user_interface.key_press(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
+            )
+            self.user_interface.key_press(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_Delete)
+            )
             stop_injecting.assert_called_once()
 
     def test_show_device_mapping_status(self):
@@ -350,7 +366,9 @@ class TestIntegration(unittest.TestCase):
             set_config_dir.assert_called_once()
 
         self.assertFalse(
-            config.is_autoloaded(self.user_interface.group.key, self.user_interface.preset_name)
+            config.is_autoloaded(
+                self.user_interface.group.key, self.user_interface.preset_name
+            )
         )
 
         self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device 2"))
@@ -363,7 +381,9 @@ class TestIntegration(unittest.TestCase):
         self.assertTrue(self.user_interface.get("preset_autoload_switch").get_active())
         self.assertEqual(self.user_interface.group.key, "Foo Device 2")
         self.assertEqual(self.user_interface.group.name, "Foo Device")
-        self.assertTrue(config.is_autoloaded(self.user_interface.group.key, "new preset"))
+        self.assertTrue(
+            config.is_autoloaded(self.user_interface.group.key, "new preset")
+        )
         self.assertFalse(config.is_autoloaded("Bar Device", "new preset"))
         self.assertListEqual(
             list(config.iterate_autoload_presets()), [("Foo Device 2", "new preset")]
@@ -518,7 +538,9 @@ class TestIntegration(unittest.TestCase):
     def test_row_not_focused(self):
         # focus anything that is not the row,
         # no keycode should be inserted into it
-        self.user_interface.window.set_focus(self.user_interface.get("preset_name_input"))
+        self.user_interface.window.set_focus(
+            self.user_interface.get("preset_name_input")
+        )
         send_event_to_reader(new_event(1, 61, 1))
         self.user_interface.consume_newest_keycode()
 
@@ -1200,7 +1222,9 @@ class TestIntegration(unittest.TestCase):
         text = self.get_status_text()
         self.assertIn("add keys", text)
         self.assertTrue(error_icon.get_visible())
-        self.assertNotEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING)
+        self.assertNotEqual(
+            self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING
+        )
 
         # not empty, but keys are held down
 
@@ -1214,9 +1238,13 @@ class TestIntegration(unittest.TestCase):
         text = self.get_status_text()
         self.assertIn("release", text)
         self.assertTrue(error_icon.get_visible())
-        self.assertNotEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING)
+        self.assertNotEqual(
+            self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING
+        )
         self.assertTrue(self.user_interface.unreleased_warn)
-        self.assertEqual(self.user_interface.get("apply_system_layout").get_opacity(), 0.4)
+        self.assertEqual(
+            self.user_interface.get("apply_system_layout").get_opacity(), 0.4
+        )
 
         # device grabbing fails
 
@@ -1242,7 +1270,8 @@ class TestIntegration(unittest.TestCase):
             self.assertIn("not grabbed", text)
             self.assertTrue(error_icon.get_visible())
             self.assertNotEqual(
-                self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING
+                self.user_interface.dbus.get_state(self.user_interface.group.key),
+                RUNNING,
             )
 
             # for the second try, release the key. that should also work
@@ -1264,7 +1293,9 @@ class TestIntegration(unittest.TestCase):
         text = self.get_status_text()
         self.assertNotIn("CTRL + DEL", text)  # only shown if btn_left mapped
         self.assertFalse(error_icon.get_visible())
-        self.assertEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING)
+        self.assertEqual(
+            self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING
+        )
 
         # because this test managed to reproduce some minor bug:
         self.assertNotIn("mapping", custom_mapping._config)
@@ -1297,18 +1328,24 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.on_apply_preset_clicked(None)
         text = self.get_status_text()
         self.assertIn("click", text)
-        self.assertEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), UNKNOWN)
+        self.assertEqual(
+            self.user_interface.dbus.get_state(self.user_interface.group.key), UNKNOWN
+        )
 
         # second apply, shows unreleased warning
         self.user_interface.on_apply_preset_clicked(None)
         text = self.get_status_text()
         self.assertIn("release", text)
-        self.assertEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), UNKNOWN)
+        self.assertEqual(
+            self.user_interface.dbus.get_state(self.user_interface.group.key), UNKNOWN
+        )
 
         # third apply, overwrites both warnings
         self.user_interface.on_apply_preset_clicked(None)
         wait()
-        self.assertEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING)
+        self.assertEqual(
+            self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING
+        )
         text = self.get_status_text()
         # because btn_left is mapped, shows help on how to stop
         # injecting via the keyboard
@@ -1320,7 +1357,9 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.preset_name = preset_name
         self.user_interface.group = groups.find(name=group_name)
 
-        self.assertNotEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING)
+        self.assertNotEqual(
+            self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING
+        )
         self.user_interface.can_modify_mapping()
         text = self.get_status_text()
         self.assertNotIn("Restore Defaults", text)
@@ -1336,7 +1375,9 @@ class TestIntegration(unittest.TestCase):
             if "Starting" not in self.get_status_text():
                 return
 
-        self.assertEqual(self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING)
+        self.assertEqual(
+            self.user_interface.dbus.get_state(self.user_interface.group.key), RUNNING
+        )
 
         # the mapping cannot be changed anymore
         self.user_interface.can_modify_mapping()

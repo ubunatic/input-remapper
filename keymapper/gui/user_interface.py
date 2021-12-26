@@ -142,51 +142,96 @@ def on_close_about(about, _):
     return True
 
 
-# TODO for consistency, don't inherit from Row but rather have one object that
-#  inherits from Row. To have exactly the same hirarchy as the simple editor
 # TODO move to advanced_editor.py
+# TODO I need a fucking base class. Avoiding calls and shit from Row.py is a nightmare
+#   because its widgets are quite different. Or maybe I need to add more small functions
+#   that can be overwritten by the advancedEditor to avoid wrong access to the widgets
 class AdvancedEditor(Row):
     """Maintains the widgets of the advanced editor."""
+
     def __init__(self, user_interface):
         """TODO"""
-        # TODO I need a fucking base class
         super().__init__(
-            delete_callback=user_interface.on_row_removed,
+            delete_callback=self.on_row_removed,
             user_interface=user_interface,
         )
 
         self.symbol_input = self.get("code_editor")
         self.symbol_input.connect("focus-out-event", self.on_symbol_input_unfocus)
+        self.symbol_input.connect("event", self.on_symbol_input_change)
 
         self.window = self.get("window")
         self.advanced_editor = self.get("advanced_editor")
         self.timeout = GLib.timeout_add(100, self.check_add_new_key)
         self.active_key_button = None
 
-        self.get("advanced_change_key_button").connect("focus-out-event", self.on_key_button_unfocus)
+        self.key = None
+
+        self.get("advanced_change_key_button").connect(
+            "focus-out-event", self.on_key_button_unfocus
+        )
+
+        mapping_list = self.get("mapping_list_advanced")
+
+        if len(mapping_list.get_children()) == 0:
+            self.add_empty()
 
         # select the first entry
-        mapping_list = self.get("mapping_list_advanced")
-        self.on_key_button_clicked(mapping_list.get_children()[0].get_children()[0])
+        rows = mapping_list.get_children()
+        first_row = rows[0]
+        self.on_key_button_clicked(first_row.get_children()[0])
 
-    def get(self, name):
-        """Get a widget from the window"""
-        return self.user_interface.builder.get_object(name)
+    """Row:"""
+
+    def on_symbol_input_change(self, _, event):
+        if not event.type in [Gdk.EventType.KEY_PRESS, Gdk.EventType.KEY_RELEASE]:
+            # there is no "changed" event for the GtkSourceView editor
+            return
+
+        super().on_symbol_input_change()
 
     def is_waiting_for_input(self):
         return self.get("advanced_change_key_button").get_active()
+
+    def get_key(self):
+        """Get the Key object from the left column.
+
+        Or None if no code is mapped on this row.
+        """
+        return self.key
 
     def get_symbol(self):
         """Get the assigned symbol from the middle column."""
         buffer = self.symbol_input.get_buffer()
         return buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
 
+    def display_key(self, key):
+        """TODO"""
+        self.key = key
+        self.active_key_button.set_label(key.beautify())
+
+    def put_together(self, key, symbol):
+        pass
+
+    """Editor:"""
+
+    def on_row_removed(self):
+        # TODO
+        pass
+
+    def get(self, name):
+        """Get a widget from the window"""
+        return self.user_interface.builder.get_object(name)
+
     def consume_newest_keycode(self, key):
         """TODO"""
         self.refresh_state()
 
-        if key and self.get("advanced_change_key_button").get_active():
-            self.active_key_button.set_label(key.beautify())
+        if key is None:
+            return True
+
+        if not self.is_waiting_for_input():
+            return True
 
         self.set_key(key)
 
@@ -210,7 +255,13 @@ class AdvancedEditor(Row):
         # TODO update advanced editor widgets
         # TODO save?
 
-    # TODO on code editor unfocus save
+    def add_empty(self):
+        """Add one empty row for a single mapped key."""
+        mapping_list_advanced = self.get("mapping_list_advanced")
+        key_button = Gtk.Button()
+        key_button.set_label("new entry")
+        key_button.show_all()
+        mapping_list_advanced.insert(key_button, -1)
 
 
 # TODO move to row.py, rename to simple_editor.py
@@ -303,6 +354,31 @@ class SimpleEditor:
 
         return True
 
+    def clear_mapping_table(self):
+        """Remove all rows from the mappings table."""
+        mapping_list = self.get("mapping_list")
+        mapping_list.forall(mapping_list.remove)
+        custom_mapping.empty()
+
+    def add_empty(self):
+        """Add one empty row for a single mapped key."""
+        empty = Row(
+            user_interface=self.user_interface, delete_callback=self.on_row_removed
+        )
+        mapping_list = self.get("mapping_list")
+        mapping_list.insert(empty, -1)
+
+    def on_row_removed(self, single_key_mapping):
+        """Stuff to do when a row was removed
+
+        Parameters
+        ----------
+        single_key_mapping : Row
+        """
+        mapping_list = self.get("mapping_list")
+        # https://stackoverflow.com/a/30329591/4417769
+        mapping_list.remove(single_key_mapping)
+
 
 class UserInterface:
     """The key mapper gtk window."""
@@ -330,6 +406,9 @@ class UserInterface:
         builder.add_from_file(gladefile)
         builder.connect_signals(self)
         self.builder = builder
+
+        self.simple_editor = SimpleEditor(self)
+        self.advanced_editor = AdvancedEditor(self)
 
         # set up the device selection
         # https://python-gtk-3-tutorial.readthedocs.io/en/latest/treeview.html#the-view
@@ -374,11 +453,6 @@ class UserInterface:
         self.get("gamepad_config").hide()
 
         self.populate_devices()
-
-        self.editors = [
-            SimpleEditor(self),
-            AdvancedEditor(self),
-        ]
 
         self.timeouts = []
         self.setup_timeouts()
@@ -557,12 +631,6 @@ class UserInterface:
         # and select the newest one (on the top). triggers on_select_preset
         preset_selection.set_active(0)
 
-    def clear_mapping_table(self):
-        """Remove all rows from the mappings table."""
-        mapping_list = self.get("mapping_list")
-        mapping_list.forall(mapping_list.remove)
-        custom_mapping.empty()
-
     def can_modify_mapping(self, *_):
         """Show a message if changing the mapping is not possible."""
         if self.dbus.get_state(self.group.key) != RUNNING:
@@ -605,8 +673,8 @@ class UserInterface:
                     + "break them.",
                 )
 
-        for editor in self.editors:
-            editor.consume_newest_keycode(key)
+        self.simple_editor.consume_newest_keycode(key)
+        self.advanced_editor.consume_newest_keycode(key)
 
         return True
 
@@ -868,8 +936,9 @@ class UserInterface:
             self.show_status(CTX_ERROR, "Permission denied!", error)
             logger.error(error)
 
-    def on_select_preset(self, dropdown):
+    def on_select_preset(self, *_):
         """Show the mappings of the preset."""
+        dropdown = self.get("preset_selection")
         # beware in tests that this function won't be called at all if the
         # active_id stays the same
         self.save_preset()
@@ -877,7 +946,7 @@ class UserInterface:
         if dropdown.get_active_id() == self.preset_name:
             return
 
-        self.clear_mapping_table()
+        self.simple_editor.clear_mapping_table()
 
         preset = dropdown.get_active_text()
         if preset is None:
@@ -893,7 +962,7 @@ class UserInterface:
             # TODO this needs to move to the SimpleEditor class
             single_key_mapping = Row(
                 user_interface=self,
-                delete_callback=self.on_row_removed,
+                delete_callback=self.simple_editor.on_row_removed,
                 key=key,
                 symbol=output,
             )
@@ -913,7 +982,8 @@ class UserInterface:
             )
 
         self.get("preset_name_input").set_text("")
-        self.add_empty()
+        self.advanced_editor.add_empty()
+        self.simple_editor.add_empty()
 
         self.initialize_gamepad_config()
 
@@ -936,32 +1006,10 @@ class UserInterface:
         speed = 2 ** gtk_range.get_value()
         custom_mapping.set("gamepad.joystick.pointer_speed", speed)
 
-    def add_empty(self):
-        """Add one empty row for a single mapped key."""
-        empty = Row(user_interface=self, delete_callback=self.on_row_removed)
-        mapping_list = self.get("mapping_list")
-        mapping_list.insert(empty, -1)
-
-        mapping_list_advanced = self.get("mapping_list_advanced")
-        key_button = Gtk.Button()
-        key_button.set_label("new entry")
-        key_button.show_all()
-        mapping_list_advanced.insert(key_button, -1)
-
-    def on_row_removed(self, single_key_mapping):
-        """Stuff to do when a row was removed
-
-        Parameters
-        ----------
-        single_key_mapping : Row
-        """
-        mapping_list = self.get("mapping_list")
-        # https://stackoverflow.com/a/30329591/4417769
-        mapping_list.remove(single_key_mapping)
-
     def save_preset(self, *_):
         """Write changes to presets to disk."""
         if not custom_mapping.changed:
+            logger.spam("Mapping did not change")
             return
 
         try:
@@ -1014,6 +1062,9 @@ class UserInterface:
             editor_stack.set_visible_child(children[1])
         else:
             editor_stack.set_visible_child(children[0])
+
+        # refresh the information of the editors
+        self.on_select_preset()
 
     def update_advanced_editor(self):
         """Show the currently selected mapping in the advanced editor."""
