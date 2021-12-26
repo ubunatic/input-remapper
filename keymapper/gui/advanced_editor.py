@@ -65,7 +65,7 @@ class AdvancedEditor(SingleEditableMapping):
         first_row = rows[0]
         self.on_key_button_clicked(first_row.get_children()[0])
 
-    """Row:"""
+    """SingleEditableMapping"""
 
     def on_symbol_input_change(self, _, event):
         if not event.type in [Gdk.EventType.KEY_PRESS, Gdk.EventType.KEY_RELEASE]:
@@ -97,7 +97,7 @@ class AdvancedEditor(SingleEditableMapping):
     def put_together(self, key, symbol):
         pass
 
-    """Editor:"""
+    """Editor"""
 
     def on_row_removed(self):
         # TODO

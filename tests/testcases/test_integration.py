@@ -391,7 +391,7 @@ class TestIntegration(unittest.TestCase):
 
         # create a new preset, the switch should be correctly off and the
         # config not changed.
-        self.user_interface.on_create_preset_clicked(None)
+        self.user_interface.on_create_preset_clicked()
         gtk_iteration()
         self.assertEqual(self.user_interface.preset_name, "new preset 2")
         self.assertFalse(self.user_interface.get("preset_autoload_switch").get_active())
@@ -445,7 +445,7 @@ class TestIntegration(unittest.TestCase):
             raise PermissionError
 
         with patch.object(custom_mapping, "save", save):
-            self.user_interface.on_create_preset_clicked(None)
+            self.user_interface.on_create_preset_clicked()
             status = self.get_status_text()
             self.assertIn("Permission denied", status)
 
@@ -690,8 +690,14 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
 
         # focus different row
+        # TODO .active_editor instead?
+        print('## add empty')
         self.user_interface.simple_editor.add_empty()
-        self.user_interface.window.set_focus(self.get_rows()[1].keycode_input)
+        keycode_input = self.get_rows()[1].keycode_input
+        print('## set focus', keycode_input)
+        self.user_interface.window.set_focus(keycode_input)
+        print('## is focus', keycode_input.is_focus())
+        print('## assert')
         self.assertEqual(reader.get_unreleased_keys(), None)
 
     def test_rows(self):
@@ -960,7 +966,7 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(len(custom_mapping), 1)
         self.assertEqual(self.user_interface.preset_name, "asdf")
 
-        self.user_interface.on_create_preset_clicked(None)
+        self.user_interface.on_create_preset_clicked()
         self.assertEqual(self.user_interface.preset_name, "new preset")
         self.assertIsNone(custom_mapping.get_symbol(Key(EV_KEY, 14, 1)))
         self.user_interface.save_preset()
@@ -1077,7 +1083,7 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(self.user_interface.preset_name, "new preset")
 
         # create another one
-        self.user_interface.on_create_preset_clicked(None)
+        self.user_interface.on_create_preset_clicked()
         gtk_iteration()
         self.assertTrue(
             os.path.exists(f"{CONFIG_PATH}/presets/Foo Device/new preset.json")
@@ -1133,7 +1139,7 @@ class TestIntegration(unittest.TestCase):
         custom_mapping.set("a.b", 3)
         self.assertEqual(custom_mapping.get("a.b"), 3)
 
-        self.user_interface.on_create_preset_clicked(None)
+        self.user_interface.on_create_preset_clicked()
 
         # the preset should be empty, only one empty row present
         self.assertEqual(len(mapping_list.get_children()), 1)
@@ -1148,14 +1154,16 @@ class TestIntegration(unittest.TestCase):
         custom_mapping.set(["foo", "bar"], 2)
 
         # this time it should be copied
-        self.user_interface.on_copy_preset_clicked(None)
+        print('-----')
+        self.user_interface.on_copy_preset_clicked()
         self.assertEqual(self.user_interface.preset_name, "new preset 2 copy")
+        print('assert')
         self.assertEqual(len(mapping_list.get_children()), 2)
         self.assertEqual(mapping_list.get_children()[0].get_symbol(), "b")
         self.assertEqual(custom_mapping.get(["foo", "bar"]), 2)
 
         # make another copy
-        self.user_interface.on_copy_preset_clicked(None)
+        self.user_interface.on_copy_preset_clicked()
         self.assertEqual(self.user_interface.preset_name, "new preset 2 copy 2")
         self.assertEqual(len(mapping_list.get_children()), 2)
         self.assertEqual(mapping_list.get_children()[0].get_symbol(), "b")
@@ -1564,7 +1572,7 @@ class TestIntegration(unittest.TestCase):
 
         # to make sure the next preset has a slightly higher timestamp
         time.sleep(0.1)
-        self.user_interface.on_create_preset_clicked(None)
+        self.user_interface.on_create_preset_clicked()
         self.user_interface.get("preset_name_input").set_text("preset 2")
         self.user_interface.on_rename_button_clicked(None)
         self.assertEqual(preset_selection.get_active_id(), "preset 2")
@@ -1638,7 +1646,7 @@ class TestIntegration(unittest.TestCase):
 
         # 1. create a preset
         self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device 2"))
-        self.user_interface.on_create_preset_clicked(None)
+        self.user_interface.on_create_preset_clicked()
         self.change_empty_row(Key(3, 2, 1), "qux")
         self.user_interface.get("preset_name_input").set_text("asdf")
         self.user_interface.on_rename_button_clicked(None)

@@ -82,6 +82,7 @@ class _KeycodeInput(Gtk.ToggleButton):
 
         # make the togglebutton go back to its normal state when doing
         # something else in the UI
+        print('_KeycodeInput constructor connect')
         self.connect("focus-in-event", self.on_focus)
         self.connect("focus-out-event", self.on_unfocus)
         # don't leave the input when using arrow keys or tab. wait for the
@@ -95,6 +96,7 @@ class _KeycodeInput(Gtk.ToggleButton):
 
     def on_focus(self, *_):
         """Refresh useful usage information."""
+        print('on_focus, reader.clear()')
         reader.clear()
         self.show_press_key()
 
@@ -138,10 +140,9 @@ class _KeycodeInput(Gtk.ToggleButton):
 
 
 class SingleEditableMapping:
-    """A base class for editors with a key listener and text input.
+    """A base class for editing a single mapping with a key listener and text input.
 
-    After finishing recording keys, it will automatically focus the text input. This
-    represents one mapping element at a time.
+    After finishing recording keys, it will automatically focus the text input.
     """
 
     """To be overwritten by inheriting class"""
@@ -329,6 +330,7 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         keycode_input = _KeycodeInput(key)
         keycode_input.connect("focus-out-event", self.on_keycode_input_unfocus)
         self.keycode_input = keycode_input
+        print('put_together', self.keycode_input)
         self.keycode_input.key = key
 
         symbol_input = Gtk.Entry()
@@ -376,9 +378,13 @@ class SimpleEditor:
 
     def load_custom_mapping(self):
         """Display the custom mapping."""
-        self.clear_mapping_table()
+        print('load_custom_mapping', custom_mapping._mapping)
+
         mapping_list = self.get("mapping_list")
+        mapping_list.forall(mapping_list.remove)
+
         for key, output in custom_mapping:
+            print('key, output', key, output)
             single_key_mapping = Row(
                 user_interface=self.user_interface,
                 delete_callback=self.on_row_removed,
@@ -391,6 +397,7 @@ class SimpleEditor:
             single_key_mapping.keycode_input.connect(
                 "focus-out-event", self.user_interface.save_preset
             )
+            print('inserting', single_key_mapping.get_key(), single_key_mapping.get_symbol())
             mapping_list.insert(single_key_mapping, -1)
 
     def get_focused_row(self):

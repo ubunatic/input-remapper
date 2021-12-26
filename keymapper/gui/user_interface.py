@@ -668,12 +668,12 @@ class UserInterface:
             self.get("apply_system_layout").set_opacity(0.4)
 
     @with_preset_name
-    def on_copy_preset_clicked(self, _):
+    def on_copy_preset_clicked(self, *_):
         """Copy the current preset and select it."""
-        self.create_preset(True)
+        self.create_preset(copy=True)
 
     @with_group
-    def on_create_preset_clicked(self, _):
+    def on_create_preset_clicked(self, *_):
         """Create a new preset and select it."""
         self.create_preset()
 
@@ -692,6 +692,7 @@ class UserInterface:
                 custom_mapping.empty()
 
             path = self.group.get_preset_path(new_preset)
+            print('save')
             custom_mapping.save(path)
             self.get("preset_selection").append(new_preset, new_preset)
             self.get("preset_selection").set_active_id(new_preset)
