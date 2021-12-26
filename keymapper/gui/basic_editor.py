@@ -31,10 +31,6 @@ from keymapper.gui.reader import reader
 from keymapper.logger import logger
 
 
-IDLE = 0
-HOLDING = 1
-
-
 store = Gtk.ListStore(str)
 
 
@@ -184,22 +180,25 @@ class SingleEditableMapping:
 
         self.put_together(key, symbol)
 
-        self.state = IDLE
+        # keys were not pressed yet
+        self.input_has_arrived = False
 
-    def refresh_state(self):
-        """Refresh the state.
+    def switch_focus_if_complete(self):
+        """If keys are released, it will switch to the symbol_input.
 
-        The state is needed to switch focus when no keys are held anymore,
-        but only if the row has been in the HOLDING state before.
+        States:
+        1. not doing anything, waiting for the user to start using it
+        2. user focuses it, no keys pressed
+        3. user presses keys
+        4. user releases keys. no keys are pressed, just like in step 2, but this time
+        the focus needs to switch.
         """
         if not self.is_waiting_for_input():
-            # TODO does it still work if I just do `if self.state == IDLE: return`?
-            self.state = IDLE
+            self.set_idle()
             return
 
-        old_state = self.state
         all_keys_released = reader.get_unreleased_keys() is None
-        if all_keys_released and old_state == HOLDING and self.get_key():
+        if all_keys_released and self.input_has_arrived and self.get_key():
             # A key was pressed and then released.
             # Switch to the symbol. idle_add this so that the
             # keycode event won't write into the symbol input as well.
@@ -207,10 +206,12 @@ class SingleEditableMapping:
             GLib.idle_add(lambda: window.set_focus(self.symbol_input))
 
         if not all_keys_released:
-            self.state = HOLDING
+            # currently the user is using the widget, and certain keys have already
+            # reached it.
+            self.input_has_arrived = True
             return
 
-        self.state = IDLE
+        self.set_idle()
 
     def set_key(self, new_key):
         """Check if a keycode has been pressed and if so, display it.
@@ -231,7 +232,7 @@ class SingleEditableMapping:
             return
 
         # it might end up being a key combination
-        self.state = HOLDING
+        self.input_has_arrived = True
 
         # keycode didn't change, do nothing
         if new_key == previous_key:
@@ -272,8 +273,8 @@ class SingleEditableMapping:
             self.symbol_input.set_text(correct_case)
         self.user_interface.save_preset()
 
-    def on_keycode_input_unfocus(self, *_):
-        self.state = IDLE
+    def set_idle(self, *_):
+        self.input_has_arrived = False
 
     def on_delete_button_clicked(self, *_):
         """Destroy the row and remove it from the config."""
@@ -326,7 +327,8 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         delete_button.set_size_request(50, -1)
 
         keycode_input = _KeycodeInput(key)
-        keycode_input.connect("focus-out-event", self.on_keycode_input_unfocus)
+        keycode_input.connect("focus-in-event", self.set_idle)
+        keycode_input.connect("focus-out-event", self.set_idle)
         self.keycode_input = keycode_input
         self.keycode_input.key = key
 
@@ -364,14 +366,22 @@ class BasicEditor:
     """Maintains the widgets of the simple editor."""
 
     def __init__(self, user_interface):
-        """TODO"""
         self.user_interface = user_interface
         self.window = self.get("window")
         self.timeout = GLib.timeout_add(100, self.check_add_row)
+        mapping_list = self.get("mapping_list")
+        mapping_list.connect("destroy", self.on_destroy)
 
     def get(self, name):
         """Get a widget from the window"""
         return self.user_interface.builder.get_object(name)
+
+    def on_destroy(self, *_):
+        """Clear up all timeouts and resources.
+
+        This is especially important for tests.
+        """
+        GLib.source_remove(self.timeout)
 
     def load_custom_mapping(self):
         """Display the custom mapping."""
@@ -411,14 +421,17 @@ class BasicEditor:
 
     def check_add_row(self):
         """Ensure that one empty row is available at all times."""
-        rows = self.get("mapping_list").get_children()
+        mapping_list = self.get("mapping_list")
+        rows = mapping_list.get_children()
 
         # verify that all mappings are displayed.
         # One of them is possibly the empty row
         num_rows = len(rows)
         num_maps = len(custom_mapping)
         if num_rows < num_maps or num_rows > num_maps + 1:
-            # good for finding bugs early on during development
+            # good for finding bugs early on during development.
+            # If you get these logs during tests, then maybe some earlier test
+            # has still a glib timeout running.
             logger.error(
                 "custom_mapping contains %d rows, but %d are displayed",
                 len(custom_mapping),
@@ -457,7 +470,7 @@ class BasicEditor:
         if row is None:
             return True
 
-        row.refresh_state()
+        row.switch_focus_if_complete()
 
         if key is None:
             return True
@@ -477,6 +490,7 @@ class BasicEditor:
 
     def add_empty(self):
         """Add one empty row for a single mapped key."""
+        logger.spam("Adding a new empty row")
         empty = Row(
             user_interface=self.user_interface, delete_callback=self.on_row_removed
         )

@@ -109,7 +109,7 @@ class AdvancedEditor(SingleEditableMapping):
 
     def consume_newest_keycode(self, key):
         """TODO"""
-        self.refresh_state()
+        self.switch_focus_if_complete()
 
         if key is None:
             return True

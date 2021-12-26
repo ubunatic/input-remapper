@@ -335,7 +335,6 @@ class UserInterface:
         for timeout in self.timeouts:
             GLib.source_remove(timeout)
             self.timeouts = []
-        # TODO on_close in editors as well?
         reader.terminate()
         Gtk.main_quit()
 
@@ -707,8 +706,6 @@ class UserInterface:
 
         if dropdown.get_active_id() == self.preset_name:
             return
-
-        self.basic_editor.clear_mapping_table()  # TODO remove line?
 
         preset = dropdown.get_active_text()
         if preset is None:

@@ -52,7 +52,7 @@ from keymapper.paths import CONFIG_PATH, get_preset_path, get_config_path
 from keymapper.config import config, WHEEL, MOUSE, BUTTONS
 from keymapper.gui.reader import reader
 from keymapper.injection.injector import RUNNING, FAILED, UNKNOWN
-from keymapper.gui.basic_editor import Row, HOLDING, IDLE
+from keymapper.gui.basic_editor import Row
 from keymapper.gui.user_interface import UserInterface
 from keymapper.key import Key
 from keymapper.daemon import Daemon
@@ -287,6 +287,7 @@ class TestIntegration(unittest.TestCase):
         # for whatever miraculous reason it suddenly takes 0.005s before gtk does
         # anything, even for old code.
         time.sleep(0.02)
+        # TODO use self.sleep here
         gtk_iteration()
 
     def get_rows(self):
@@ -547,9 +548,7 @@ class TestIntegration(unittest.TestCase):
     def test_row_not_focused(self):
         # focus anything that is not the row,
         # no keycode should be inserted into it
-        self.set_focus(
-            self.user_interface.get("preset_name_input")
-        )
+        self.set_focus(self.user_interface.get("preset_name_input"))
         send_event_to_reader(new_event(1, 61, 1))
         self.user_interface.consume_newest_keycode()
 
@@ -606,7 +605,7 @@ class TestIntegration(unittest.TestCase):
         row = rows[-1]
         self.assertIsNone(row.get_key())
         self.assertEqual(row.symbol_input.get_text(), "")
-        self.assertEqual(row.state, IDLE)
+        self.assertFalse(row.input_has_arrived)
 
         if char and not code_first:
             # set the symbol to make the new row complete
@@ -629,9 +628,8 @@ class TestIntegration(unittest.TestCase):
             # modifies the keycode in the row not by writing into the input,
             # but by sending an event. press down all the keys of a combination
             for sub_key in key:
-
                 send_event_to_reader(new_event(*sub_key))
-                # this will be consumed all at once, since no gt_iteration
+                # this will be consumed all at once, since no gtk_iteration
                 # is done
 
             # make the window consume the keycode
@@ -640,7 +638,7 @@ class TestIntegration(unittest.TestCase):
             # holding down
             self.assertIsNotNone(reader.get_unreleased_keys())
             self.assertGreater(len(reader.get_unreleased_keys()), 0)
-            self.assertEqual(row.state, HOLDING)
+            self.assertTrue(row.input_has_arrived)
             self.assertTrue(row.keycode_input.is_focus())
 
             # release all the keys
@@ -652,7 +650,7 @@ class TestIntegration(unittest.TestCase):
 
             # released
             self.assertIsNone(reader.get_unreleased_keys())
-            self.assertEqual(row.state, IDLE)
+            self.assertFalse(row.input_has_arrived)
 
             if expect_success:
                 self.assertEqual(row.get_key(), key)
@@ -663,7 +661,7 @@ class TestIntegration(unittest.TestCase):
         if not expect_success:
             self.assertIsNone(row.get_key())
             self.assertIsNone(row.get_symbol())
-            self.assertEqual(row.state, IDLE)
+            self.assertFalse(row.input_has_arrived)
             # it won't switch the focus to the symbol input
             self.assertTrue(row.keycode_input.is_focus())
             self.assertEqual(custom_mapping.changed, changed)
@@ -703,11 +701,6 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.basic_editor.add_empty()
         keycode_input = self.get_rows()[1].keycode_input
         self.set_focus(keycode_input)
-
-        # for whatever stupid shit reason it takes 0.005s before gtk does anything.
-        # A few hours ago this wasn't necessary. This even suddenly happens on old code
-        time.sleep(0.02)
-        gtk_iteration()
 
         self.assertEqual(reader.get_unreleased_keys(), None)
 
@@ -1623,7 +1616,9 @@ class TestIntegration(unittest.TestCase):
         mapping_list = self.user_interface.get("mapping_list")
         mapping_list.forall(mapping_list.remove)
         for i in range(5):
-            broken = Row(user_interface=self.user_interface, delete_callback=lambda: None)
+            broken = Row(
+                user_interface=self.user_interface, delete_callback=lambda: None
+            )
             broken.set_key(Key(1, i, 1))
             broken.symbol_input.set_text("a")
             mapping_list.insert(broken, -1)
