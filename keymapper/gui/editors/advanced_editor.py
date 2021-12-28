@@ -22,7 +22,7 @@
 """The advanced editor with a larger code editor."""
 
 
-from gi.repository import Gtk, GLib, Gdk
+from gi.repository import GObject, Gtk, GLib, Gdk
 
 from keymapper.gui.editors.basic_editor import SingleEditableMapping
 from keymapper.gui.custom_mapping import custom_mapping
@@ -188,6 +188,7 @@ class AdvancedEditor(SingleEditableMapping):
             # there is no "changed" event for the GtkSourceView editor
             return
 
+        print(id(self), "on_text_input_change")
         # TODO autocompletion
         #  - also for words at the cursor position when editing a macro
 

@@ -154,8 +154,11 @@ class UserInterface:
         builder.connect_signals(self)
         self.builder = builder
 
+        self.advanced_editor = AdvancedEditor(self)
+        self.basic_editor = BasicEditor(self)
+
         # TODO read from config which one to show on start
-        self.active_editor = BasicEditor(self)
+        self.active_editor = self.basic_editor
 
         # set up the device selection
         # https://python-gtk-3-tutorial.readthedocs.io/en/latest/treeview.html#the-view
@@ -785,17 +788,15 @@ class UserInterface:
         # TODO test
         # TODO write to config when changed
 
-        self.active_editor.destroy()
-
         show_advanced_editor = button.get_active()
         editor_stack = self.get("editor-stack")
         children = editor_stack.get_children()
 
         if show_advanced_editor:
-            self.active_editor = AdvancedEditor(self)
+            self.active_editor = self.advanced_editor
             editor_stack.set_visible_child(children[1])
         else:
-            self.active_editor = BasicEditor(self)
+            self.active_editor = self.basic_editor
             editor_stack.set_visible_child(children[0])
 
         self.active_editor.load_custom_mapping()
