@@ -24,7 +24,7 @@
 
 from gi.repository import Gtk, GLib, Gdk
 
-from keymapper.gui.basic_editor import SingleEditableMapping
+from keymapper.gui.editors.basic_editor import SingleEditableMapping
 from keymapper.gui.custom_mapping import custom_mapping
 
 

@@ -19,7 +19,7 @@
 # along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""The basic editor with one row per mapping."""
+"""Base classes for all editors."""
 
 
 from gi.repository import Gtk, GLib, Gdk

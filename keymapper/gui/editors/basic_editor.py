@@ -22,12 +22,11 @@
 """The basic editor with one row per mapping."""
 
 
-from gi.repository import Gtk, GLib, Gdk
+from gi.repository import Gtk, GLib
 
 from keymapper.gui.custom_mapping import custom_mapping
 from keymapper.key import Key
-from keymapper.gui.reader import reader
-from keymapper.gui.single_editable_mapping import SingleEditableMapping, store
+from keymapper.gui.editors.base import SingleEditableMapping, store
 from keymapper.logger import logger
 
 

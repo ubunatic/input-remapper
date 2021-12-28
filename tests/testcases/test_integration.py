@@ -52,7 +52,7 @@ from keymapper.paths import CONFIG_PATH, get_preset_path, get_config_path
 from keymapper.config import config, WHEEL, MOUSE, BUTTONS
 from keymapper.gui.reader import reader
 from keymapper.injection.injector import RUNNING, FAILED, UNKNOWN
-from keymapper.gui.basic_editor import Row
+from keymapper.gui.editors.basic_editor import Row
 from keymapper.gui.user_interface import UserInterface
 from keymapper.key import Key
 from keymapper.daemon import Daemon

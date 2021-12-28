@@ -50,8 +50,8 @@ from keymapper.groups import (
     TOUCHPAD,
     MOUSE,
 )
-from keymapper.gui.basic_editor import BasicEditor
-from keymapper.gui.advanced_editor import AdvancedEditor
+from keymapper.gui.editors.basic_editor import BasicEditor
+from keymapper.gui.editors.advanced_editor import AdvancedEditor
 from keymapper.key import Key
 from keymapper.gui.reader import reader
 from keymapper.gui.helper import is_helper_running
