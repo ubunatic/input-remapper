@@ -64,13 +64,11 @@ class _KeycodeRecordingToggle(Gtk.ToggleButton):
 
     def on_focus(self, *_):
         """Refresh useful usage information."""
-        reader.clear()
         self.show_press_key()
 
     def on_unfocus(self, *_):
         """Refresh useful usage information and set some state stuff."""
         self.show_click_here()
-        self.set_active(False)
 
     def show_click_here(self):
         """Show 'click here' on the keycode input button."""
@@ -169,8 +167,8 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         self.add(box)
         self.show_all()
 
-    def is_waiting_for_input(self):
-        return self.key_recording_toggle.is_focus()
+    def get_recording_toggle(self):
+        return self.key_recording_toggle
 
     def get_key(self):
         """Get the Key object from the left column.
@@ -304,25 +302,10 @@ class BasicEditor:
         key : Key or None
             If None will unfocus the input widget
         """
-        # TODO highlight if a row for that key exists or something
-
         # inform the currently selected row about the new keycode
         row, focused = self.get_focused_row()
-
-        if row is None:
-            return True
-
-        row.switch_focus_if_complete()
-
-        if key is None:
-            return True
-
-        if not row.key_recording_toggle.is_focus():
-            return True
-
-        row.set_key(key)
-
-        return True
+        if row:
+            row.consume_newest_keycode(key)
 
     def clear_mapping_table(self):
         """Remove all rows from the mappings table."""

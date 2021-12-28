@@ -75,6 +75,7 @@ if __name__ == '__main__':
     user_interface = UserInterface()
 
     def stop():
+        # TODO I don't think the below makes sense anymore
         if isinstance(user_interface.dbus, Daemon):
             # it created its own temporary daemon inside the process
             # because none was running

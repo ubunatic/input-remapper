@@ -22,7 +22,7 @@
 """The basic editor with one row per mapping."""
 
 
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GLib, Gdk
 
 from keymapper.system_mapping import system_mapping
 from keymapper.gui.custom_mapping import custom_mapping
@@ -58,15 +58,14 @@ populate_store()
 
 
 class SingleEditableMapping:
-    """A base class for editing a single mapping with a key listener and text input.
+    """A base class for editing a single mapping,
 
-    After finishing recording keys, it will automatically focus the text input.
+    Manages a text input to show the configured output, a ToggleButton to activate key
+    recording and a delete button. After finishing recording keys, it will
+    automatically focus the text input.
     """
 
     """To be overwritten by inheriting class"""
-
-    def is_waiting_for_input(self):
-        raise NotImplementedError
 
     def get_key(self):
         """Get the Key object, or None if no code is mapped on this row."""
@@ -78,6 +77,10 @@ class SingleEditableMapping:
 
     def display_key(self, key):
         """Show what the user is currently pressing in ther user interface."""
+        raise NotImplementedError
+
+    def get_recording_toggle(self):
+        """Return the Gtk.ToggleButton that indicates if keys are being recorded."""
         raise NotImplementedError
 
     """Connect your widget events to those functions"""
@@ -104,6 +107,7 @@ class SingleEditableMapping:
             custom_mapping.clear(key)
 
         self.text_input.set_text("")
+
         self.delete_callback(self)
 
     """Base functionality"""
@@ -112,12 +116,48 @@ class SingleEditableMapping:
         """Construct an editable mapping."""
         self.device = user_interface.group
         self.user_interface = user_interface
+
+        # TODO use glib events instead of parameter:
         self.delete_callback = delete_callback
 
         self.text_input = None
 
         # keys were not pressed yet
         self.input_has_arrived = False
+
+        # Do this after the constructor of inheriting classes has finished.
+        # TODO this is stupid
+        GLib.idle_add(self.connect_events)
+
+    def connect_events(self):
+        # the click event to activate recording should not be recorded
+        toggle = self.get_recording_toggle()
+        toggle.connect("focus-in-event", lambda *_: reader.clear())
+        toggle.connect("focus-out-event", lambda *_: toggle.set_active(False))
+
+    def is_waiting_for_input(self):
+        """Check if the user is interacting with the ToggleButton for key recording."""
+        return self.get_recording_toggle().is_focus()
+
+    def consume_newest_keycode(self, key):
+        """To capture events from keyboards, mice and gamepads.
+
+        Parameters
+        ----------
+        key : Key or None
+            If None will unfocus the input widget
+            # TODO wtf? switch_focus_if_complete uses self.get_key, but
+               set_key is called after it
+        """
+        self.switch_focus_if_complete()
+
+        if key is None:
+            return
+
+        if not self.is_waiting_for_input():
+            return
+
+        self.set_key(key)
 
     def switch_focus_if_complete(self):
         """If keys are released, it will switch to the text_input.

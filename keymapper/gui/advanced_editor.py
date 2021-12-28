@@ -59,6 +59,13 @@ class SelectionLabel(Gtk.Label):
 
 
 # TODO bass class all functions calls on self.active_editor.
+# TODO changing keys adds duplicate mappings
+# TODO mapping the left mouse button doesn't work (maybe because is_waiting_for_input
+#  uses get_active)
+# TODO I get tons of duplicate
+#  DEBUG mapping.py:108: Key((1, 272, 1), (1, 273, 1)) maps to "abcd"
+#  EBUG mapping.py:132: Key((1, 272, 1), (1, 273, 1)) cleared
+#  logs
 class AdvancedEditor(SingleEditableMapping):
     """Maintains the widgets of the advanced editor."""
 
@@ -77,13 +84,17 @@ class AdvancedEditor(SingleEditableMapping):
         self.timeout = GLib.timeout_add(100, self.check_add_new_key)
         self.active_selection_label = None
 
-        # TODO show "press key" on button when active
-        self.get("advanced_key_recording_button").connect(
+        self.get("advanced_key_recording_toggle").connect(
             "focus-out-event", self.on_key_recording_button_unfocus
         )
-        self.get("advanced_key_recording_button").connect(
+        self.get("advanced_key_recording_toggle").connect(
             "focus-in-event", self.on_key_recording_button_focus,
         )
+
+        # TODO can I somehow move this to the base class?
+        # don't leave the input when using arrow keys or tab. wait for the
+        # window to consume the keycode from the reader
+        self.get("advanced_key_recording_toggle").connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
 
         mapping_list = self.get("mapping_list_advanced")
         mapping_list.connect("row-activated", self.on_mapping_selected)
@@ -91,57 +102,17 @@ class AdvancedEditor(SingleEditableMapping):
         if len(mapping_list.get_children()) == 0:
             self.add_empty()
 
-    """SingleEditableMapping"""
-
-    def on_text_input_change(self, _, event):
-        if not event.type in [Gdk.EventType.KEY_PRESS, Gdk.EventType.KEY_RELEASE]:
-            # there is no "changed" event for the GtkSourceView editor
-            return
-
-        # TODO autocompletion
-        #  - also for words at the cursor position
-
-        super().on_text_input_change()
-
-    def is_waiting_for_input(self):
-        return self.get("advanced_key_recording_button").get_active()
-
-    def get_key(self):
-        """Get the Key object from the left column.
-
-        Or None if no code is mapped on this row.
-        """
-        if self.active_selection_label is None:
-            return None
-
-        return self.active_selection_label.key
-
-    def get_symbol(self):
-        """Get the assigned symbol from the middle column."""
-        buffer = self.text_input.get_buffer()
-        symbol = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
-        # TODO make sure to test that this never returns ""
-        return symbol if symbol else None
-
-    def display_key(self, key):
-        """Show what the user is currently pressing in ther user interface."""
-        self.active_selection_label.set_label(key.beautify())
-
-    """Editor"""
-
     def __del__(self, *_):
         """Clear up all timeouts and resources.
 
         This is especially important for tests.
         """
-        # TODO move into base class?
         if self.timeout:
             GLib.source_remove(self.timeout)
             self.timeout = None
 
     def destroy(self):
         """Don't do anything with the widgets anymore."""
-        # TODO should be a base function of an interface for advanced and basic editor
         self.__del__()
 
     def on_mapping_removed(self):
@@ -153,20 +124,6 @@ class AdvancedEditor(SingleEditableMapping):
         """Get a widget from the window"""
         return self.user_interface.builder.get_object(name)
 
-    def consume_newest_keycode(self, key):
-        """To capture events from keyboards, mice and gamepads."""
-        self.switch_focus_if_complete()
-
-        if key is None:
-            return True
-
-        if not self.is_waiting_for_input():
-            return True
-
-        self.set_key(key)
-
-        return True
-
     def check_add_new_key(self):
         """If needed, add a new empty mapping to the list for the user to configure."""
         # TODO. Or a + icon to add a new one?
@@ -174,12 +131,13 @@ class AdvancedEditor(SingleEditableMapping):
 
     def on_key_recording_button_focus(self, *_):
         """Don't highlight the key-recording-button anymore."""
-        self.get("advanced_key_recording_button").set_label("Press key")
+        self.get("advanced_key_recording_toggle").set_label("Press key")
 
     def on_key_recording_button_unfocus(self, *_):
         """Don't highlight the key-recording-button anymore."""
-        self.get("advanced_key_recording_button").set_label("Change key")
-        self.get("advanced_key_recording_button").set_active(False)
+        print('on_key_recording_button_unfocus')
+        self.get("advanced_key_recording_toggle").set_label("Change key")
+        self.get("advanced_key_recording_toggle").set_active(False)
 
     def on_mapping_selected(self, _=None, list_box_row=None):
         """One of the buttons in the left "key" column was clicked.
@@ -222,3 +180,39 @@ class AdvancedEditor(SingleEditableMapping):
         rows = mapping_list.get_children()
         mapping_list.select_row(rows[0])
         self.on_mapping_selected(list_box_row=rows[0])
+
+    """SingleEditableMapping"""
+
+    def get_recording_toggle(self):
+        return self.get("advanced_key_recording_toggle")
+
+    def on_text_input_change(self, _, event):
+        if not event.type in [Gdk.EventType.KEY_PRESS, Gdk.EventType.KEY_RELEASE]:
+            # there is no "changed" event for the GtkSourceView editor
+            return
+
+        # TODO autocompletion
+        #  - also for words at the cursor position when editing a macro
+
+        super().on_text_input_change()
+
+    def get_key(self):
+        """Get the Key object from the left column.
+
+        Or None if no code is mapped on this row.
+        """
+        if self.active_selection_label is None:
+            return None
+
+        return self.active_selection_label.key
+
+    def get_symbol(self):
+        """Get the assigned symbol from the middle column."""
+        buffer = self.text_input.get_buffer()
+        symbol = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+        # TODO make sure to test that this never returns ""
+        return symbol if symbol else None
+
+    def display_key(self, key):
+        """Show what the user is currently pressing in ther user interface."""
+        self.active_selection_label.set_label(key.beautify())
