@@ -504,19 +504,19 @@ class TestIntegration(unittest.TestCase):
 
         row = rows[0]
 
-        row.set_key(None)
+        row._set_key(None)
         self.assertIsNone(row.get_key())
         self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(row.key_recording_toggle.get_label(), "Click here")
 
-        row.set_key(Key(EV_KEY, 30, 1))
+        row._set_key(Key(EV_KEY, 30, 1))
         self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(row.get_key(), (EV_KEY, 30, 1))
         # this is KEY_A in linux/input-event-codes.h,
         # but KEY_ is removed from the text
         self.assertEqual(row.key_recording_toggle.get_label(), "a")
 
-        row.set_key(Key(EV_KEY, 30, 1))
+        row._set_key(Key(EV_KEY, 30, 1))
         self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(row.get_key(), (EV_KEY, 30, 1))
 
@@ -1616,7 +1616,7 @@ class TestIntegration(unittest.TestCase):
             broken = Row(
                 user_interface=self.user_interface, delete_callback=lambda: None
             )
-            broken.set_key(Key(1, i, 1))
+            broken._set_key(Key(1, i, 1))
             broken.text_input.set_text("a")
             mapping_list.insert(broken, -1)
         custom_mapping.empty()

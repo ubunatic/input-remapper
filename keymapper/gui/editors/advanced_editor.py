@@ -73,7 +73,6 @@ class AdvancedEditor(SingleEditableMapping):
         self.user_interface = user_interface
 
         text_input = self.get("code_editor")
-        text_input.connect("focus-out-event", self.on_text_input_unfocus)
         text_input.connect("event", self.on_text_input_change)
 
         self.window = self.get("window")
@@ -84,7 +83,8 @@ class AdvancedEditor(SingleEditableMapping):
             "focus-out-event", self.on_key_recording_button_unfocus
         )
         self.get("advanced_key_recording_toggle").connect(
-            "focus-in-event", self.on_key_recording_button_focus,
+            "focus-in-event",
+            self.on_key_recording_button_focus,
         )
 
         mapping_list = self.get("mapping_list_advanced")
@@ -93,10 +93,7 @@ class AdvancedEditor(SingleEditableMapping):
         if len(mapping_list.get_children()) == 0:
             self.add_empty()
 
-        super().__init__(
-            delete_callback=self.on_mapping_removed,
-            user_interface=user_interface,
-        )
+        super().__init__(user_interface=user_interface)
 
     def __del__(self, *_):
         """Clear up all timeouts and resources.
@@ -111,7 +108,7 @@ class AdvancedEditor(SingleEditableMapping):
         """Don't do anything with the widgets anymore."""
         self.__del__()
 
-    def on_mapping_removed(self):
+    def on_delete_button_clicked(self):
         """The delete button on a single mapped key was clicked."""
         # TODO
         pass
@@ -126,14 +123,12 @@ class AdvancedEditor(SingleEditableMapping):
         return True
 
     def on_key_recording_button_focus(self, *_):
-        """Don't highlight the key-recording-button anymore."""
+        """Show user friendly instructions."""
         self.get("advanced_key_recording_toggle").set_label("Press key")
 
     def on_key_recording_button_unfocus(self, *_):
-        """Don't highlight the key-recording-button anymore."""
-        print('on_key_recording_button_unfocus')
+        """Show user friendly instructions."""
         self.get("advanced_key_recording_toggle").set_label("Change key")
-        self.get("advanced_key_recording_toggle").set_active(False)
 
     def on_mapping_selected(self, _=None, list_box_row=None):
         """One of the buttons in the left "key" column was clicked.
@@ -143,8 +138,8 @@ class AdvancedEditor(SingleEditableMapping):
         selection_label = list_box_row.get_children()[0]
         self.active_selection_label = selection_label
 
-        self.get("code_editor").get_buffer().set_text(selection_label.output or "")
-        self.set_key(selection_label.key)
+        self.set_symbol(selection_label.output or "")
+        self.display_key(selection_label.key)
 
     def add_empty(self):
         """Add one empty row for a single mapped key."""
@@ -182,11 +177,14 @@ class AdvancedEditor(SingleEditableMapping):
     def get_recording_toggle(self):
         return self.get("advanced_key_recording_toggle")
 
+    def set_symbol(self, symbol):
+        self.get("code_editor").get_buffer().set_text(symbol)
+
     def get_text_input(self):
         return self.get("code_editor")
 
     def on_text_input_change(self, _, event):
-        if not event.type in [Gdk.EventType.KEY_PRESS, Gdk.EventType.KEY_RELEASE]:
+        if event.type != Gdk.EventType.KEY_RELEASE:
             # there is no "changed" event for the GtkSourceView editor
             return
 

@@ -108,7 +108,7 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
 
     __gtype_name__ = "ListBoxRow"
 
-    def __init__(self, *args, key=None, symbol=None, **kwargs):
+    def __init__(self, *args, delete_callback, key=None, symbol=None, **kwargs):
         """
 
         Parameters
@@ -128,8 +128,6 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         delete_button.set_size_request(50, -1)
 
         key_recording_toggle = _KeycodeRecordingToggle(key)
-        key_recording_toggle.connect("focus-in-event", self.reset)
-        key_recording_toggle.connect("focus-out-event", self.reset)
         self.key_recording_toggle = key_recording_toggle
         self.key_recording_toggle.key = key
 
@@ -148,7 +146,6 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
             text_input.set_text(symbol)
 
         self.text_input.connect("changed", self.on_text_input_change)
-        self.text_input.connect("focus-out-event", self.on_text_input_unfocus)
 
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         box.set_homogeneous(False)
@@ -158,6 +155,8 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         box.pack_start(delete_button, expand=False, fill=True, padding=0)
         box.show_all()
         box.get_style_context().add_class("row-box")
+
+        self.delete_callback = delete_callback
 
         self.add(box)
         self.show_all()
@@ -182,6 +181,10 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         symbol = self.text_input.get_text()
         return symbol if symbol else None
 
+    def set_symbol(self, symbol):
+        """Set the assigned symbol from the middle column."""
+        self.text_input.set_text(symbol)
+
     def display_key(self, key):
         """Show what the user is currently pressing in ther user interface."""
         self.key_recording_toggle.set_key(key)
@@ -191,6 +194,7 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         super().on_delete_button_clicked()
         self.key_recording_toggle.set_label("")
         self.key_recording_toggle.key = None
+        self.delete_callback(self)
 
 
 class BasicEditor:
@@ -322,13 +326,13 @@ class BasicEditor:
         mapping_list = self.get("mapping_list")
         mapping_list.insert(empty, -1)
 
-    def on_row_removed(self, single_key_mapping):
+    def on_row_removed(self, row):
         """Stuff to do when a row was removed
 
         Parameters
         ----------
-        single_key_mapping : Row
+        row : Row
         """
         mapping_list = self.get("mapping_list")
         # https://stackoverflow.com/a/30329591/4417769
-        mapping_list.remove(single_key_mapping)
+        mapping_list.remove(row)

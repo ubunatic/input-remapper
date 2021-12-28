@@ -75,6 +75,9 @@ class SingleEditableMapping:
         """Get the assigned symbol from the text input."""
         raise NotImplementedError
 
+    def set_symbol(self, symbol):
+        raise NotImplementedError
+
     def display_key(self, key):
         """Show what the user is currently pressing in ther user interface."""
         raise NotImplementedError
@@ -96,27 +99,17 @@ class SingleEditableMapping:
         if symbol is not None and key is not None:
             custom_mapping.change(new_key=key, symbol=symbol, previous_key=None)
 
-    def on_text_input_unfocus(self, *_):
-        """Save the preset and correct the input casing."""
-        symbol = self.get_symbol() or ""
-        correct_case = system_mapping.correct_case(symbol)
-        if symbol != correct_case:
-            self.get_text_input().set_text(correct_case)
-        self.user_interface.save_preset()
-
     def on_delete_button_clicked(self, *_):
         """Destroy the row and remove it from the config."""
         key = self.get_key()
         if key is not None:
             custom_mapping.clear(key)
 
-        self.get_text_input().set_text("")
-
-        self.delete_callback(self)
+        self.set_symbol("")
 
     """Base functionality"""
 
-    def __init__(self, delete_callback, user_interface):
+    def __init__(self, user_interface):
         """Construct an editable mapping.
 
         This constructor needs to be called after your inheriting object finished,
@@ -125,21 +118,30 @@ class SingleEditableMapping:
         self.device = user_interface.group
         self.user_interface = user_interface
 
-        # TODO use glib events instead of parameter:
-        self.delete_callback = delete_callback
-
         # keys were not pressed yet
         self.input_has_arrived = False
 
-        # the click event to activate recording should not be recorded
         toggle = self.get_recording_toggle()
-        toggle.connect("focus-in-event", lambda *_: reader.clear())
+        toggle.connect("focus-in-event", self._reset)
+        toggle.connect("focus-out-event", self._reset)
         toggle.connect("focus-out-event", lambda *_: toggle.set_active(False))
-
+        # the click event to activate recording should not be recorded
+        toggle.connect("focus-in-event", lambda *_: reader.clear())
         # don't leave the input when using arrow keys or tab. wait for the
         # window to consume the keycode from the reader. I.e. a tab input should
         # be recorded, instead of causing the recording to stop.
         toggle.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
+
+        text_input = self.get_text_input()
+        text_input.connect("focus-out-event", self._on_text_input_unfocus)
+
+    def _on_text_input_unfocus(self, *_):
+        """Save the preset and correct the input casing."""
+        symbol = self.get_symbol() or ""
+        correct_case = system_mapping.correct_case(symbol)
+        if symbol != correct_case:
+            self.get_text_input().set_text(correct_case)
+        self.user_interface.save_preset()
 
     def _is_waiting_for_input(self):
         """Check if the user is interacting with the ToggleButton for key recording."""
@@ -153,7 +155,7 @@ class SingleEditableMapping:
         key : Key or None
             If None will unfocus the input widget
             # TODO wtf? _switch_focus_if_complete uses self.get_key, but
-               set_key is called after it
+               _set_key is called after it
         """
         self._switch_focus_if_complete()
 
@@ -163,7 +165,7 @@ class SingleEditableMapping:
         if not self._is_waiting_for_input():
             return
 
-        self.set_key(key)
+        self._set_key(key)
 
     def _switch_focus_if_complete(self):
         """If keys are released, it will switch to the text_input.
@@ -176,7 +178,7 @@ class SingleEditableMapping:
         the focus needs to switch.
         """
         if not self._is_waiting_for_input():
-            self.reset()
+            self._reset()
             return
 
         all_keys_released = reader.get_unreleased_keys() is None
@@ -193,15 +195,16 @@ class SingleEditableMapping:
             self.input_has_arrived = True
             return
 
-        self.reset()
+        self._reset()
 
-    def set_key(self, new_key):
+    def _set_key(self, new_key):
         """Check if a keycode has been pressed and if so, display it.
 
         Parameters
         ----------
         new_key : Key or None
         """
+        # TODO move this into consume_newest_keycode
         if new_key is not None and not isinstance(new_key, Key):
             raise TypeError("Expected new_key to be a Key object")
 
@@ -236,5 +239,5 @@ class SingleEditableMapping:
         value = store.get_value(tree_iter, 0)
         return key in value.lower()
 
-    def reset(self, *_):
+    def _reset(self, *_):
         self.input_has_arrived = False
