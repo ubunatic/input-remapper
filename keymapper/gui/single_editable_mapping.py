@@ -83,6 +83,10 @@ class SingleEditableMapping:
         """Return the Gtk.ToggleButton that indicates if keys are being recorded."""
         raise NotImplementedError
 
+    def get_text_input(self):
+        """Return the Gtk text input widget that contains the mappings output."""
+        raise NotImplementedError
+
     """Connect your widget events to those functions"""
 
     def on_text_input_change(self, *_):
@@ -97,7 +101,7 @@ class SingleEditableMapping:
         symbol = self.get_symbol() or ""
         correct_case = system_mapping.correct_case(symbol)
         if symbol != correct_case:
-            self.text_input.set_text(correct_case)
+            self.get_text_input().set_text(correct_case)
         self.user_interface.save_preset()
 
     def on_delete_button_clicked(self, *_):
@@ -106,36 +110,38 @@ class SingleEditableMapping:
         if key is not None:
             custom_mapping.clear(key)
 
-        self.text_input.set_text("")
+        self.get_text_input().set_text("")
 
         self.delete_callback(self)
 
     """Base functionality"""
 
     def __init__(self, delete_callback, user_interface):
-        """Construct an editable mapping."""
+        """Construct an editable mapping.
+
+        This constructor needs to be called after your inheriting object finished,
+        so that the various widgets are available for event connections.
+        """
         self.device = user_interface.group
         self.user_interface = user_interface
 
         # TODO use glib events instead of parameter:
         self.delete_callback = delete_callback
 
-        self.text_input = None
-
         # keys were not pressed yet
         self.input_has_arrived = False
 
-        # Do this after the constructor of inheriting classes has finished.
-        # TODO this is stupid
-        GLib.idle_add(self.connect_events)
-
-    def connect_events(self):
         # the click event to activate recording should not be recorded
         toggle = self.get_recording_toggle()
         toggle.connect("focus-in-event", lambda *_: reader.clear())
         toggle.connect("focus-out-event", lambda *_: toggle.set_active(False))
 
-    def is_waiting_for_input(self):
+        # don't leave the input when using arrow keys or tab. wait for the
+        # window to consume the keycode from the reader. I.e. a tab input should
+        # be recorded, instead of causing the recording to stop.
+        toggle.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
+
+    def _is_waiting_for_input(self):
         """Check if the user is interacting with the ToggleButton for key recording."""
         return self.get_recording_toggle().is_focus()
 
@@ -146,20 +152,20 @@ class SingleEditableMapping:
         ----------
         key : Key or None
             If None will unfocus the input widget
-            # TODO wtf? switch_focus_if_complete uses self.get_key, but
+            # TODO wtf? _switch_focus_if_complete uses self.get_key, but
                set_key is called after it
         """
-        self.switch_focus_if_complete()
+        self._switch_focus_if_complete()
 
         if key is None:
             return
 
-        if not self.is_waiting_for_input():
+        if not self._is_waiting_for_input():
             return
 
         self.set_key(key)
 
-    def switch_focus_if_complete(self):
+    def _switch_focus_if_complete(self):
         """If keys are released, it will switch to the text_input.
 
         States:
@@ -169,7 +175,7 @@ class SingleEditableMapping:
         4. user releases keys. no keys are pressed, just like in step 2, but this time
         the focus needs to switch.
         """
-        if not self.is_waiting_for_input():
+        if not self._is_waiting_for_input():
             self.reset()
             return
 
@@ -179,7 +185,7 @@ class SingleEditableMapping:
             # Switch to the symbol. idle_add this so that the
             # keycode event won't write into the symbol input as well.
             window = self.user_interface.window
-            GLib.idle_add(lambda: window.set_focus(self.text_input))
+            GLib.idle_add(lambda: window.set_focus(self.get_text_input()))
 
         if not all_keys_released:
             # currently the user is using the widget, and certain keys have already

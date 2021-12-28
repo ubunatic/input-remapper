@@ -70,17 +70,13 @@ class AdvancedEditor(SingleEditableMapping):
     """Maintains the widgets of the advanced editor."""
 
     def __init__(self, user_interface):
-        super().__init__(
-            delete_callback=self.on_mapping_removed,
-            user_interface=user_interface,
-        )
+        self.user_interface = user_interface
 
-        self.text_input = self.get("code_editor")
-        self.text_input.connect("focus-out-event", self.on_text_input_unfocus)
-        self.text_input.connect("event", self.on_text_input_change)
+        text_input = self.get("code_editor")
+        text_input.connect("focus-out-event", self.on_text_input_unfocus)
+        text_input.connect("event", self.on_text_input_change)
 
         self.window = self.get("window")
-        self.advanced_editor = self.get("advanced_editor")
         self.timeout = GLib.timeout_add(100, self.check_add_new_key)
         self.active_selection_label = None
 
@@ -91,16 +87,16 @@ class AdvancedEditor(SingleEditableMapping):
             "focus-in-event", self.on_key_recording_button_focus,
         )
 
-        # TODO can I somehow move this to the base class?
-        # don't leave the input when using arrow keys or tab. wait for the
-        # window to consume the keycode from the reader
-        self.get("advanced_key_recording_toggle").connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
-
         mapping_list = self.get("mapping_list_advanced")
         mapping_list.connect("row-activated", self.on_mapping_selected)
 
         if len(mapping_list.get_children()) == 0:
             self.add_empty()
+
+        super().__init__(
+            delete_callback=self.on_mapping_removed,
+            user_interface=user_interface,
+        )
 
     def __del__(self, *_):
         """Clear up all timeouts and resources.
@@ -186,6 +182,9 @@ class AdvancedEditor(SingleEditableMapping):
     def get_recording_toggle(self):
         return self.get("advanced_key_recording_toggle")
 
+    def get_text_input(self):
+        return self.get("code_editor")
+
     def on_text_input_change(self, _, event):
         if not event.type in [Gdk.EventType.KEY_PRESS, Gdk.EventType.KEY_RELEASE]:
             # there is no "changed" event for the GtkSourceView editor
@@ -208,7 +207,7 @@ class AdvancedEditor(SingleEditableMapping):
 
     def get_symbol(self):
         """Get the assigned symbol from the middle column."""
-        buffer = self.text_input.get_buffer()
+        buffer = self.get("code_editor").get_buffer()
         symbol = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
         # TODO make sure to test that this never returns ""
         return symbol if symbol else None

@@ -695,7 +695,6 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
 
         # focus different row
-        # TODO .active_editor instead?
         self.user_interface.active_editor.add_empty()
         key_recording_toggle = self.get_rows()[1].key_recording_toggle
         self.set_focus(key_recording_toggle)

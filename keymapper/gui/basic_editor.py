@@ -53,9 +53,6 @@ class _KeycodeRecordingToggle(Gtk.ToggleButton):
         # something else in the UI
         self.connect("focus-in-event", self.on_focus)
         self.connect("focus-out-event", self.on_unfocus)
-        # don't leave the input when using arrow keys or tab. wait for the
-        # window to consume the keycode from the reader
-        self.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
 
         if key is not None:
             self.set_label(key.beautify())
@@ -123,7 +120,6 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
             The symbol/macro this row is going to display by default
         """
         Gtk.ListBoxRow.__init__(self)
-        SingleEditableMapping.__init__(self, *args, **kwargs)
 
         # create all child GTK widgets and connect their signals
         delete_button = Gtk.EventBox()
@@ -167,8 +163,13 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         self.add(box)
         self.show_all()
 
+        SingleEditableMapping.__init__(self, *args, **kwargs)
+
     def get_recording_toggle(self):
         return self.key_recording_toggle
+
+    def get_text_input(self):
+        return self.text_input
 
     def get_key(self):
         """Get the Key object from the left column.
