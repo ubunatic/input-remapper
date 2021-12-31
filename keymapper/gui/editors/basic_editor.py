@@ -26,7 +26,7 @@ from gi.repository import Gtk, GLib
 
 from keymapper.gui.custom_mapping import custom_mapping
 from keymapper.key import Key
-from keymapper.gui.editors.base import SingleEditableMapping, store
+from keymapper.gui.editors.base import EditableMapping, store, Editor
 from keymapper.logger import logger
 
 
@@ -100,7 +100,7 @@ class _KeycodeRecordingToggle(Gtk.ToggleButton):
         self.set_opacity(1)
 
 
-class Row(Gtk.ListBoxRow, SingleEditableMapping):
+class Row(Gtk.ListBoxRow, EditableMapping):
     """A single configurable key mapping of the basic editor.
 
     Configures an entry in custom_mapping.
@@ -161,7 +161,7 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         self.add(box)
         self.show_all()
 
-        SingleEditableMapping.__init__(self, *args, **kwargs)
+        EditableMapping.__init__(self, *args, **kwargs)
 
     def get_recording_toggle(self):
         return self.key_recording_toggle
@@ -197,7 +197,7 @@ class Row(Gtk.ListBoxRow, SingleEditableMapping):
         self.delete_callback(self)
 
 
-class BasicEditor:
+class BasicEditor(Editor):
     """Maintains the widgets of the simple editor."""
 
     def __init__(self, user_interface):
@@ -273,8 +273,8 @@ class BasicEditor:
                 len(custom_mapping),
                 num_rows,
             )
-            logger.spam("Mapping %s", list(custom_mapping))
-            logger.spam(
+            logger.error("Mapping %s", list(custom_mapping))
+            logger.error(
                 "Rows    %s", [(row.get_key(), row.get_symbol()) for row in rows]
             )
 

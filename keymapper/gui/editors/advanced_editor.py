@@ -19,12 +19,12 @@
 # along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""The advanced editor with a larger code editor."""
+"""The advanced editor with a multiline code editor."""
 
 
 from gi.repository import Gtk, GLib, Gdk
 
-from keymapper.gui.editors.basic_editor import SingleEditableMapping
+from keymapper.gui.editors.base import Editor, EditableMapping
 from keymapper.gui.custom_mapping import custom_mapping
 
 
@@ -58,7 +58,6 @@ class SelectionLabel(Gtk.Label):
         self.output = output
 
 
-# TODO bass class all functions calls on self.active_editor.
 # TODO changing keys adds duplicate mappings
 # TODO mapping the left mouse button doesn't work (maybe because is_waiting_for_input
 #  uses get_active)
@@ -66,7 +65,7 @@ class SelectionLabel(Gtk.Label):
 #  DEBUG mapping.py:108: Key((1, 272, 1), (1, 273, 1)) maps to "abcd"
 #  EBUG mapping.py:132: Key((1, 272, 1), (1, 273, 1)) cleared
 #  logs
-class AdvancedEditor(SingleEditableMapping):
+class AdvancedEditor(EditableMapping, Editor):
     """Maintains the widgets of the advanced editor."""
 
     def __init__(self, user_interface):
@@ -171,7 +170,7 @@ class AdvancedEditor(SingleEditableMapping):
         mapping_list.select_row(rows[0])
         self.on_mapping_selected(list_box_row=rows[0])
 
-    """SingleEditableMapping"""
+    """EditableMapping"""
 
     def get_recording_toggle(self):
         return self.get("advanced_key_recording_toggle")

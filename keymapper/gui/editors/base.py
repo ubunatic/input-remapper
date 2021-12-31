@@ -57,7 +57,22 @@ def populate_store():
 populate_store()
 
 
-class SingleEditableMapping:
+class Editor:
+    """Interface for all functions the editors have to provide."""
+
+    def consume_newest_keycode(self, key):
+        """Process the current output of the reader.
+
+        This can be used for recording buttons, like EditableMapping does.
+        """
+        raise NotImplementedError
+
+    def load_custom_mapping(self):
+        """Display the data from custom_mapping, make this ready for editing."""
+        raise NotImplementedError
+
+
+class EditableMapping:
     """A base class for editing a single mapping,
 
     Manages a text input to show the configured output, a ToggleButton to activate key
@@ -204,7 +219,6 @@ class SingleEditableMapping:
         ----------
         new_key : Key or None
         """
-        # TODO move this into consume_newest_keycode
         if new_key is not None and not isinstance(new_key, Key):
             raise TypeError("Expected new_key to be a Key object")
 
