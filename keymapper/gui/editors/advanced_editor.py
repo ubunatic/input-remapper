@@ -22,7 +22,7 @@
 """The advanced editor with a larger code editor."""
 
 
-from gi.repository import GObject, Gtk, GLib, Gdk
+from gi.repository import Gtk, GLib, Gdk
 
 from keymapper.gui.editors.basic_editor import SingleEditableMapping
 from keymapper.gui.custom_mapping import custom_mapping
@@ -104,9 +104,8 @@ class AdvancedEditor(SingleEditableMapping):
             GLib.source_remove(self.timeout)
             self.timeout = None
 
-    def destroy(self):
-        """Don't do anything with the widgets anymore."""
-        self.__del__()
+        # TODO disconnect handlers, since those widgets arent deleted and created from
+        #  scratch and duplicate constructor calls would cause problems
 
     def on_delete_button_clicked(self):
         """The delete button on a single mapped key was clicked."""

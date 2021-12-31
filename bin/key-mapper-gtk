@@ -74,7 +74,9 @@ if __name__ == '__main__':
     user_interface = UserInterface()
 
     def stop():
-        # TODO is this needed for tests?
+        # TODO __del__ will also be called when exiting the application without this.
+        #  is this needed for tests?
+        global user_interface
         del user_interface
 
     atexit.register(stop)

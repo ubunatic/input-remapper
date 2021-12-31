@@ -220,30 +220,22 @@ class BasicEditor:
             GLib.source_remove(self.timeout)
             self.timeout = None
 
-    def destroy(self):
-        """Don't do anything with the widgets anymore."""
-        # TODO should be a base function of an interface for advanced and basic editor
-        self.__del__()
-
     def load_custom_mapping(self):
         """Display the custom mapping."""
         mapping_list = self.get("mapping_list")
         mapping_list.forall(mapping_list.remove)
 
         for key, output in custom_mapping:
-            single_key_mapping = Row(
+            row = Row(
                 user_interface=self.user_interface,
                 delete_callback=self.on_row_removed,
                 key=key,
                 symbol=output,
             )
-            single_key_mapping.key_recording_toggle.connect(
-                "focus-in-event", self.user_interface.can_modify_mapping
-            )
-            single_key_mapping.key_recording_toggle.connect(
-                "focus-out-event", self.user_interface.save_preset
-            )
-            mapping_list.insert(single_key_mapping, -1)
+            toggle = row.key_recording_toggle
+            toggle.connect("focus-in-event", self.user_interface.can_modify_mapping)
+            toggle.connect("focus-out-event", self.user_interface.save_preset)
+            mapping_list.insert(row, -1)
 
         self.check_add_row()
 

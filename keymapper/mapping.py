@@ -153,7 +153,7 @@ class Mapping(ConfigBase):
         if not os.path.exists(path):
             raise FileNotFoundError(f'Tried to load non-existing preset "{path}"')
 
-        self.clear_config()
+        self.empty()
 
         with open(path, "r") as file:
             preset_dict = json.load(file)

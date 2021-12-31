@@ -167,9 +167,6 @@ def clean_up_integration(test):
         atexit.unregister(test.user_interface.dbus.stop_all)
 
 
-original_on_select_preset = UserInterface.on_select_preset
-
-
 class GtkKeyEvent:
     def __init__(self, keyval):
         self.keyval = keyval
@@ -220,19 +217,19 @@ class TestGroupsFromHelper(unittest.TestCase):
         os.system = cls.original_os_system
         Daemon.connect = cls.original_connect
 
-    @patch("keymapper.gui.user_interface.UserInterface.on_select_preset")
-    def test_knows_devices(self, on_select_preset_patch):
-        # verify that it is working as expected
-        gtk_iteration()
-        self.assertIsNone(self.user_interface.group)
-        self.assertIsNone(self.user_interface.preset_name)
-        self.assertEqual(len(groups), 0)
-        on_select_preset_patch.assert_not_called()
+    def test_knows_devices(self):
+        patch_target = "keymapper.gui.user_interface.UserInterface.on_select_preset"
+        with patch(patch_target) as on_select_preset_patch:
+            # verify that it is working as expected
+            gtk_iteration()
+            self.assertIsNone(self.user_interface.group)
+            self.assertIsNone(self.user_interface.preset_name)
+            self.assertEqual(len(groups), 0)
+            on_select_preset_patch.assert_not_called()
 
         # perform some iterations so that the gui ends up running
         # consume_newest_keycode, which will make it receive devices.
         # Restore patch, otherwise gtk complains when disabling handlers
-        UserInterface.on_select_preset = original_on_select_preset
         for _ in range(10):
             time.sleep(0.01)
             gtk_iteration()
@@ -1075,31 +1072,39 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 9, 1)), "k(1)")
 
     def test_select_device_and_preset(self):
+        foo_device_path = f"{CONFIG_PATH}/presets/Foo Device"
+        key_10 = Key(EV_KEY, 10, 1)
+        key_11 = Key(EV_KEY, 11, 1)
+
         # created on start because the first device is selected and some empty
         # preset prepared.
-        self.assertTrue(
-            os.path.exists(f"{CONFIG_PATH}/presets/Foo Device/new preset.json")
-        )
+        self.assertTrue(os.path.exists(f"{foo_device_path}/new preset.json"))
         self.assertEqual(self.user_interface.group.name, "Foo Device")
         self.assertEqual(self.user_interface.preset_name, "new preset")
+        # change it to check if the gui loads presets correctly later
+        custom_mapping.change(key_10, "a")
 
         # create another one
         self.user_interface.on_create_preset_clicked()
         gtk_iteration()
-        self.assertTrue(
-            os.path.exists(f"{CONFIG_PATH}/presets/Foo Device/new preset.json")
-        )
-        self.assertTrue(
-            os.path.exists(f"{CONFIG_PATH}/presets/Foo Device/new preset 2.json")
-        )
+        self.assertTrue(os.path.exists(f"{foo_device_path}/new preset.json"))
+        self.assertTrue(os.path.exists(f"{foo_device_path}/new preset 2.json"))
         self.assertEqual(self.user_interface.preset_name, "new preset 2")
+        self.assertEqual(len(custom_mapping), 0)
+        # this should not be loaded when "new preset" is selected, because it belongs
+        # to "new preset 2":
+        custom_mapping.change(key_11, "a")
 
+        # select the first one again
         self.user_interface.on_select_preset(FakePresetDropdown("new preset"))
         gtk_iteration()
         self.assertEqual(self.user_interface.preset_name, "new preset")
 
+        self.assertEqual(len(custom_mapping), 1)
+        self.assertEqual(custom_mapping.get_symbol(key_10), "a")
+
         self.assertListEqual(
-            sorted(os.listdir(f"{CONFIG_PATH}/presets/Foo Device")),
+            sorted(os.listdir(f"{foo_device_path}")),
             sorted(["new preset.json", "new preset 2.json"]),
         )
 
@@ -1107,23 +1112,19 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.get("preset_name_input").set_text("abc 123")
         gtk_iteration()
         self.assertEqual(self.user_interface.preset_name, "new preset")
-        self.assertFalse(
-            os.path.exists(f"{CONFIG_PATH}/presets/Foo Device/abc 123.json")
-        )
+        self.assertFalse(os.path.exists(f"{foo_device_path}/abc 123.json"))
         custom_mapping.change(Key(EV_KEY, 10, 1), "1", None)
         self.user_interface.save_preset()
         self.user_interface.on_rename_button_clicked(None)
         gtk_iteration()
         self.assertEqual(self.user_interface.preset_name, "abc 123")
-        self.assertTrue(
-            os.path.exists(f"{CONFIG_PATH}/presets/Foo Device/abc 123.json")
-        )
+        self.assertTrue(os.path.exists(f"{foo_device_path}/abc 123.json"))
         self.assertListEqual(
             sorted(os.listdir(os.path.join(CONFIG_PATH, "presets"))),
             sorted(["Foo Device"]),
         )
         self.assertListEqual(
-            sorted(os.listdir(f"{CONFIG_PATH}/presets/Foo Device")),
+            sorted(os.listdir(f"{foo_device_path}")),
             sorted(["abc 123.json", "new preset 2.json"]),
         )
 
