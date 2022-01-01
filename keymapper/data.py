@@ -1,25 +1,25 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# key-mapper - GUI for device specific keyboard mappings
-# Copyright (C) 2021 sezanzeb <proxima@sezanzeb.de>
+# input-remapper - GUI for device specific keyboard mappings
+# Copyright (C) 2022 sezanzeb <proxima@sezanzeb.de>
 #
-# This file is part of key-mapper.
+# This file is part of input-remapper.
 #
-# key-mapper is free software: you can redistribute it and/or modify
+# input-remapper is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# key-mapper is distributed in the hope that it will be useful,
+# input-remapper is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
+# along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""Get stuff from /usr/share/key-mapper, depending on the prefix."""
+"""Get stuff from /usr/share/input-remapper, depending on the prefix."""
 
 
 import sys
@@ -27,7 +27,7 @@ import os
 import site
 import pkg_resources
 
-from keymapper.logger import logger
+from inputremapper.logger import logger
 
 
 logged = False
@@ -44,7 +44,7 @@ def get_data_path(filename=""):
 
     source = None
     try:
-        source = pkg_resources.require("key-mapper")[0].location
+        source = pkg_resources.require("input-remapper")[0].location
         # failed in some ubuntu installations
     except pkg_resources.DistributionNotFound:
         pass
@@ -65,9 +65,9 @@ def get_data_path(filename=""):
             data = None
 
     candidates = [
-        "/usr/share/key-mapper",
-        "/usr/local/share/key-mapper",
-        os.path.join(site.USER_BASE, "share/key-mapper"),
+        "/usr/share/input-remapper",
+        "/usr/local/share/input-remapper",
+        os.path.join(site.USER_BASE, "share/input-remapper"),
     ]
 
     if data is None:

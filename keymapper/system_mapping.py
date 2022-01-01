@@ -1,22 +1,22 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# key-mapper - GUI for device specific keyboard mappings
-# Copyright (C) 2021 sezanzeb <proxima@sezanzeb.de>
+# input-remapper - GUI for device specific keyboard mappings
+# Copyright (C) 2022 sezanzeb <proxima@sezanzeb.de>
 #
-# This file is part of key-mapper.
+# This file is part of input-remapper.
 #
-# key-mapper is free software: you can redistribute it and/or modify
+# input-remapper is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# key-mapper is distributed in the hope that it will be useful,
+# input-remapper is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
+# along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
 """Make the systems/environments mapping of keys and codes accessible."""
@@ -27,9 +27,9 @@ import json
 import subprocess
 import evdev
 
-from keymapper.logger import logger
-from keymapper.paths import get_config_path, touch
-from keymapper.utils import is_service
+from inputremapper.logger import logger
+from inputremapper.paths import get_config_path, touch
+from inputremapper.utils import is_service
 
 
 DISABLE_NAME = "disable"
@@ -54,7 +54,7 @@ class SystemMapping:
     def __getattribute__(self, key):
         """To lazy load system_mapping info only when needed.
 
-        For example, this helps to keep logs of key-mapper-control clear when it doesnt
+        For example, this helps to keep logs of input-remapper-control clear when it doesnt
         need it the information.
         """
         if key == "_mapping" and object.__getattribute__(self, "_mapping") is None:
@@ -94,7 +94,7 @@ class SystemMapping:
 
         if not is_service():
             # Clients usually take care of that, don't let the service do funny things.
-            # Write this stuff into the key-mapper config directory, because
+            # Write this stuff into the input-remapper config directory, because
             # the systemd service won't know the user sessions xmodmap.
             path = get_config_path(XMODMAP_FILENAME)
             touch(path)

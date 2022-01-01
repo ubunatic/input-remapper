@@ -1,22 +1,22 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# key-mapper - GUI for device specific keyboard mappings
-# Copyright (C) 2021 sezanzeb <proxima@sezanzeb.de>
+# input-remapper - GUI for device specific keyboard mappings
+# Copyright (C) 2022 sezanzeb <proxima@sezanzeb.de>
 #
-# This file is part of key-mapper.
+# This file is part of input-remapper.
 #
-# key-mapper is free software: you can redistribute it and/or modify
+# input-remapper is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# key-mapper is distributed in the hope that it will be useful,
+# input-remapper is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
+# along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
 """Find, classify and group devices.
@@ -52,8 +52,8 @@ from evdev.ecodes import (
     REL_WHEEL,
 )
 
-from keymapper.logger import logger
-from keymapper.paths import get_preset_path
+from inputremapper.logger import logger
+from inputremapper.paths import get_preset_path
 
 
 TABLET_KEYS = [
@@ -192,7 +192,7 @@ DENYLIST = [".*Yubico.*YubiKey.*", "Eee PC WMI hotkeys"]
 
 
 def is_denylisted(device):
-    """Check if a device should not be used in key-mapper.
+    """Check if a device should not be used in input-remapper.
 
     Parameters
     ----------
@@ -420,7 +420,7 @@ class _Groups:
     def __getattribute__(self, key):
         """To lazy load group info only when needed.
 
-        For example, this helps to keep logs of key-mapper-control clear when it doesnt
+        For example, this helps to keep logs of input-remapper-control clear when it doesnt
         need it the information.
         """
         if key == "_groups" and object.__getattribute__(self, "_groups") is None:
@@ -452,7 +452,7 @@ class _Groups:
         result = []
         for group in self._groups:
             name = group.name
-            if not include_keymapper and name.startswith("key-mapper"):
+            if not include_keymapper and name.startswith("input-remapper"):
                 continue
 
             result.append(group)
@@ -468,7 +468,7 @@ class _Groups:
         return [
             group.name
             for group in self._groups
-            if not group.name.startswith("key-mapper")
+            if not group.name.startswith("input-remapper")
         ]
 
     def __len__(self):
@@ -499,7 +499,7 @@ class _Groups:
             "/dev/input/event3"
         """
         for group in self._groups:
-            if not include_keymapper and group.name.startswith("key-mapper"):
+            if not include_keymapper and group.name.startswith("input-remapper"):
                 continue
 
             if name and group.name != name:

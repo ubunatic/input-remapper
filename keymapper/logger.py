@@ -1,25 +1,25 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# key-mapper - GUI for device specific keyboard mappings
-# Copyright (C) 2021 sezanzeb <proxima@sezanzeb.de>
+# input-remapper - GUI for device specific keyboard mappings
+# Copyright (C) 2022 sezanzeb <proxima@sezanzeb.de>
 #
-# This file is part of key-mapper.
+# This file is part of input-remapper.
 #
-# key-mapper is free software: you can redistribute it and/or modify
+# input-remapper is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# key-mapper is distributed in the hope that it will be useful,
+# input-remapper is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
+# along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""Logging setup for key-mapper."""
+"""Logging setup for input-remapper."""
 
 
 import os
@@ -29,10 +29,10 @@ import logging
 import pkg_resources
 from datetime import datetime
 
-from keymapper.user import HOME
+from inputremapper.user import HOME
 
 try:
-    from keymapper.commit_hash import COMMIT_HASH
+    from inputremapper.commit_hash import COMMIT_HASH
 except ImportError:
     COMMIT_HASH = ""
 
@@ -89,9 +89,9 @@ logging.Logger.spam = spam
 logging.Logger.key_spam = key_spam
 
 LOG_PATH = (
-    "/var/log/key-mapper"
+    "/var/log/input-remapper"
     if os.access("/var/log", os.W_OK)
-    else f"{HOME}/.log/key-mapper"
+    else f"{HOME}/.log/input-remapper"
 )
 
 logger = logging.getLogger()
@@ -152,17 +152,17 @@ logging.getLogger("asyncio").setLevel(logging.WARNING)
 VERSION = ""
 EVDEV_VERSION = None
 try:
-    VERSION = pkg_resources.require("key-mapper")[0].version
+    VERSION = pkg_resources.require("input-remapper")[0].version
     EVDEV_VERSION = pkg_resources.require("evdev")[0].version
 except pkg_resources.DistributionNotFound as error:
     logger.info("Could not figure out the version")
     logger.debug(error)
 
 
-def log_info(name="key-mapper"):
+def log_info(name="input-remapper"):
     """Log version and name to the console."""
     logger.info(
-        "%s %s %s https://github.com/sezanzeb/key-mapper", name, VERSION, COMMIT_HASH
+        "%s %s %s https://github.com/sezanzeb/input-remapper", name, VERSION, COMMIT_HASH
     )
 
     if EVDEV_VERSION:

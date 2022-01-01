@@ -1,22 +1,22 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# key-mapper - GUI for device specific keyboard mappings
-# Copyright (C) 2021 sezanzeb <proxima@sezanzeb.de>
+# input-remapper - GUI for device specific keyboard mappings
+# Copyright (C) 2022 sezanzeb <proxima@sezanzeb.de>
 #
-# This file is part of key-mapper.
+# This file is part of input-remapper.
 #
-# key-mapper is free software: you can redistribute it and/or modify
+# input-remapper is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# key-mapper is distributed in the hope that it will be useful,
+# input-remapper is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
+# along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
 """Starts injecting keycodes based on the configuration.
@@ -37,14 +37,14 @@ import gi
 gi.require_version("GLib", "2.0")
 from gi.repository import GLib
 
-from keymapper.logger import logger, is_debug
-from keymapper.injection.injector import Injector, UNKNOWN
-from keymapper.mapping import Mapping
-from keymapper.config import config
-from keymapper.system_mapping import system_mapping
-from keymapper.groups import groups
-from keymapper.paths import get_config_path, USER
-from keymapper.injection.macros.macro import macro_variables
+from inputremapper.logger import logger, is_debug
+from inputremapper.injection.injector import Injector, UNKNOWN
+from inputremapper.mapping import Mapping
+from inputremapper.config import config
+from inputremapper.system_mapping import system_mapping
+from inputremapper.groups import groups
+from inputremapper.paths import get_config_path, USER
+from inputremapper.injection.macros.macro import macro_variables
 
 
 BUS_NAME = "keymapper.Control"
@@ -75,7 +75,7 @@ class AutoloadHistory:
 
         This is needed because udev triggers multiple times per hardware
         device, and because it should be possible to stop the injection
-        by unplugging the device if the preset goes wrong or if key-mapper
+        by unplugging the device if the preset goes wrong or if input-remapper
         has some bug that prevents the computer from being controlled.
 
         For that unplug and reconnect the device twice within a 15 seconds
@@ -203,10 +203,10 @@ class Daemon:
 
             logger.info("Starting the service")
             # Blocks until pkexec is done asking for the password.
-            # Runs via key-mapper-control so that auth_admin_keep works
+            # Runs via input-remapper-control so that auth_admin_keep works
             # for all pkexec calls of the gui
             debug = " -d" if is_debug() else ""
-            cmd = f"pkexec key-mapper-control --command start-daemon {debug}"
+            cmd = f"pkexec input-remapper-control --command start-daemon {debug}"
 
             # using pkexec will also cause the service to continue running in
             # the background after the gui has been closed, which will keep
@@ -328,7 +328,7 @@ class Daemon:
         group = groups.find(key=group_key)
         if group is None:
             # even after groups.refresh, the device is unknown, so it's
-            # either not relevant for key-mapper, or not connected yet
+            # either not relevant for input-remapper, or not connected yet
             return
 
         preset = config.get(["autoload", group.key], log_unknown=False)
@@ -368,7 +368,7 @@ class Daemon:
             unique identifier used by the groups object
         """
         # avoid some confusing logs and filter obviously invalid requests
-        if group_key.startswith("key-mapper"):
+        if group_key.startswith("input-remapper"):
             return
 
         logger.info('Request to autoload for "%s"', group_key)

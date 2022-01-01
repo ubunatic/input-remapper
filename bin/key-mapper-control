@@ -1,22 +1,22 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# key-mapper - GUI for device specific keyboard mappings
-# Copyright (C) 2021 sezanzeb <proxima@sezanzeb.de>
+# input-remapper - GUI for device specific keyboard mappings
+# Copyright (C) 2022 sezanzeb <proxima@sezanzeb.de>
 #
-# This file is part of key-mapper.
+# This file is part of input-remapper.
 #
-# key-mapper is free software: you can redistribute it and/or modify
+# input-remapper is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# key-mapper is distributed in the hope that it will be useful,
+# input-remapper is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
+# along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
 """Control the dbus service from the command line."""
@@ -29,8 +29,8 @@ import argparse
 import logging
 import subprocess
 
-from keymapper.logger import logger, update_verbosity, log_info, add_filehandler
-from keymapper.config import config
+from inputremapper.logger import logger, update_verbosity, log_info, add_filehandler
+from inputremapper.config import config
 
 # import keymapper modules as late as possible to make sure the correct
 # log level is applied before anything is logged
@@ -73,12 +73,12 @@ def utils(options):
     """Listing names, tasks that don't require a running daemon."""
     if options.list_devices:
         logger.setLevel(logging.ERROR)
-        from keymapper.groups import groups
+        from inputremapper.groups import groups
         for group in groups:
             print(group.key)
 
     if options.key_names:
-        from keymapper.system_mapping import system_mapping
+        from inputremapper.system_mapping import system_mapping
         print('\n'.join(system_mapping.list_names()))
 
 
@@ -86,8 +86,8 @@ def communicate(options, daemon):
     """Commands that require a running daemon"""
     # import stuff late to make sure the correct log level is applied
     # before anything is logged
-    from keymapper.groups import groups
-    from keymapper.paths import USER
+    from inputremapper.groups import groups
+    from inputremapper.paths import USER
 
     def require_group():
         if options.device is None:
@@ -171,14 +171,14 @@ def communicate(options, daemon):
 def internals(options):
     """Methods that are needed to get the gui to work and that require root.
 
-    key-mapper-control should be started with sudo or pkexec for this.
+    input-remapper-control should be started with sudo or pkexec for this.
     """
     debug = ' -d' if options.debug else ''
 
     if options.command == HELPER:
-        cmd = f'key-mapper-helper{debug}'
+        cmd = f'input-remapper-helper{debug}'
     elif options.command == START_DAEMON:
-        cmd = f'key-mapper-service --hide-info{debug}'
+        cmd = f'input-remapper-service --hide-info{debug}'
     else:
         return
 
@@ -192,7 +192,7 @@ def systemd_finished():
     try:
         systemd_analyze = subprocess.run(['systemd-analyze'], stdout=subprocess.PIPE)
     except FileNotFoundError:
-        # probably not systemd, lets assume true to not block key-mapper for good
+        # probably not systemd, lets assume true to not block input-remapper for good
         # on certain installations
         return True
 
@@ -206,7 +206,7 @@ def main(options):
     if options.debug:
         update_verbosity(True)
 
-    add_filehandler('/var/log/key-mapper-control')
+    add_filehandler('/var/log/input-remapper-control')
 
     if options.version:
         log_info()
@@ -214,7 +214,7 @@ def main(options):
 
     logger.debug('Call for "%s"', sys.argv)
 
-    from keymapper.paths import USER
+    from inputremapper.paths import USER
     boot_finished = systemd_finished()
     is_root = USER == "root"
     is_autoload = options.command == AUTOLOAD
@@ -224,7 +224,7 @@ def main(options):
         # triggered by udev. There is no need to try to inject anything if the
         # service doesn't know where to look for a config file. This avoids a lot
         # of confusing service logs. And also avoids potential for problems when
-        # key-mapper-control stresses about evdev, dbus and multiprocessing already
+        # input-remapper-control stresses about evdev, dbus and multiprocessing already
         # while the system hasn't even booted completely.
         logger.warning('Skipping autoload command without a logged in user')
         return
@@ -233,7 +233,7 @@ def main(options):
         if options.command in INTERNALS:
             internals(options)
         elif options.command in COMMANDS:
-            from keymapper.daemon import Daemon
+            from inputremapper.daemon import Daemon
             daemon = Daemon.connect(fallback=False)
             communicate(options, daemon)
         else:
@@ -258,7 +258,7 @@ if __name__ == '__main__':
         help=(
             'path to the config directory containing config.json, '
             'xmodmap.json and the presets folder. '
-            'defaults to ~/.config/key-mapper/'
+            'defaults to ~/.config/input-remapper/'
         ),
         default=None, metavar='PATH',
     )

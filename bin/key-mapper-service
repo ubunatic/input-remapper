@@ -1,22 +1,22 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# key-mapper - GUI for device specific keyboard mappings
-# Copyright (C) 2021 sezanzeb <proxima@sezanzeb.de>
+# input-remapper - GUI for device specific keyboard mappings
+# Copyright (C) 2022 sezanzeb <proxima@sezanzeb.de>
 #
-# This file is part of key-mapper.
+# This file is part of input-remapper.
 #
-# key-mapper is free software: you can redistribute it and/or modify
+# input-remapper is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# key-mapper is distributed in the hope that it will be useful,
+# input-remapper is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
+# along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
 """Starts injecting keycodes based on the configuration."""
@@ -25,7 +25,7 @@
 import sys
 from argparse import ArgumentParser
 
-from keymapper.logger import update_verbosity, log_info, add_filehandler
+from inputremapper.logger import update_verbosity, log_info, add_filehandler
 
 
 if __name__ == '__main__':
@@ -43,12 +43,12 @@ if __name__ == '__main__':
 
     update_verbosity(options.debug)
 
-    # import key-mapper stuff after setting the log verbosity
-    from keymapper.daemon import Daemon
+    # import input-remapper stuff after setting the log verbosity
+    from inputremapper.daemon import Daemon
 
     add_filehandler()
     if not options.hide_info:
-        log_info('key-mapper-service')
+        log_info('input-remapper-service')
 
     daemon = Daemon()
     daemon.publish()

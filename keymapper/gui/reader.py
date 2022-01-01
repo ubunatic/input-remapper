@@ -1,22 +1,22 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# key-mapper - GUI for device specific keyboard mappings
-# Copyright (C) 2021 sezanzeb <proxima@sezanzeb.de>
+# input-remapper - GUI for device specific keyboard mappings
+# Copyright (C) 2022 sezanzeb <proxima@sezanzeb.de>
 #
-# This file is part of key-mapper.
+# This file is part of input-remapper.
 #
-# key-mapper is free software: you can redistribute it and/or modify
+# input-remapper is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# key-mapper is distributed in the hope that it will be useful,
+# input-remapper is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
+# along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
 """Talking to the GUI helper that has root permissions.
@@ -28,14 +28,14 @@ see gui.helper.helper
 import evdev
 from evdev.ecodes import EV_REL
 
-from keymapper.logger import logger
-from keymapper.key import Key
-from keymapper.groups import groups, GAMEPAD
-from keymapper.ipc.pipe import Pipe
-from keymapper.gui.helper import TERMINATE, REFRESH_GROUPS
-from keymapper import utils
-from keymapper.gui.custom_mapping import custom_mapping
-from keymapper.user import USER
+from inputremapper.logger import logger
+from inputremapper.key import Key
+from inputremapper.groups import groups, GAMEPAD
+from inputremapper.ipc.pipe import Pipe
+from inputremapper.gui.helper import TERMINATE, REFRESH_GROUPS
+from inputremapper import utils
+from inputremapper.gui.custom_mapping import custom_mapping
+from inputremapper.user import USER
 
 
 DEBOUNCE_TICKS = 3
@@ -71,8 +71,8 @@ class Reader:
 
     def connect(self):
         """Connect to the helper."""
-        self._results = Pipe(f"/tmp/key-mapper-{USER}/results")
-        self._commands = Pipe(f"/tmp/key-mapper-{USER}/commands")
+        self._results = Pipe(f"/tmp/input-remapper-{USER}/results")
+        self._commands = Pipe(f"/tmp/input-remapper-{USER}/commands")
 
     def are_new_devices_available(self):
         """Check if groups contains new devices.

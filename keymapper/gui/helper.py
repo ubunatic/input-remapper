@@ -1,27 +1,27 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# key-mapper - GUI for device specific keyboard mappings
-# Copyright (C) 2021 sezanzeb <proxima@hip70890b.de>
+# input-remapper - GUI for device specific keyboard mappings
+# Copyright (C) 2022 sezanzeb <proxima@hip70890b.de>
 #
-# This file is part of key-mapper.
+# This file is part of input-remapper.
 #
-# key-mapper is free software: you can redistribute it and/or modify
+# input-remapper is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# key-mapper is distributed in the hope that it will be useful,
+# input-remapper is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
+# along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
 """Process that sends stuff to the GUI.
 
-It should be started via key-mapper-control and pkexec.
+It should be started via input-remapper-control and pkexec.
 
 GUIs should not run as root
 https://wiki.archlinux.org/index.php/Running_GUI_applications_as_root
@@ -41,11 +41,11 @@ import subprocess
 import evdev
 from evdev.ecodes import EV_KEY, EV_ABS
 
-from keymapper.ipc.pipe import Pipe
-from keymapper.logger import logger
-from keymapper.groups import groups
-from keymapper import utils
-from keymapper.user import USER
+from inputremapper.ipc.pipe import Pipe
+from inputremapper.logger import logger
+from inputremapper.groups import groups
+from inputremapper import utils
+from inputremapper.user import USER
 
 
 TERMINATE = "terminate"
@@ -55,7 +55,7 @@ REFRESH_GROUPS = "refresh_groups"
 def is_helper_running():
     """Check if the helper is running."""
     try:
-        subprocess.check_output(["pgrep", "-f", "key-mapper-helper"])
+        subprocess.check_output(["pgrep", "-f", "input-remapper-helper"])
     except subprocess.CalledProcessError:
         return False
     return True
@@ -72,8 +72,8 @@ class RootHelper:
 
     def __init__(self):
         """Construct the helper and initialize its sockets."""
-        self._results = Pipe(f"/tmp/key-mapper-{USER}/results")
-        self._commands = Pipe(f"/tmp/key-mapper-{USER}/commands")
+        self._results = Pipe(f"/tmp/input-remapper-{USER}/results")
+        self._commands = Pipe(f"/tmp/input-remapper-{USER}/commands")
 
         self._send_groups()
 

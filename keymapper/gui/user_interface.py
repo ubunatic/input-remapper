@@ -1,22 +1,22 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# key-mapper - GUI for device specific keyboard mappings
-# Copyright (C) 2021 sezanzeb <proxima@sezanzeb.de>
+# input-remapper - GUI for device specific keyboard mappings
+# Copyright (C) 2022 sezanzeb <proxima@sezanzeb.de>
 #
-# This file is part of key-mapper.
+# This file is part of input-remapper.
 #
-# key-mapper is free software: you can redistribute it and/or modify
+# input-remapper is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# key-mapper is distributed in the hope that it will be useful,
+# input-remapper is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
+# along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
 """User Interface."""
@@ -28,20 +28,20 @@ import sys
 
 from gi.repository import Gtk, GtkSource, Gdk, GLib, GObject
 
-from keymapper.data import get_data_path
-from keymapper.paths import get_config_path
-from keymapper.system_mapping import system_mapping
-from keymapper.gui.custom_mapping import custom_mapping
-from keymapper.gui.utils import HandlerDisabled
-from keymapper.presets import (
+from inputremapper.data import get_data_path
+from inputremapper.paths import get_config_path
+from inputremapper.system_mapping import system_mapping
+from inputremapper.gui.custom_mapping import custom_mapping
+from inputremapper.gui.utils import HandlerDisabled
+from inputremapper.presets import (
     find_newest_preset,
     get_presets,
     delete_preset,
     rename_preset,
     get_available_preset_name,
 )
-from keymapper.logger import logger, COMMIT_HASH, VERSION, EVDEV_VERSION, is_debug
-from keymapper.groups import (
+from inputremapper.logger import logger, COMMIT_HASH, VERSION, EVDEV_VERSION, is_debug
+from inputremapper.groups import (
     groups,
     GAMEPAD,
     KEYBOARD,
@@ -50,15 +50,15 @@ from keymapper.groups import (
     TOUCHPAD,
     MOUSE,
 )
-from keymapper.gui.editors.basic_editor import BasicEditor
-from keymapper.gui.editors.advanced_editor import AdvancedEditor
-from keymapper.key import Key
-from keymapper.gui.reader import reader
-from keymapper.gui.helper import is_helper_running
-from keymapper.injection.injector import RUNNING, FAILED, NO_GRAB
-from keymapper.daemon import Daemon
-from keymapper.config import config
-from keymapper.injection.macros.parse import is_this_a_macro, parse
+from inputremapper.gui.editors.basic_editor import BasicEditor
+from inputremapper.gui.editors.advanced_editor import AdvancedEditor
+from inputremapper.key import Key
+from inputremapper.gui.reader import reader
+from inputremapper.gui.helper import is_helper_running
+from inputremapper.injection.injector import RUNNING, FAILED, NO_GRAB
+from inputremapper.daemon import Daemon
+from inputremapper.config import config
+from inputremapper.injection.macros.parse import is_this_a_macro, parse
 
 
 def gtk_iteration():
@@ -148,7 +148,7 @@ class UserInterface:
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
 
-        gladefile = get_data_path("key-mapper.glade")
+        gladefile = get_data_path("input-remapper.glade")
         builder = Gtk.Builder()
         builder.add_from_file(gladefile)
         builder.connect_signals(self)
@@ -182,7 +182,7 @@ class UserInterface:
         self.about.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
 
         self.get("version-label").set_text(
-            f"key-mapper {VERSION} {COMMIT_HASH[:7]}" f"\npython-evdev {EVDEV_VERSION}"
+            f"input-remapper {VERSION} {COMMIT_HASH[:7]}" f"\npython-evdev {EVDEV_VERSION}"
             if EVDEV_VERSION
             else ""
         )
@@ -229,7 +229,7 @@ class UserInterface:
         self.dbus = Daemon.connect()
 
         debug = " -d" if is_debug() else ""
-        cmd = f"pkexec key-mapper-control --command helper {debug}"
+        cmd = f"pkexec input-remapper-control --command helper {debug}"
 
         logger.debug("Running `%s`", cmd)
         exit_code = os.system(cmd)

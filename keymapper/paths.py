@@ -1,22 +1,22 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# key-mapper - GUI for device specific keyboard mappings
-# Copyright (C) 2021 sezanzeb <proxima@sezanzeb.de>
+# input-remapper - GUI for device specific keyboard mappings
+# Copyright (C) 2022 sezanzeb <proxima@sezanzeb.de>
 #
-# This file is part of key-mapper.
+# This file is part of input-remapper.
 #
-# key-mapper is free software: you can redistribute it and/or modify
+# input-remapper is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# key-mapper is distributed in the hope that it will be useful,
+# input-remapper is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with key-mapper.  If not, see <https://www.gnu.org/licenses/>.
+# along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
 """Path constants to be used."""
@@ -25,8 +25,8 @@
 import os
 import shutil
 
-from keymapper.logger import logger
-from keymapper.user import USER, CONFIG_PATH
+from inputremapper.logger import logger
+from inputremapper.user import USER, CONFIG_PATH
 
 
 def chown(path):
@@ -67,7 +67,7 @@ def mkdir(path, log=True):
         logger.info('Creating dir "%s"', path)
 
     # give all newly created folders to the user.
-    # e.g. if .config/key-mapper/mouse/ is created the latter two
+    # e.g. if .config/input-remapper/mouse/ is created the latter two
     base = os.path.split(path)[0]
     mkdir(base, log=False)
 
@@ -107,5 +107,5 @@ def get_preset_path(group_name=None, preset=None):
 
 
 def get_config_path(*paths):
-    """Get a path in ~/.config/key-mapper/"""
+    """Get a path in ~/.config/input-remapper/"""
     return os.path.join(CONFIG_PATH, *paths)
