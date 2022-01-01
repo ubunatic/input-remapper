@@ -31,7 +31,6 @@ from inputremapper.logger import logger
 from inputremapper.paths import get_config_path, touch
 from inputremapper.utils import is_service
 
-
 DISABLE_NAME = "disable"
 
 DISABLE_CODE = -1

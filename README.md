@@ -2,6 +2,8 @@
 
 <h1 align="center">Input Remapper</h1>
 
+<p align="center"><b>Formerly Key Mapper</b></p>
+
 <p align="center">
   An easy to use tool to change the mapping of your input device buttons.<br/>
   Supports mice, keyboards, gamepads, X11, Wayland, combined buttons and programmable macros.<br/>
@@ -37,6 +39,7 @@ input-remapper is now part of [Debian Unstable](https://packages.debian.org/sid/
 ##### pip
 
 ```bash
+sudo pip uninstall key-mapper
 sudo pip install --no-binary :all: git+https://github.com/sezanzeb/input-remapper.git
 sudo systemctl enable input-remapper
 sudo systemctl restart input-remapper
