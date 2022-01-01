@@ -44,6 +44,13 @@ class SelectionLabel(Gtk.Label):
         self.key = None
         self.output = None
 
+        # Make the child label widget break lines, important for
+        # long combinations
+        self.set_line_wrap(True)
+        self.set_line_wrap_mode(2)
+        self.set_justify(Gtk.Justification.CENTER)
+        self.show_all()
+
     def set_key(self, key):
         """Set the key this button represents
 
@@ -52,7 +59,10 @@ class SelectionLabel(Gtk.Label):
         key : Key
         """
         self.key = key
-        self.set_label(key.beautify())
+        if key:
+            self.set_label(key.beautify())
+        else:
+            self.set_label("new entry")
 
     def set_output(self, output):
         """Set the output/symbol this mapping will attempt to write."""
@@ -159,12 +169,6 @@ class AdvancedEditor(EditableMapping, Editor):
             mapping_selection.set_key(key)
             mapping_selection.set_output(output)
             mapping_selection.set_label(key.beautify())
-            # Make the child label widget break lines, important for
-            # long combinations
-            mapping_selection.set_line_wrap(True)
-            mapping_selection.set_line_wrap_mode(2)
-            mapping_selection.set_justify(Gtk.Justification.CENTER)
-            mapping_selection.show_all()
             mapping_list.insert(mapping_selection, -1)
 
         # select the first entry

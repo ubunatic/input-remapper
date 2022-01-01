@@ -283,6 +283,8 @@ class BasicEditor(Editor):
             logger.error(
                 "Rows    %s", [(row.get_key(), row.get_symbol()) for row in rows]
             )
+            self.load_custom_mapping()
+            return True
 
         # iterating over that 10 times per second is a bit wasteful,
         # but the old approach which involved just counting the number of
