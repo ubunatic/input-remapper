@@ -105,6 +105,10 @@ class EditableMapping:
         """Return the Gtk text input widget that contains the mappings output."""
         raise NotImplementedError
 
+    def get_delete_button(self):
+        """Return the Gtk.Button that deletes this mapping."""
+        raise NotImplementedError
+
     """Connect your widget events to those functions"""
 
     def on_text_input_change(self, *_):
@@ -113,14 +117,6 @@ class EditableMapping:
         symbol = self.get_symbol()
         if symbol is not None and key is not None:
             custom_mapping.change(new_key=key, symbol=symbol, previous_key=None)
-
-    def on_delete_button_clicked(self, *_):
-        """Destroy the row and remove it from the config."""
-        key = self.get_key()
-        if key is not None:
-            custom_mapping.clear(key)
-
-        self.set_symbol("")
 
     """Base functionality"""
 
@@ -149,6 +145,17 @@ class EditableMapping:
 
         text_input = self.get_text_input()
         text_input.connect("focus-out-event", self._on_text_input_unfocus)
+
+        delete_button = self.get_delete_button()
+        delete_button.connect("button-press-event", self._on_delete_button_clicked)
+
+    def _on_delete_button_clicked(self, *_):
+        """Destroy the row and remove it from the config."""
+        key = self.get_key()
+        if key is not None:
+            custom_mapping.clear(key)
+
+        self.set_symbol("")
 
     def _on_text_input_unfocus(self, *_):
         """Save the preset and correct the input casing."""

@@ -879,7 +879,7 @@ class TestIntegration(unittest.TestCase):
             else:
                 self.assertEqual(row.get_key(), Key(EV_KEY, code, 1))
 
-            row.on_delete_button_clicked()
+            row._on_delete_button_clicked()
             time.sleep(0.2)
             gtk_iteration()
 

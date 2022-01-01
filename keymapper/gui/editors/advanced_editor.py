@@ -59,8 +59,6 @@ class SelectionLabel(Gtk.Label):
 
 
 # TODO changing keys adds duplicate mappings
-# TODO mapping the left mouse button doesn't work (maybe because is_waiting_for_input
-#  uses get_active)
 # TODO I get tons of duplicate
 #  DEBUG mapping.py:108: Key((1, 272, 1), (1, 273, 1)) maps to "abcd"
 #  EBUG mapping.py:132: Key((1, 272, 1), (1, 273, 1)) cleared
@@ -106,10 +104,13 @@ class AdvancedEditor(EditableMapping, Editor):
         # TODO disconnect handlers, since those widgets arent deleted and created from
         #  scratch and duplicate constructor calls would cause problems
 
-    def on_delete_button_clicked(self):
+    def _on_delete_button_clicked(self, *_):
         """The delete button on a single mapped key was clicked."""
-        # TODO
-        pass
+        super()._on_delete_button_clicked()
+        self.load_custom_mapping()
+
+    def get_delete_button(self):
+        return self.get("advanced-delete-mapping")
 
     def get(self, name):
         """Get a widget from the window"""
@@ -167,6 +168,11 @@ class AdvancedEditor(EditableMapping, Editor):
 
         # select the first entry
         rows = mapping_list.get_children()
+
+        if len(rows) == 0:
+            self.add_empty()
+            rows = mapping_list.get_children()
+
         mapping_list.select_row(rows[0])
         self.on_mapping_selected(list_box_row=rows[0])
 

@@ -124,8 +124,8 @@ class Row(Gtk.ListBoxRow, EditableMapping):
         delete_button = Gtk.EventBox()
         close_image = Gtk.Image.new_from_icon_name("window-close", Gtk.IconSize.BUTTON)
         delete_button.add(close_image)
-        delete_button.connect("button-press-event", self.on_delete_button_clicked)
         delete_button.set_size_request(50, -1)
+        self.delete_button = delete_button
 
         key_recording_toggle = _KeycodeRecordingToggle(key)
         self.key_recording_toggle = key_recording_toggle
@@ -163,6 +163,9 @@ class Row(Gtk.ListBoxRow, EditableMapping):
 
         EditableMapping.__init__(self, *args, **kwargs)
 
+    def get_delete_button(self):
+        return self.delete_button
+
     def get_recording_toggle(self):
         return self.key_recording_toggle
 
@@ -189,9 +192,9 @@ class Row(Gtk.ListBoxRow, EditableMapping):
         """Show what the user is currently pressing in ther user interface."""
         self.key_recording_toggle.set_key(key)
 
-    def on_delete_button_clicked(self, *_):
+    def _on_delete_button_clicked(self, *_):
         """Destroy the row and remove it from the config."""
-        super().on_delete_button_clicked()
+        super()._on_delete_button_clicked()
         self.key_recording_toggle.set_label("")
         self.key_recording_toggle.key = None
         self.delete_callback(self)
@@ -216,6 +219,9 @@ class BasicEditor(Editor):
 
         This is especially important for tests.
         """
+        self.stop_timeouts()
+
+    def stop_timeouts(self):
         if self.timeout:
             GLib.source_remove(self.timeout)
             self.timeout = None
@@ -228,7 +234,7 @@ class BasicEditor(Editor):
         for key, output in custom_mapping:
             row = Row(
                 user_interface=self.user_interface,
-                delete_callback=self.on_row_removed,
+                delete_callback=self.remove_row,
                 key=key,
                 symbol=output,
             )
@@ -313,13 +319,13 @@ class BasicEditor(Editor):
         """Add one empty row for a single mapped key."""
         logger.spam("Adding a new empty row")
         empty = Row(
-            user_interface=self.user_interface, delete_callback=self.on_row_removed
+            user_interface=self.user_interface, delete_callback=self.remove_row
         )
         mapping_list = self.get("mapping_list")
         mapping_list.insert(empty, -1)
 
-    def on_row_removed(self, row):
-        """Stuff to do when a row was removed
+    def remove_row(self, row):
+        """Remove this row from the editor.
 
         Parameters
         ----------
