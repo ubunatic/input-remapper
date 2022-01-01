@@ -96,7 +96,7 @@ def launch(argv=None):
         argv = ["-d"]
 
     with patch(
-        "keymapper.gui.user_interface.UserInterface.setup_timeouts", lambda *args: None
+        "inputremapper.gui.user_interface.UserInterface.setup_timeouts", lambda *args: None
     ):
         with patch.object(sys, "argv", [""] + [str(arg) for arg in argv]):
             loader = SourceFileLoader("__main__", bin_path)
@@ -218,7 +218,7 @@ class TestGroupsFromHelper(unittest.TestCase):
         Daemon.connect = cls.original_connect
 
     def test_knows_devices(self):
-        patch_target = "keymapper.gui.user_interface.UserInterface.on_select_preset"
+        patch_target = "inputremapper.gui.user_interface.UserInterface.on_select_preset"
         with patch(patch_target) as on_select_preset_patch:
             # verify that it is working as expected
             gtk_iteration()

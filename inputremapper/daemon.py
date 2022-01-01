@@ -47,7 +47,7 @@ from inputremapper.paths import get_config_path, USER
 from inputremapper.injection.macros.macro import macro_variables
 
 
-BUS_NAME = "keymapper.Control"
+BUS_NAME = "inputremapper.Control"
 # timeout in seconds, see
 # https://github.com/LEW21/pydbus/blob/cc407c8b1d25b7e28a6d661a29f9e661b1c9b964/pydbus/proxy.py
 BUS_TIMEOUT = 10

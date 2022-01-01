@@ -91,7 +91,7 @@ However, if you try to map Shift to button 10 of your mouse, and use
 mouse-shift + keyboard-1, you need to press keyboard-1 again to do anything.
 I assume this is because:
 - mouse-10 down
-- keymapper says: 50 down
+- inputremapper says: 50 down
 - xkb mapping: 10 is none. 50 is shift.
 - keyboard-10 down (down again? X/Linux ignores that)
 - keyboard-10 up

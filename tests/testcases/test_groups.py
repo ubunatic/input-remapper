@@ -130,7 +130,7 @@ class TestGroups(unittest.TestCase):
         )
 
         groups2 = json.dumps(
-            [group.dumps() for group in groups.filter(include_keymapper=True)]
+            [group.dumps() for group in groups.filter(include_inputremapper=True)]
         )
         self.assertEqual(pipe.groups, groups2)
 

@@ -40,9 +40,9 @@ class Install(install):
             if re.match(r"^([a-z]|[0-9])+$", commit):
                 # for whatever reason different systems have different paths here
                 build_dir = ""
-                if os.path.exists("build/lib/keymapper"):
+                if os.path.exists("build/lib/inputremapper"):
                     build_dir = "build/lib/"
-                with open(f"{build_dir}keymapper/commit_hash.py", "w+") as f:
+                with open(f"{build_dir}inputremapper/commit_hash.py", "w+") as f:
                     f.write(f"COMMIT_HASH = '{commit}'\n")
         except Exception as e:
             print("Failed to save the commit hash:", e)
@@ -53,10 +53,10 @@ class Install(install):
         install.run(self)
 
 
-def get_packages(base="keymapper"):
+def get_packages(base="inputremapper"):
     """Return all modules used in input-remapper.
 
-    For example 'keymapper.gui' or 'keymapper.injection.consumers'
+    For example 'inputremapper.gui' or 'inputremapper.injection.consumers'
     """
     if not os.path.exists(os.path.join(base, "__init__.py")):
         # only python modules
@@ -114,7 +114,7 @@ setup(
         ("/usr/share/applications/", ["data/input-remapper.desktop"]),
         ("/usr/share/polkit-1/actions/", ["data/input-remapper.policy"]),
         ("/usr/lib/systemd/system", ["data/input-remapper.service"]),
-        ("/etc/dbus-1/system.d/", ["data/keymapper.Control.conf"]),
+        ("/etc/dbus-1/system.d/", ["data/inputremapper.Control.conf"]),
         ("/etc/xdg/autostart/", ["data/input-remapper-autoload.desktop"]),
         ("/usr/lib/udev/rules.d", ["data/99-input-remapper.rules"]),
         ("/usr/bin/", ["bin/input-remapper-gtk"]),

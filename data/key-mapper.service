@@ -6,7 +6,7 @@ After=dbus.service
 
 [Service]
 Type=dbus
-BusName=keymapper.Control
+BusName=inputremapper.Control
 ExecStart=/usr/bin/input-remapper-service
 
 [Install]

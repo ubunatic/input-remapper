@@ -447,12 +447,12 @@ class _Groups:
             keys = [f'"{group.key}"' for group in self._groups]
             logger.info("Found %s", ", ".join(keys))
 
-    def filter(self, include_keymapper=False):
+    def filter(self, include_inputremapper=False):
         """Filter groups."""
         result = []
         for group in self._groups:
             name = group.name
-            if not include_keymapper and name.startswith("input-remapper"):
+            if not include_inputremapper and name.startswith("input-remapper"):
                 continue
 
             result.append(group)
@@ -485,7 +485,7 @@ class _Groups:
         """Load a serialized representation created via dumps."""
         self._groups = [_Group.loads(group) for group in json.loads(dump)]
 
-    def find(self, name=None, key=None, path=None, include_keymapper=False):
+    def find(self, name=None, key=None, path=None, include_inputremapper=False):
         """Find a group that matches the provided parameters.
 
         Parameters
@@ -499,7 +499,7 @@ class _Groups:
             "/dev/input/event3"
         """
         for group in self._groups:
-            if not include_keymapper and group.name.startswith("input-remapper"):
+            if not include_inputremapper and group.name.startswith("input-remapper"):
                 continue
 
             if name and group.name != name:

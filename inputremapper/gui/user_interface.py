@@ -343,7 +343,7 @@ class UserInterface:
 
         with HandlerDisabled(device_selection, self.on_select_device):
             self.device_store.clear()
-            for group in groups.filter(include_keymapper=False):
+            for group in groups.filter(include_inputremapper=False):
                 types = group.types
                 if len(types) > 0:
                     device_type = sorted(types, key=ICON_PRIORITIES.index)[0]
@@ -648,7 +648,7 @@ class UserInterface:
         return True
 
     def show_device_mapping_status(self):
-        """Figure out if this device is currently under keymappers control."""
+        """Figure out if this device is currently under inputremappers control."""
         group_key = self.group.key
         state = self.dbus.get_state(group_key)
         if state == RUNNING:

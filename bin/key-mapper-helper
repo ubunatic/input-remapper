@@ -28,7 +28,7 @@ import atexit
 import signal
 from argparse import ArgumentParser
 
-from keymapper.logger import update_verbosity
+from inputremapper.logger import update_verbosity
 
 
 if __name__ == '__main__':
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     update_verbosity(options.debug)
 
     # import key-mapper stuff after setting the log verbosity
-    from keymapper.gui.helper import RootHelper
+    from inputremapper.gui.helper import RootHelper
 
     def on_exit():
         """Don't remain idle and alive when the GUI exits via ctrl+c."""

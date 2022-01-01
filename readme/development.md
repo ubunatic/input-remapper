@@ -47,7 +47,7 @@ be mostly compliant with pylint.
 
 ```bash
 sudo pip install coverage
-pylint keymapper --extension-pkg-whitelist=evdev
+pylint inputremapper --extension-pkg-whitelist=evdev
 sudo pkill -f input-remapper
 sudo pip install . && coverage run tests/test.py
 coverage combine && coverage report -m
@@ -128,7 +128,7 @@ just need to be commited.
   usually needs root rights.
 - `data/input-remapper.service` starts input-remapper-service automatically on boot
   on distros using systemd.
-- `data/keymapper.Control.conf` is needed to connect to dbus services started
+- `data/inputremapper.Control.conf` is needed to connect to dbus services started
   by systemd from other applications.
 
 **autoload**
@@ -205,20 +205,20 @@ It uses evdev. The links below point to the 1.0.0 release, line numbers might ha
 
 1. It grabs a device (e.g. /dev/input/event3), so that the key events won't
    reach X11/Wayland anymore
-   [source](https://github.com/sezanzeb/input-remapper/blob/1.0.0/keymapper/injection/injector.py#L197)
+   [source](https://github.com/sezanzeb/input-remapper/blob/1.0.0/inputremapper/injection/injector.py#L197)
 2. Reads the events from it (`evtest` can do it, you can also do
    `cat /dev/input/event3` which yields binary stuff)
-   [source](https://github.com/sezanzeb/input-remapper/blob/1.0.0/keymapper/injection/injector.py#L443)
+   [source](https://github.com/sezanzeb/input-remapper/blob/1.0.0/inputremapper/injection/injector.py#L443)
 3. Looks up the mapping if that event maps to anything
-   [source](https://github.com/sezanzeb/input-remapper/blob/1.0.0/keymapper/injection/keycode_mapper.py#L434)
+   [source](https://github.com/sezanzeb/input-remapper/blob/1.0.0/inputremapper/injection/keycode_mapper.py#L434)
 4. Injects the output event in a new device that input-remapper created (another
    new path in /dev/input, device name is suffixed by "mapped")
-   [source](https://github.com/sezanzeb/input-remapper/blob/1.0.0/keymapper/injection/keycode_mapper.py#L242),
-   [new device](https://github.com/sezanzeb/input-remapper/blob/1.0.0/keymapper/injection/injector.py#L356)
+   [source](https://github.com/sezanzeb/input-remapper/blob/1.0.0/inputremapper/injection/keycode_mapper.py#L242),
+   [new device](https://github.com/sezanzeb/input-remapper/blob/1.0.0/inputremapper/injection/injector.py#L356)
 5. Forwards any events that should not be mapped to anything in another new
    device (device name is suffixed by "forwarded")
-   [source](https://github.com/sezanzeb/input-remapper/blob/1.0.0/keymapper/injection/keycode_mapper.py#L247),
-   [new device](https://github.com/sezanzeb/input-remapper/blob/1.0.0/keymapper/injection/injector.py#L367)
+   [source](https://github.com/sezanzeb/input-remapper/blob/1.0.0/inputremapper/injection/keycode_mapper.py#L247),
+   [new device](https://github.com/sezanzeb/input-remapper/blob/1.0.0/inputremapper/injection/injector.py#L367)
 
 This stuff is going on as a daemon in the background
 
@@ -242,7 +242,7 @@ a + b -> y
 
 ## Multiple sources, single UInput
 
-https://github.com/sezanzeb/input-remapper/blob/1.0.0/keymapper/injection/injector.py
+https://github.com/sezanzeb/input-remapper/blob/1.0.0/inputremapper/injection/injector.py
 
 This "Injector" process is the only process that injects if input-remapper is used for a single device.
 

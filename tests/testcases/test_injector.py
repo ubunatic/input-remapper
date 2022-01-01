@@ -747,7 +747,7 @@ class TestInjector(unittest.IsolatedAsyncioTestCase):
 
         """yes"""
 
-        with mock.patch("keymapper.utils.should_map_as_btn", lambda *_: True):
+        with mock.patch("inputremapper.utils.should_map_as_btn", lambda *_: True):
             history = do_stuff()
             self.assertEqual(history.count((EV_KEY, code_w, 1)), 1)
             self.assertEqual(history.count((EV_KEY, code_d, 1)), 1)

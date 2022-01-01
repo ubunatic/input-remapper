@@ -458,7 +458,7 @@ class TestReader(unittest.TestCase):
         self.assertEqual(reader.read(), None)
         self.assertEqual(len(reader._unreleased), 0)
 
-    def test_keymapper_devices(self):
+    def test_inputremapper_devices(self):
         # Don't read from inputremapper devices, their keycodes are not
         # representative for the original key. As long as this is not
         # intentionally programmed it won't even do that. But it was at some

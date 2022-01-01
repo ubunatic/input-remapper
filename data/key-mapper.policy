@@ -4,7 +4,7 @@
         "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd"
         >
 <policyconfig>
-    <action id="keymapper">
+    <action id="inputremapper">
         <description>Run Input Remapper as root</description>
         <message>Authentication is required to discover and read devices.</message>
         <defaults>

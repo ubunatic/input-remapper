@@ -100,7 +100,7 @@ class TestMacros(MacroTestBase):
             result.append((a, b, c, d))
 
         functions = {"k": patch}
-        with mock.patch("keymapper.injection.macros.parse.FUNCTIONS", functions):
+        with mock.patch("inputremapper.injection.macros.parse.FUNCTIONS", functions):
             await parse("k(1, d=4, b=2, c=3)", self.context).run(self.handler)
             await parse("k(1, b=2, c=3)", self.context).run(self.handler)
             self.assertListEqual(result, [(1, 2, 3, 4), (1, 2, 3, 400)])

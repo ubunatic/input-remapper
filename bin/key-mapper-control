@@ -32,7 +32,7 @@ import subprocess
 from inputremapper.logger import logger, update_verbosity, log_info, add_filehandler
 from inputremapper.config import config
 
-# import keymapper modules as late as possible to make sure the correct
+# import inputremapper modules as late as possible to make sure the correct
 # log level is applied before anything is logged
 
 
