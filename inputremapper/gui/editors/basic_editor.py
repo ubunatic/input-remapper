@@ -274,15 +274,18 @@ class BasicEditor(Editor):
             # good for finding bugs early on during development.
             # If you get these logs during tests, then maybe some earlier test
             # has still a glib timeout running.
-            logger.error(
+            # Since there are multiple editors available now, this is expected
+            # when the other editor adds or removes mappings.
+            logger.debug(
                 "custom_mapping contains %d rows, but %d are displayed",
                 len(custom_mapping),
                 num_rows,
             )
-            logger.error("Mapping %s", list(custom_mapping))
-            logger.error(
+            logger.debug("Mapping %s", list(custom_mapping))
+            logger.debug(
                 "Rows    %s", [(row.get_key(), row.get_symbol()) for row in rows]
             )
+            logger.debug("Reloading mapping")
             self.load_custom_mapping()
             return True
 
