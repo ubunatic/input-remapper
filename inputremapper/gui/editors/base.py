@@ -27,6 +27,7 @@ from gi.repository import Gtk, GLib, Gdk
 from inputremapper.system_mapping import system_mapping
 from inputremapper.gui.custom_mapping import custom_mapping
 from inputremapper.key import Key
+from inputremapper.logger import logger
 from inputremapper.gui.reader import reader
 
 
@@ -93,7 +94,7 @@ class EditableMapping:
     def set_symbol(self, symbol):
         raise NotImplementedError
 
-    def display_key(self, key):
+    def set_key(self, key):
         """Show what the user is currently pressing in ther user interface."""
         raise NotImplementedError
 
@@ -187,7 +188,35 @@ class EditableMapping:
         if not self._is_waiting_for_input():
             return
 
-        self._set_key(key)
+        if key is not None and not isinstance(key, Key):
+            raise TypeError("Expected new_key to be a Key object")
+
+        # the newest_keycode is populated since the ui regularly polls it
+        # in order to display it in the status bar.
+        previous_key = self.get_key()
+
+        # no input
+        if key is None:
+            return
+
+        # it might end up being a key combination, wait for more
+        self.input_has_arrived = True
+
+        # keycode didn't change, do nothing
+        if key == previous_key:
+            logger.debug("%s didn't change", previous_key)
+            return
+
+        self.set_key(key)
+
+        symbol = self.get_symbol()
+
+        # the symbol is empty and therefore the mapping is not complete
+        if symbol is None:
+            return
+
+        # else, the keycode has changed, the symbol is set, all good
+        custom_mapping.change(new_key=key, symbol=symbol, previous_key=previous_key)
 
     def _switch_focus_if_complete(self):
         """If keys are released, it will switch to the text_input.
@@ -218,42 +247,6 @@ class EditableMapping:
             return
 
         self._reset()
-
-    def _set_key(self, new_key):
-        """Check if a keycode has been pressed and if so, display it.
-
-        Parameters
-        ----------
-        new_key : Key or None
-        """
-        if new_key is not None and not isinstance(new_key, Key):
-            raise TypeError("Expected new_key to be a Key object")
-
-        # the newest_keycode is populated since the ui regularly polls it
-        # in order to display it in the status bar.
-        previous_key = self.get_key()
-
-        # no input
-        if new_key is None:
-            return
-
-        # it might end up being a key combination, wait for more
-        self.input_has_arrived = True
-
-        # keycode didn't change, do nothing
-        if new_key == previous_key:
-            return
-
-        self.display_key(new_key)
-
-        symbol = self.get_symbol()
-
-        # the symbol is empty and therefore the mapping is not complete
-        if symbol is None:
-            return
-
-        # else, the keycode has changed, the symbol is set, all good
-        custom_mapping.change(new_key=new_key, symbol=symbol, previous_key=previous_key)
 
     def match(self, _, key, tree_iter):
         """Search the avilable names."""

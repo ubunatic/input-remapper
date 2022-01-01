@@ -96,7 +96,8 @@ def launch(argv=None):
         argv = ["-d"]
 
     with patch(
-        "inputremapper.gui.user_interface.UserInterface.setup_timeouts", lambda *args: None
+        "inputremapper.gui.user_interface.UserInterface.setup_timeouts",
+        lambda *args: None,
     ):
         with patch.object(sys, "argv", [""] + [str(arg) for arg in argv]):
             loader = SourceFileLoader("__main__", bin_path)
@@ -500,20 +501,22 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(len(rows), 1)
 
         row = rows[0]
+        self.user_interface.window.set_focus(row.get_recording_toggle())
 
-        row._set_key(None)
+        row.consume_newest_keycode(None)
+        # nothing happens
         self.assertIsNone(row.get_key())
         self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(row.key_recording_toggle.get_label(), "Click here")
 
-        row._set_key(Key(EV_KEY, 30, 1))
+        row.consume_newest_keycode(Key(EV_KEY, 30, 1))
         self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(row.get_key(), (EV_KEY, 30, 1))
         # this is KEY_A in linux/input-event-codes.h,
         # but KEY_ is removed from the text
         self.assertEqual(row.key_recording_toggle.get_label(), "a")
 
-        row._set_key(Key(EV_KEY, 30, 1))
+        row.consume_newest_keycode(Key(EV_KEY, 30, 1))
         self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(row.get_key(), (EV_KEY, 30, 1))
 
@@ -1614,14 +1617,14 @@ class TestIntegration(unittest.TestCase):
         )
 
     def test_screw_up_rows(self):
-        # add a row that is not present in custom_mapping
+        # add a few rows that are not present in custom_mapping
         mapping_list = self.user_interface.get("mapping_list")
         mapping_list.forall(mapping_list.remove)
         for i in range(5):
             broken = Row(
                 user_interface=self.user_interface, delete_callback=lambda: None
             )
-            broken._set_key(Key(1, i, 1))
+            broken.set_key(Key(1, i, 1))
             broken.text_input.set_text("a")
             mapping_list.insert(broken, -1)
         custom_mapping.empty()

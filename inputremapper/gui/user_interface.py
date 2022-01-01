@@ -182,7 +182,8 @@ class UserInterface:
         self.about.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
 
         self.get("version-label").set_text(
-            f"input-remapper {VERSION} {COMMIT_HASH[:7]}" f"\npython-evdev {EVDEV_VERSION}"
+            f"input-remapper {VERSION} {COMMIT_HASH[:7]}"
+            f"\npython-evdev {EVDEV_VERSION}"
             if EVDEV_VERSION
             else ""
         )
@@ -412,7 +413,7 @@ class UserInterface:
             existing = custom_mapping.get_symbol(key)
             if existing is not None:
                 msg = f'"{key.beautify()}" already mapped to "{existing}"'
-                logger.info(msg)
+                logger.info("%s %s", key, msg)
                 self.show_status(CTX_KEYCODE, msg)
                 return True
 

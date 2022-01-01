@@ -188,7 +188,7 @@ class Row(Gtk.ListBoxRow, EditableMapping):
         """Set the assigned symbol from the middle column."""
         self.text_input.set_text(symbol)
 
-    def display_key(self, key):
+    def set_key(self, key):
         """Show what the user is currently pressing in ther user interface."""
         self.key_recording_toggle.set_key(key)
 
@@ -318,9 +318,7 @@ class BasicEditor(Editor):
     def add_empty(self):
         """Add one empty row for a single mapped key."""
         logger.spam("Adding a new empty row")
-        empty = Row(
-            user_interface=self.user_interface, delete_callback=self.remove_row
-        )
+        empty = Row(user_interface=self.user_interface, delete_callback=self.remove_row)
         mapping_list = self.get("mapping_list")
         mapping_list.insert(empty, -1)
 

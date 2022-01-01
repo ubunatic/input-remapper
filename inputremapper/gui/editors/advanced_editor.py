@@ -52,6 +52,7 @@ class SelectionLabel(Gtk.Label):
         key : Key
         """
         self.key = key
+        self.set_label(key.beautify())
 
     def set_output(self, output):
         """Set the output/symbol this mapping will attempt to write."""
@@ -138,7 +139,7 @@ class AdvancedEditor(EditableMapping, Editor):
         self.active_selection_label = selection_label
 
         self.set_symbol(selection_label.output or "")
-        self.display_key(selection_label.key)
+        self.set_key(selection_label.key)
 
     def add_empty(self):
         """Add one empty row for a single mapped key."""
@@ -215,6 +216,6 @@ class AdvancedEditor(EditableMapping, Editor):
         # TODO make sure to test that this never returns ""
         return symbol if symbol else None
 
-    def display_key(self, key):
+    def set_key(self, key):
         """Show what the user is currently pressing in ther user interface."""
-        self.active_selection_label.set_label(key.beautify())
+        self.active_selection_label.set_key(key)
