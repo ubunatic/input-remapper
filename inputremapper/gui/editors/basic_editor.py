@@ -199,6 +199,12 @@ class Row(Gtk.ListBoxRow, EditableMapping):
         self.key_recording_toggle.key = None
         self.delete_callback(self)
 
+    def __str__(self):
+        return f"Row({str(self.get_key())}, {self.get_symbol()})"
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class BasicEditor(Editor):
     """Maintains the widgets of the simple editor."""
@@ -254,15 +260,29 @@ class BasicEditor(Editor):
 
     def check_add_row(self):
         """Ensure that one empty row is available at all times."""
-        mapping_list = self.get("mapping_list")
-        rows = mapping_list.get_children()
 
-        # verify that all mappings are displayed.
-        # One of them is possibly the empty row
+        self.ensure_integrity()
+
+        # iterating over that 10 times per second is a bit wasteful,
+        # but the old approach which involved just counting the number of
+        # mappings and rows didn't seem very robust.
+        rows = self.get("mapping_list").get_children()
+        for row in rows:
+            if row.get_key() is None or row.get_symbol() is None:
+                # unfinished row found
+                break
+        else:
+            self.add_empty()
+
+        return True
+
+    def ensure_integrity(self):
+        """If an incorrect number of keys is displayed, reload the custom_mapping."""
+        rows = self.get("mapping_list").get_children()
         num_rows = len(rows)
         num_maps = len(custom_mapping)
         if num_rows < num_maps or num_rows > num_maps + 1:
-            # good for finding bugs early on during development.
+            # good for finding bugs early on during development.asdfasdf
             # If you get these logs during tests, then maybe some earlier test
             # has still a glib timeout running.
             # Since there are multiple editors available now, this is expected
@@ -273,24 +293,10 @@ class BasicEditor(Editor):
                 num_rows,
             )
             logger.debug("Mapping %s", list(custom_mapping))
-            logger.debug(
-                "Rows    %s", [(row.get_key(), row.get_symbol()) for row in rows]
-            )
+            logger.debug("Rows    %s", rows)
             logger.debug("Reloading mapping")
             self.load_custom_mapping()
             return True
-
-        # iterating over that 10 times per second is a bit wasteful,
-        # but the old approach which involved just counting the number of
-        # mappings and rows didn't seem very robust.
-        for row in rows:
-            if row.get_key() is None or row.get_symbol() is None:
-                # unfinished row found
-                break
-        else:
-            self.add_empty()
-
-        return True
 
     def consume_newest_keycode(self, key):
         """To capture events from keyboards, mice and gamepads.

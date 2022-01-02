@@ -42,7 +42,6 @@ class SelectionLabel(Gtk.Label):
     def __init__(self):
         super().__init__()
         self.key = None
-        self.output = None
 
         # Make the child label widget break lines, important for
         # long combinations
@@ -64,9 +63,14 @@ class SelectionLabel(Gtk.Label):
         else:
             self.set_label("new entry")
 
-    def set_output(self, output):
-        """Set the output/symbol this mapping will attempt to write."""
-        self.output = output
+    def get_key(self):
+        return self.key
+
+    def __str__(self):
+        return f"SelectionLabel({str(self.key)})"
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class AdvancedEditor(EditableMapping, Editor):
@@ -95,9 +99,6 @@ class AdvancedEditor(EditableMapping, Editor):
         mapping_list = self.get("mapping_list_advanced")
         mapping_list.connect("row-activated", self.on_mapping_selected)
 
-        if len(mapping_list.get_children()) == 0:
-            self.add_empty()
-
         super().__init__(user_interface=user_interface)
 
     def _on_delete_button_clicked(self, *_):
@@ -114,7 +115,20 @@ class AdvancedEditor(EditableMapping, Editor):
 
     def check_add_new_key(self):
         """If needed, add a new empty mapping to the list for the user to configure."""
-        # TODO. Or a + icon to add a new one?
+        mapping_list = self.get("mapping_list_advanced")
+
+        selection_labels = [
+            selection_label.get_children()[0]
+            for selection_label in mapping_list.get_children()
+        ]
+
+        for selection_label in selection_labels:
+            if selection_label.get_key() is None:
+                # unfinished row found
+                break
+        else:
+            self.add_empty()
+
         return True
 
     def on_key_recording_button_focus(self, *_):
@@ -133,8 +147,13 @@ class AdvancedEditor(EditableMapping, Editor):
         selection_label = list_box_row.get_children()[0]
         self.active_selection_label = selection_label
 
-        self.set_symbol(selection_label.output or "")
-        self.set_key(selection_label.key)
+        key = selection_label.key
+        self.set_key(key)
+
+        if key is None:
+            self.set_symbol("")
+        else:
+            self.set_symbol(custom_mapping.get_symbol(key))
 
     def add_empty(self):
         """Add one empty row for a single mapped key."""
@@ -152,9 +171,10 @@ class AdvancedEditor(EditableMapping, Editor):
         for key, output in custom_mapping:
             mapping_selection = SelectionLabel()
             mapping_selection.set_key(key)
-            mapping_selection.set_output(output)
             mapping_selection.set_label(key.beautify())
             mapping_list.insert(mapping_selection, -1)
+
+        self.check_add_new_key()
 
         # select the first entry
         rows = mapping_list.get_children()
@@ -172,7 +192,7 @@ class AdvancedEditor(EditableMapping, Editor):
         return self.get("advanced_key_recording_toggle")
 
     def set_symbol(self, symbol):
-        self.get("code_editor").get_buffer().set_text(symbol)
+        self.get("code_editor").get_buffer().set_text(symbol or "")
 
     def get_text_input(self):
         return self.get("code_editor")
@@ -182,7 +202,6 @@ class AdvancedEditor(EditableMapping, Editor):
             # there is no "changed" event for the GtkSourceView editor
             return
 
-        print(id(self), "on_text_input_change")
         # TODO autocompletion
         #  - also for words at the cursor position when editing a macro
 
