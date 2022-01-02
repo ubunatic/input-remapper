@@ -113,15 +113,6 @@ class EditableMapping:
         """Return the Gtk.Button that deletes this mapping."""
         raise NotImplementedError
 
-    """Connect your widget events to those functions"""
-
-    def on_text_input_change(self, *_):
-        """When the output symbol for that keycode is typed in."""
-        key = self.get_key()
-        symbol = self.get_symbol()
-        if symbol is not None and key is not None:
-            custom_mapping.change(new_key=key, symbol=symbol, previous_key=None)
-
     """Base functionality"""
 
     def __init__(self, user_interface):
@@ -148,7 +139,7 @@ class EditableMapping:
         toggle.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
 
         text_input = self.get_text_input()
-        text_input.connect("focus-out-event", self._on_text_input_unfocus)
+        text_input.connect("focus-out-event", self._collect_and_save_changes)
 
         delete_button = self.get_delete_button()
         delete_button.connect("button-press-event", self._on_delete_button_clicked)
@@ -161,7 +152,7 @@ class EditableMapping:
 
         self.set_symbol("")
 
-    def _on_text_input_unfocus(self, *_):
+    def _collect_and_save_changes(self, *_):
         """Save the preset and correct the input casing."""
         # correct case
         symbol = self.get_symbol() or ""
@@ -170,7 +161,9 @@ class EditableMapping:
             self.get_text_input().set_text(correct_case)
 
         # make sure the custom_mapping is up to date
-        self.on_text_input_change()
+        key = self.get_key()
+        if correct_case is not None and key is not None:
+            custom_mapping.change(new_key=key, symbol=correct_case, previous_key=None)
 
         # save to disk
         self.user_interface.save_preset()

@@ -524,7 +524,10 @@ class TestIntegration(unittest.TestCase):
         gtk_iteration()
         self.assertEqual(len(self.user_interface.get("mapping_list").get_children()), 1)
 
+        self.set_focus(row.text_input)
         row.text_input.set_text("Shift_L")
+        self.set_focus(None)
+
         self.assertEqual(len(custom_mapping), 1)
 
         time.sleep(0.1)
@@ -677,6 +680,9 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(row.get_symbol(), correct_case)
         self.assertFalse(custom_mapping.changed)
 
+        self.set_focus(row.text_input)
+        self.set_focus(None)
+
         return row
 
     def test_clears_unreleased_on_focus_change(self):
@@ -734,11 +740,16 @@ class TestIntegration(unittest.TestCase):
         """edit first row"""
 
         row = self.get_rows()[0]
+        self.set_focus(row.text_input)
         row.text_input.set_text("c")
+        self.set_focus(None)
+
+        # after unfocusing, it stores the mapping. So loading it again will retain
+        # the mapping that was used
+        custom_mapping.load(self.user_interface.group.get_preset_path(self.user_interface.preset_name))
 
         self.assertEqual(custom_mapping.get_symbol(ev_1), "c")
         self.assertEqual(custom_mapping.get_symbol(ev_2), "k(b).k(c)")
-        self.assertTrue(custom_mapping.changed)
 
         """add duplicate"""
 

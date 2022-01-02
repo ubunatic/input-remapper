@@ -145,8 +145,6 @@ class Row(Gtk.ListBoxRow, EditableMapping):
         if symbol is not None:
             text_input.set_text(symbol)
 
-        self.text_input.connect("changed", self.on_text_input_change)
-
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         box.set_homogeneous(False)
         box.set_spacing(0)

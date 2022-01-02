@@ -69,7 +69,7 @@ def _propose_symbols(iter):
     return [
         GtkSource.CompletionItem(label=name, text=name)
         for name in list(system_mapping.list_names())
-        if match in name.lower()
+        if match in name.lower() and match != name.lower()
     ]
 
 
@@ -93,7 +93,7 @@ def _propose_function_names(iter):
     return [
         GtkSource.CompletionItem(label=name, text=name)
         for name in FUNCTION_NAMES
-        if match in name.lower()
+        if match in name.lower() and match != name.lower()
     ]
 
 

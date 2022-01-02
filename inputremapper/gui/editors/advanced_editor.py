@@ -108,7 +108,6 @@ class AdvancedEditor(EditableMapping, Editor):
     def _setup_source_view(self):
         """Prepare the code editor."""
         source_view = self.get("code_editor")
-        source_view.connect("event", self.on_text_input_change)
 
         # Syntax Highlighting
         # Thanks to https://github.com/wolfthefallen/py-GtkSourceCompletion-example
@@ -189,7 +188,6 @@ class AdvancedEditor(EditableMapping, Editor):
         mapping_list.insert(mapping_selection, -1)
 
     def load_custom_mapping(self):
-        # with HandlerDisabled(self.text_input, self.on_text_input_change):
         mapping_list = self.get("mapping_list_advanced")
         mapping_list.forall(mapping_list.remove)
 
@@ -221,13 +219,6 @@ class AdvancedEditor(EditableMapping, Editor):
 
     def get_text_input(self):
         return self.get("code_editor")
-
-    def on_text_input_change(self, _=None, event=None):
-        if event and event.type != Gdk.EventType.KEY_RELEASE:
-            # there is no "changed" event for the GtkSourceView editor
-            return
-
-        super().on_text_input_change()
 
     def get_key(self):
         """Get the Key object from the left column.

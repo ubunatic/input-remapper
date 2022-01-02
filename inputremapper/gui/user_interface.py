@@ -508,14 +508,7 @@ class UserInterface:
         if custom_mapping.num_saved_keys == 0:
             logger.error("Cannot apply empty preset file")
             # also helpful for first time use
-            if custom_mapping.changed:
-                self.show_status(
-                    CTX_ERROR,
-                    "You need to save your changes first",
-                    "No mappings are stored in the preset .json file yet",
-                )
-            else:
-                self.show_status(CTX_ERROR, "You need to add keys and save first")
+            self.show_status(CTX_ERROR, "You need to add keys and save first")
             return
 
         preset = self.preset_name
