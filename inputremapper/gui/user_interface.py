@@ -25,6 +25,7 @@
 import math
 import os
 import sys
+import re
 
 from gi.repository import Gtk, GtkSource, Gdk, GLib, GObject
 
@@ -59,6 +60,7 @@ from inputremapper.injection.injector import RUNNING, FAILED, NO_GRAB
 from inputremapper.daemon import Daemon
 from inputremapper.config import config
 from inputremapper.injection.macros.parse import is_this_a_macro, parse
+from inputremapper.gui.utils import CTX_ERROR, CTX_MAPPING, CTX_APPLY, CTX_WARNING
 
 
 def gtk_iteration():
@@ -73,13 +75,6 @@ GObject.type_register(GtkSource.View)
 # GtkSource.View() also works:
 # https://stackoverflow.com/questions/60126579/gtk-builder-error-quark-invalid-object-type-webkitwebview
 
-
-CTX_SAVE = 0
-CTX_APPLY = 1
-CTX_KEYCODE = 2
-CTX_ERROR = 3
-CTX_WARNING = 4
-CTX_MAPPING = 5
 
 CONTINUE = True
 GO_BACK = False
@@ -408,24 +403,6 @@ class UserInterface:
         if reader.are_new_devices_available():
             self.populate_devices()
 
-        # keycode is already set by some other row
-        if key is not None:
-            existing = custom_mapping.get_symbol(key)
-            if existing is not None:
-                msg = f'"{key.beautify()}" already mapped to "{existing}"'
-                logger.info("%s %s", key, msg)
-                self.show_status(CTX_KEYCODE, msg)
-                return True
-
-            if key.is_problematic():
-                self.show_status(
-                    CTX_WARNING,
-                    "ctrl, alt and shift may not combine properly",
-                    "Your system might reinterpret combinations "
-                    + "with those after they are injected, and by doing so "
-                    + "break them.",
-                )
-
         self.active_editor.consume_newest_keycode(key)
 
         return True
@@ -468,8 +445,9 @@ class UserInterface:
             if context_id == CTX_WARNING:
                 self.get("warning_status_icon").show()
 
-            if len(message) > 55:
-                message = message[:52] + "..."
+            max_length = 45
+            if len(message) > max_length:
+                message = message[: max_length - 3] + "..."
 
             status_bar.push(context_id, message)
             status_bar.set_tooltip_text(tooltip)

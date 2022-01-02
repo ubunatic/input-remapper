@@ -22,6 +22,8 @@
 """Base classes for all editors."""
 
 
+import re
+
 from gi.repository import Gtk, GLib, Gdk
 
 from inputremapper.system_mapping import system_mapping
@@ -29,6 +31,7 @@ from inputremapper.gui.custom_mapping import custom_mapping
 from inputremapper.key import Key
 from inputremapper.logger import logger
 from inputremapper.gui.reader import reader
+from inputremapper.gui.utils import CTX_KEYCODE, CTX_WARNING
 
 
 store = Gtk.ListStore(str)
@@ -190,6 +193,25 @@ class EditableMapping:
 
         if key is not None and not isinstance(key, Key):
             raise TypeError("Expected new_key to be a Key object")
+
+        # keycode is already set by some other row
+        if key is not None:
+            existing = custom_mapping.get_symbol(key)
+            if existing is not None:
+                existing = re.sub(r"\s", "", existing)
+                msg = f'"{key.beautify()}" already mapped to "{existing}"'
+                logger.info("%s %s", key, msg)
+                self.user_interface.show_status(CTX_KEYCODE, msg)
+                return True
+
+            if key.is_problematic():
+                self.user_interface.show_status(
+                    CTX_WARNING,
+                    "ctrl, alt and shift may not combine properly",
+                    "Your system might reinterpret combinations "
+                    + "with those after they are injected, and by doing so "
+                    + "break them.",
+                )
 
         # the newest_keycode is populated since the ui regularly polls it
         # in order to display it in the status bar.

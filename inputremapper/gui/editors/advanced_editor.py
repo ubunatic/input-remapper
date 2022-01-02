@@ -22,10 +22,14 @@
 """The advanced editor with a multiline code editor."""
 
 
-from gi.repository import Gtk, GLib, Gdk
+from gi.repository import Gtk, GLib, Gdk, GtkSource
 
 from inputremapper.gui.editors.base import Editor, EditableMapping
 from inputremapper.gui.custom_mapping import custom_mapping
+from inputremapper.gui.editors.autocompletion import (
+    FunctionCompletionProvider,
+    KeyCompletionProvider,
+)
 
 
 # TODO test
@@ -73,20 +77,31 @@ class SelectionLabel(Gtk.Label):
         return self.__str__()
 
 
+# TODO it doesn't reliably save the changes or something.
+#  observed when switching to the basic editor
+# TODO there might also be problems with applying the symbol to multiple entries, but
+#  I'm not sure. Based on an observation
 class AdvancedEditor(EditableMapping, Editor):
     """Maintains the widgets of the advanced editor."""
 
     def __init__(self, user_interface):
         self.user_interface = user_interface
 
-        text_input = self.get("code_editor")
-        text_input.connect("event", self.on_text_input_change)
+        self._setup_source_view()
+        self._setup_recording_toggle()
 
         self.window = self.get("window")
         self.timeout = GLib.timeout_add(100, self.check_add_new_key)
         self.active_selection_label = None
 
-        kaka = self.get("advanced_key_recording_toggle").connect(
+        mapping_list = self.get("mapping_list_advanced")
+        mapping_list.connect("row-activated", self.on_mapping_selected)
+
+        super().__init__(user_interface=user_interface)
+
+    def _setup_recording_toggle(self):
+        """Prepare the toggle button for recording key inputs."""
+        self.get("advanced_key_recording_toggle").connect(
             "focus-out-event", self.on_key_recording_button_unfocus
         )
         self.get("advanced_key_recording_toggle").connect(
@@ -94,12 +109,22 @@ class AdvancedEditor(EditableMapping, Editor):
             self.on_key_recording_button_focus,
         )
 
-        self.get("advanced_key_recording_toggle").disconnect(kaka)
+    def _setup_source_view(self):
+        """Prepare the code editor."""
+        source_view = self.get("code_editor")
+        source_view.connect("event", self.on_text_input_change)
 
-        mapping_list = self.get("mapping_list_advanced")
-        mapping_list.connect("row-activated", self.on_mapping_selected)
+        # Syntax Highlighting
+        # Thanks to https://github.com/wolfthefallen/py-GtkSourceCompletion-example
+        python = GtkSource.LanguageManager().get_language("python")
+        # there are some similarities with python, I don't know how I can specify
+        # custom rules for input-remappers syntax.
+        source_view.get_buffer().set_language(python)
 
-        super().__init__(user_interface=user_interface)
+        # Autocompletion
+        completion = source_view.get_completion()
+        completion.add_provider(FunctionCompletionProvider())
+        completion.add_provider(KeyCompletionProvider())
 
     def _on_delete_button_clicked(self, *_):
         """The delete button on a single mapped key was clicked."""
@@ -202,8 +227,26 @@ class AdvancedEditor(EditableMapping, Editor):
             # there is no "changed" event for the GtkSourceView editor
             return
 
+        """idk = self.get_text_input().get_cursor_locations(None)
+        print((idk[0].x - 2) / 9, idk[0].y / 18)
+
+        wtf = self.get_text_input().get_buffer()
+        print(wtf)
+        print(wtf.cursor_position)
+
+        symbol = self.get_symbol().lower()
+        for i, (char_1, char_2) in enumerate(zip(self.previous_symbol, symbol)):
+            if char_1 != char_2:
+                print(i, char_1, char_2)
+                break
+
+        for name in system_mapping.list_names():
+            if symbol in name.lower():
+                print(name)
+
+        self.previous_symbol = symbol
         # TODO autocompletion
-        #  - also for words at the cursor position when editing a macro
+        #  - also for words at the cursor position when editing a macro"""
 
         super().on_text_input_change()
 

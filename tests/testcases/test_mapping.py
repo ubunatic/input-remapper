@@ -23,7 +23,7 @@ import os
 import unittest
 import json
 
-from evdev.ecodes import EV_KEY, EV_ABS, ABS_HAT0X, KEY_A
+from evdev.ecodes import EV_KEY, EV_ABS, KEY_A
 
 from inputremapper.mapping import Mapping, split_key
 from inputremapper.system_mapping import SystemMapping, XMODMAP_FILENAME

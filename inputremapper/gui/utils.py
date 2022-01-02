@@ -19,6 +19,15 @@
 # along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
+# status ctx ids
+CTX_SAVE = 0
+CTX_APPLY = 1
+CTX_KEYCODE = 2
+CTX_ERROR = 3
+CTX_WARNING = 4
+CTX_MAPPING = 5
+
+
 class HandlerDisabled:
     """Safely modify a widget without causing handlers to be called.
 
