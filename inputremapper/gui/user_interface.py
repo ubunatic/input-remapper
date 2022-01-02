@@ -781,9 +781,3 @@ class UserInterface:
             editor_stack.set_visible_child(children[0])
 
         self.active_editor.load_custom_mapping()
-
-    def update_advanced_editor(self):
-        """Show the currently selected mapping in the advanced editor."""
-        # TODO put a key_recording_toggle into it
-        # TODO connect handlers to key_recording_toggle
-        # TODO show code

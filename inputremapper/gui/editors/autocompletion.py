@@ -98,7 +98,7 @@ def _propose_function_names(iter):
 
 
 class FunctionCompletionProvider(GObject.GObject, GtkSource.CompletionProvider):
-    """Autocomplete function and key names"""
+    """Autocomplete function names"""
 
     def do_get_name(self):
         return "Functions"
@@ -109,7 +109,7 @@ class FunctionCompletionProvider(GObject.GObject, GtkSource.CompletionProvider):
 
 
 class KeyCompletionProvider(GObject.GObject, GtkSource.CompletionProvider):
-    """Autocomplete function and key names"""
+    """Autocomplete key names"""
 
     def do_get_name(self):
         return "Keys"

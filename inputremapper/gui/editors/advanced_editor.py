@@ -77,10 +77,6 @@ class SelectionLabel(Gtk.Label):
         return self.__str__()
 
 
-# TODO it doesn't reliably save the changes or something.
-#  observed when switching to the basic editor
-# TODO there might also be problems with applying the symbol to multiple entries, but
-#  I'm not sure. Based on an observation
 class AdvancedEditor(EditableMapping, Editor):
     """Maintains the widgets of the advanced editor."""
 
@@ -125,6 +121,10 @@ class AdvancedEditor(EditableMapping, Editor):
         completion = source_view.get_completion()
         completion.add_provider(FunctionCompletionProvider())
         completion.add_provider(KeyCompletionProvider())
+
+    def save(self):
+
+        super().save()
 
     def _on_delete_button_clicked(self, *_):
         """The delete button on a single mapped key was clicked."""
@@ -222,31 +222,10 @@ class AdvancedEditor(EditableMapping, Editor):
     def get_text_input(self):
         return self.get("code_editor")
 
-    def on_text_input_change(self, _, event):
-        if event.type != Gdk.EventType.KEY_RELEASE:
+    def on_text_input_change(self, _=None, event=None):
+        if event and event.type != Gdk.EventType.KEY_RELEASE:
             # there is no "changed" event for the GtkSourceView editor
             return
-
-        """idk = self.get_text_input().get_cursor_locations(None)
-        print((idk[0].x - 2) / 9, idk[0].y / 18)
-
-        wtf = self.get_text_input().get_buffer()
-        print(wtf)
-        print(wtf.cursor_position)
-
-        symbol = self.get_symbol().lower()
-        for i, (char_1, char_2) in enumerate(zip(self.previous_symbol, symbol)):
-            if char_1 != char_2:
-                print(i, char_1, char_2)
-                break
-
-        for name in system_mapping.list_names():
-            if symbol in name.lower():
-                print(name)
-
-        self.previous_symbol = symbol
-        # TODO autocompletion
-        #  - also for words at the cursor position when editing a macro"""
 
         super().on_text_input_change()
 

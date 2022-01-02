@@ -163,10 +163,16 @@ class EditableMapping:
 
     def _on_text_input_unfocus(self, *_):
         """Save the preset and correct the input casing."""
+        # correct case
         symbol = self.get_symbol() or ""
         correct_case = system_mapping.correct_case(symbol)
         if symbol != correct_case:
             self.get_text_input().set_text(correct_case)
+
+        # make sure the custom_mapping is up to date
+        self.on_text_input_change()
+
+        # save to disk
         self.user_interface.save_preset()
 
     def _is_waiting_for_input(self):
