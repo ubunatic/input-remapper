@@ -21,12 +21,13 @@ import json
 from evdev.ecodes import EV_KEY, EV_ABS, ABS_HAT0X
 
 from inputremapper.migrations import migrate, config_version
-from inputremapper.mapping import Mapping, split_key
-from inputremapper.config import config, GlobalConfig
+from inputremapper.mapping import Mapping
+from inputremapper.config import config
 from inputremapper.paths import touch, CONFIG_PATH, mkdir, get_preset_path
 from inputremapper.key import Key
+from inputremapper.user import HOME
 
-from inputremapper.logger import logger, VERSION
+from inputremapper.logger import VERSION
 
 from tests.test import quick_cleanup, tmp
 
@@ -61,7 +62,7 @@ class TestMigrations(unittest.TestCase):
         self.assertTrue(new.startswith("/tmp"))
 
         try:
-            os.rmdir(new)
+            shutil.rmtree(new)
         except FileNotFoundError:
             pass
 
