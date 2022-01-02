@@ -746,7 +746,9 @@ class TestIntegration(unittest.TestCase):
 
         # after unfocusing, it stores the mapping. So loading it again will retain
         # the mapping that was used
-        custom_mapping.load(self.user_interface.group.get_preset_path(self.user_interface.preset_name))
+        preset_name = self.user_interface.preset_name
+        preset_path = self.user_interface.group.get_preset_path(preset_name)
+        custom_mapping.load(preset_path)
 
         self.assertEqual(custom_mapping.get_symbol(ev_1), "c")
         self.assertEqual(custom_mapping.get_symbol(ev_2), "k(b).k(c)")
