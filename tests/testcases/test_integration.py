@@ -306,56 +306,56 @@ class TestIntegration(unittest.TestCase):
 
         self.user_interface.on_close = on_close
 
-        self.user_interface.key_press(
+        self.user_interface.on_key_press(
             self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
         )
-        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
-        self.user_interface.key_release(
+        self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
+        self.user_interface.on_key_release(
             self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
         )
-        self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
-        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
-        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
-        self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
-        self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
+        self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
+        self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
+        self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+        self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+        self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
         self.assertFalse(closed)
 
         # while keys are being recorded no shortcut should work
         rows = self.get_rows()
         row = rows[-1]
         self.set_focus(row.key_recording_toggle)
-        self.user_interface.key_press(
+        self.user_interface.on_key_press(
             self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
         )
-        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+        self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
         self.assertFalse(closed)
 
         self.set_focus(None)
-        self.user_interface.key_press(
+        self.user_interface.on_key_press(
             self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
         )
-        self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+        self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
         self.assertTrue(closed)
 
-        self.user_interface.key_release(
+        self.user_interface.on_key_release(
             self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
         )
-        self.user_interface.key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+        self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
 
     def test_ctrl_r(self):
         with patch.object(reader, "refresh_groups") as reader_get_devices_patch:
-            self.user_interface.key_press(
+            self.user_interface.on_key_press(
                 self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
             )
-            self.user_interface.key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_r))
+            self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_r))
             reader_get_devices_patch.assert_called_once()
 
     def test_ctrl_del(self):
         with patch.object(self.user_interface.dbus, "stop_injecting") as stop_injecting:
-            self.user_interface.key_press(
+            self.user_interface.on_key_press(
                 self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
             )
-            self.user_interface.key_press(
+            self.user_interface.on_key_press(
                 self.user_interface, GtkKeyEvent(Gdk.KEY_Delete)
             )
             stop_injecting.assert_called_once()

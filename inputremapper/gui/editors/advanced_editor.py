@@ -22,7 +22,7 @@
 """The advanced editor with a multiline code editor."""
 
 
-from gi.repository import Gtk, GLib, Gdk, GtkSource
+from gi.repository import Gtk, GLib, GtkSource
 
 from inputremapper.gui.editors.base import Editor, EditableMapping
 from inputremapper.gui.custom_mapping import custom_mapping
@@ -120,10 +120,6 @@ class AdvancedEditor(EditableMapping, Editor):
         completion = source_view.get_completion()
         completion.add_provider(FunctionCompletionProvider())
         completion.add_provider(KeyCompletionProvider())
-
-    def save(self):
-
-        super().save()
 
     def _on_delete_button_clicked(self, *_):
         """The delete button on a single mapped key was clicked."""

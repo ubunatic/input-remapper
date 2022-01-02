@@ -244,7 +244,7 @@ class UserInterface:
         self.confirm_delete.hide()
         return response
 
-    def key_press(self, _, event):
+    def on_key_press(self, _, event):
         """To execute shortcuts.
 
         This has nothing to do with the keycode reader.
@@ -269,7 +269,7 @@ class UserInterface:
             if gdk_keycode == Gdk.KEY_Delete:
                 self.on_restore_defaults_clicked()
 
-    def key_release(self, _, event):
+    def on_key_release(self, _, event):
         """To execute shortcuts.
 
         This has nothing to do with the keycode reader.
@@ -756,12 +756,9 @@ class UserInterface:
         if gdk_keycode == Gdk.KEY_Escape:
             self.about.hide()
 
-    # todo all of them should start with "on" I guess?
-    def toggle_advanced_editor_toggled(self, button):
+    def on_toggle_advanced_editor_toggled(self, button):
         """Show the advanced editor."""
         # TODO test
-        # TODO write to config when changed
-
         show_advanced_editor = button.get_active()
         editor_stack = self.get("editor-stack")
         children = editor_stack.get_children()

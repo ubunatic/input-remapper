@@ -74,8 +74,8 @@
     <property name="title" translatable="yes">Input Remapper</property>
     <property name="icon">input-remapper.svg</property>
     <signal name="delete-event" handler="on_close" swapped="no"/>
-    <signal name="key-press-event" handler="key_press" swapped="no"/>
-    <signal name="key-release-event" handler="key_release" swapped="no"/>
+    <signal name="key-press-event" handler="on_key_press" swapped="no"/>
+    <signal name="key-release-event" handler="on_key_release" swapped="no"/>
     <child>
       <object class="GtkBox" id="vertical-wrapper">
         <property name="visible">True</property>
@@ -173,7 +173,7 @@ To give your keys back their original mapping.</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
                     <property name="tooltip-text" translatable="yes">Show advanced editor</property>
-                    <signal name="toggled" handler="toggle_advanced_editor_toggled" swapped="no"/>
+                    <signal name="toggled" handler="on_toggle_advanced_editor_toggled" swapped="no"/>
                     <child>
                       <object class="GtkImage">
                         <property name="visible">True</property>
