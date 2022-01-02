@@ -69,11 +69,6 @@ class SelectionLabel(Gtk.Label):
         self.output = output
 
 
-# TODO changing keys adds duplicate mappings
-# TODO I get tons of duplicate
-#  DEBUG mapping.py:108: Key((1, 272, 1), (1, 273, 1)) maps to "abcd"
-#  EBUG mapping.py:132: Key((1, 272, 1), (1, 273, 1)) cleared
-#  logs
 class AdvancedEditor(EditableMapping, Editor):
     """Maintains the widgets of the advanced editor."""
 
@@ -87,13 +82,15 @@ class AdvancedEditor(EditableMapping, Editor):
         self.timeout = GLib.timeout_add(100, self.check_add_new_key)
         self.active_selection_label = None
 
-        self.get("advanced_key_recording_toggle").connect(
+        kaka = self.get("advanced_key_recording_toggle").connect(
             "focus-out-event", self.on_key_recording_button_unfocus
         )
         self.get("advanced_key_recording_toggle").connect(
             "focus-in-event",
             self.on_key_recording_button_focus,
         )
+
+        self.get("advanced_key_recording_toggle").disconnect(kaka)
 
         mapping_list = self.get("mapping_list_advanced")
         mapping_list.connect("row-activated", self.on_mapping_selected)
@@ -102,18 +99,6 @@ class AdvancedEditor(EditableMapping, Editor):
             self.add_empty()
 
         super().__init__(user_interface=user_interface)
-
-    def __del__(self, *_):
-        """Clear up all timeouts and resources.
-
-        This is especially important for tests.
-        """
-        if self.timeout:
-            GLib.source_remove(self.timeout)
-            self.timeout = None
-
-        # TODO disconnect handlers, since those widgets arent deleted and created from
-        #  scratch and duplicate constructor calls would cause problems
 
     def _on_delete_button_clicked(self, *_):
         """The delete button on a single mapped key was clicked."""

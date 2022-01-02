@@ -1617,7 +1617,7 @@ class TestIntegration(unittest.TestCase):
         )
 
     def test_screw_up_rows(self):
-        # add a few rows that are not present in custom_mapping
+        # add a few rows
         mapping_list = self.user_interface.get("mapping_list")
         mapping_list.forall(mapping_list.remove)
         for i in range(5):
@@ -1627,26 +1627,24 @@ class TestIntegration(unittest.TestCase):
             broken.set_key(Key(1, i, 1))
             broken.text_input.set_text("a")
             mapping_list.insert(broken, -1)
-        custom_mapping.empty()
 
-        # the ui has 5 rows, the custom_mapping 0. mismatch
+        # now remove all rows from the mapping. they are still displayed though,
+        # which is a mismatch that should be detected by the ui automatically.
+        custom_mapping.empty()
+        custom_mapping.change(Key(EV_KEY, 10, 1), "foo")
+
+        # the ui has 5 rows, the custom_mapping 1. mismatch
         num_rows_before = len(mapping_list.get_children())
-        self.assertEqual(len(custom_mapping), 0)
+        self.assertEqual(len(custom_mapping), 1)
         self.assertEqual(num_rows_before, 5)
 
-        # it returns true to keep the glib timeout going
+        # it returns true to keep the glib timeout going.
+        # it will also reload the mapping to avoid more confusion
         self.assertTrue(self.user_interface.active_editor.check_add_row())
-        # it still adds a new empty row and won't break
-        num_rows_after = len(mapping_list.get_children())
-        self.assertEqual(num_rows_after, num_rows_before + 1)
-
         rows = mapping_list.get_children()
-        self.assertEqual(rows[0].get_symbol(), "a")
-        self.assertEqual(rows[1].get_symbol(), "a")
-        self.assertEqual(rows[2].get_symbol(), "a")
-        self.assertEqual(rows[3].get_symbol(), "a")
-        self.assertEqual(rows[4].get_symbol(), "a")
-        self.assertEqual(rows[5].get_symbol(), None)
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0].get_symbol(), "foo")
+        self.assertEqual(rows[1].get_symbol(), None)
 
     def test_shared_presets(self):
         # devices with the same name (but different key because the key is

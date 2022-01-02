@@ -207,19 +207,10 @@ class BasicEditor(Editor):
         self.user_interface = user_interface
         self.window = self.get("window")
         self.timeout = GLib.timeout_add(100, self.check_add_row)
-        mapping_list = self.get("mapping_list")
-        mapping_list.connect("destroy", self.__del__)
 
     def get(self, name):
         """Get a widget from the window"""
         return self.user_interface.builder.get_object(name)
-
-    def __del__(self, *_):
-        """Clear up all timeouts and resources.
-
-        This is especially important for tests.
-        """
-        self.stop_timeouts()
 
     def stop_timeouts(self):
         if self.timeout:
