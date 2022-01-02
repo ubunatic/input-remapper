@@ -47,7 +47,7 @@ def _get_left_text(iter):
 
 # regex to search for the beginning of a...
 PARAMETER = r".*?[(,=]\s*"
-FUNCTION_CHAIN = r"(?:.*?\)\s*\.\s*|.*?[(,=]\s*)"
+FUNCTION_CHAIN = r".*?\)\s*\.\s*"
 
 
 def _propose_symbols(iter):
