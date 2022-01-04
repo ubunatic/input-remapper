@@ -25,7 +25,6 @@
 import math
 import os
 import sys
-import re
 
 from gi.repository import Gtk, GtkSource, Gdk, GLib, GObject
 
