@@ -87,7 +87,7 @@ def get_incomplete_parameter(iter):
 
 def propose_symbols(incomplete_name):
     """Find key names that match the input at the cursor."""
-    if incomplete_name is None:
+    if incomplete_name is None or len(incomplete_name) <= 1:
         return []
 
     incomplete_name = incomplete_name.lower()
@@ -101,7 +101,7 @@ def propose_symbols(incomplete_name):
 
 def propose_function_names(incomplete_name):
     """Find function names that match the input at the cursor."""
-    if incomplete_name is None:
+    if incomplete_name is None or len(incomplete_name) <= 1:
         return []
 
     incomplete_name = incomplete_name.lower()

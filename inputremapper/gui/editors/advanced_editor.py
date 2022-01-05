@@ -80,6 +80,20 @@ class SelectionLabel(Gtk.Label):
         return self.__str__()
 
 
+autocomplete_debounce = None
+
+
+def debounce(func):
+    """Debounce a function call"""
+    def wrapped(self, *args):
+        if autocomplete_debounce is not None:
+            GLib.source_remove(self.autocomplete_debounce)
+
+        GLib.timeout_add(50, lambda: func(self, *args))
+
+    return wrapped
+
+
 class AdvancedEditor(EditableMapping, Editor):
     """Maintains the widgets of the advanced editor."""
 
@@ -134,7 +148,7 @@ class AdvancedEditor(EditableMapping, Editor):
 
         source_view.connect("focus-out-event", self.hide_autocompletion)
 
-        source_view.get_buffer().connect("changed", self.debounce_symbol_change)
+        source_view.get_buffer().connect("changed", self.on_symbol_changed)
 
     def hide_autocompletion(self, *_):
         """TODO"""
@@ -148,13 +162,7 @@ class AdvancedEditor(EditableMapping, Editor):
         cursor = source_view.get_cursor_locations()[0]
         return source_view.get_iter_at_location(cursor.x, cursor.y)[1]
 
-    def debounce_symbol_change(self, *_):
-        """Avoid wasting computation power when typing."""
-        if self.autocomplete_debounce is not None:
-            GLib.source_remove(self.autocomplete_debounce)
-
-        self.autocomplete_debounce = GLib.timeout_add(100, self.on_symbol_changed)
-
+    @debounce
     def on_symbol_changed(self, *_):
         """The symbol/code text input was changed by the user."""
         self.autocomplete_debounce = None
