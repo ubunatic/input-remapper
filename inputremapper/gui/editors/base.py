@@ -128,12 +128,11 @@ class EditableMapping:
         self.input_has_arrived = False
 
         toggle = self.get_recording_toggle()
-        toggle.connect("focus-in-event", self._reset)
         toggle.connect("focus-out-event", self._reset)
         toggle.connect("focus-out-event", lambda *_: toggle.set_active(False))
-        # the click event to activate recording should not be recorded
-        toggle.connect("focus-in-event", lambda *_: reader.clear())
-        # don't leave the input when using arrow keys or tab. wait for the
+        toggle.connect("focus-in-event", self.on_recording_toggle_focus)
+        # the click event to activate recording should not be recorded.
+        # Don't leave the input when using arrow keys or tab. wait for the
         # window to consume the keycode from the reader. I.e. a tab input should
         # be recorded, instead of causing the recording to stop.
         toggle.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
@@ -143,6 +142,12 @@ class EditableMapping:
 
         delete_button = self.get_delete_button()
         delete_button.connect("button-press-event", self._on_delete_button_clicked)
+
+    def on_recording_toggle_focus(self, *_):
+        """Refresh useful usage information."""
+        self._reset()
+        reader.clear()
+        self.user_interface.can_modify_mapping()
 
     def _on_delete_button_clicked(self, *_):
         """Destroy the row and remove it from the config."""
