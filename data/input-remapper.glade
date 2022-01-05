@@ -48,16 +48,6 @@
     <property name="can-focus">False</property>
     <property name="icon-name">dialog-ok</property>
   </object>
-  <object class="GtkSourceView" id="code_editor_old">
-    <property name="visible">True</property>
-    <property name="can-focus">True</property>
-    <property name="left-margin">2</property>
-    <property name="right-margin">2</property>
-    <property name="monospace">True</property>
-    <property name="show-line-numbers">True</property>
-    <property name="tab-width">2</property>
-    <property name="auto-indent">True</property>
-  </object>
   <object class="GtkImage" id="copy-icon">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
@@ -871,7 +861,7 @@ To give your keys back their original mapping.</property>
                                 <property name="can-focus">False</property>
                                 <property name="shadow-type">none</property>
                                 <child>
-                                  <object class="GtkTextView" id="code_editor">
+                                  <object class="GtkSourceView" id="code_editor">
                                     <property name="visible">True</property>
                                     <property name="can-focus">True</property>
                                     <property name="left-margin">10</property>
@@ -879,8 +869,9 @@ To give your keys back their original mapping.</property>
                                     <property name="top-margin">10</property>
                                     <property name="bottom-margin">10</property>
                                     <property name="monospace">True</property>
+                                    <property name="tab-width">2</property>
+                                    <property name="auto-indent">True</property>
                                     <style>
-                                      <class name="transparent"/>
                                       <class name="code-editor-text-view"/>
                                     </style>
                                   </object>

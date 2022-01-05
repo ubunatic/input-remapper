@@ -130,17 +130,13 @@ class AdvancedEditor(EditableMapping, Editor):
 
         # Syntax Highlighting
         # Thanks to https://github.com/wolfthefallen/py-GtkSourceCompletion-example
-        # python = GtkSource.LanguageManager().get_language("python")
+        python = GtkSource.LanguageManager().get_language("python")
         # there are some similarities with python, I don't know how I can specify
         # custom rules for input-remappers syntax.
-        # source_view.get_buffer().set_language(python)
+        source_view.get_buffer().set_language(python)
 
-        # Autocompletion
-        # completion = source_view.get_completion()
-        # completion.add_provider(FunctionCompletionProvider())
-        # completion.add_provider(KeyCompletionProvider())
-
-        # Beautiful autocompletion
+        # Beautiful autocompletion using popovers
+        # The one provided via source_view.get_completion() is not very appealing
         autocompletion = self.get("autocompletion-popover")
         autocompletion.set_relative_to(self.get("code_editor_container"))
         autocompletion.set_position(Gtk.PositionType.BOTTOM)
