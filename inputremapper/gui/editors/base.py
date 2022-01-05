@@ -139,7 +139,7 @@ class EditableMapping:
         toggle.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
 
         text_input = self.get_text_input()
-        text_input.connect("focus-out-event", self._collect_and_save_changes)
+        text_input.connect("focus-out-event", self.save_changes)
 
         delete_button = self.get_delete_button()
         delete_button.connect("button-press-event", self._on_delete_button_clicked)
@@ -152,7 +152,7 @@ class EditableMapping:
 
         self.set_symbol("")
 
-    def _collect_and_save_changes(self, *_):
+    def save_changes(self, *_):
         """Save the preset and correct the input casing."""
         # correct case
         symbol = self.get_symbol() or ""

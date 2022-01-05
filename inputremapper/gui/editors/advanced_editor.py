@@ -227,6 +227,8 @@ class AdvancedEditor(EditableMapping, Editor):
         # insert the autocompletion
         source_view.get_buffer().set_text(left + selected_proposal + right)
 
+        self.save_changes()
+
     def _on_delete_button_clicked(self, *_):
         """The delete button on a single mapped key was clicked."""
         super()._on_delete_button_clicked()
