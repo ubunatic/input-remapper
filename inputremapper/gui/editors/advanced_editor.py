@@ -27,9 +27,12 @@ from gi.repository import Gtk, GLib, GtkSource
 from inputremapper.gui.editors.base import Editor, EditableMapping
 from inputremapper.gui.custom_mapping import custom_mapping
 from inputremapper.gui.editors.autocompletion import (
-    FunctionCompletionProvider,
-    KeyCompletionProvider,
+    propose_symbols,
+    propose_function_names,
+    get_incomplete_parameter,
+    get_incomplete_function_name
 )
+from inputremapper.logger import logger
 
 
 # TODO test
@@ -93,6 +96,8 @@ class AdvancedEditor(EditableMapping, Editor):
         mapping_list = self.get("mapping_list_advanced")
         mapping_list.connect("row-activated", self.on_mapping_selected)
 
+        self.autocomplete_debounce = None
+
         super().__init__(user_interface=user_interface)
 
     def _setup_recording_toggle(self):
@@ -111,15 +116,108 @@ class AdvancedEditor(EditableMapping, Editor):
 
         # Syntax Highlighting
         # Thanks to https://github.com/wolfthefallen/py-GtkSourceCompletion-example
-        python = GtkSource.LanguageManager().get_language("python")
+        # python = GtkSource.LanguageManager().get_language("python")
         # there are some similarities with python, I don't know how I can specify
         # custom rules for input-remappers syntax.
-        source_view.get_buffer().set_language(python)
+        # source_view.get_buffer().set_language(python)
 
         # Autocompletion
-        completion = source_view.get_completion()
-        completion.add_provider(FunctionCompletionProvider())
-        completion.add_provider(KeyCompletionProvider())
+        # completion = source_view.get_completion()
+        # completion.add_provider(FunctionCompletionProvider())
+        # completion.add_provider(KeyCompletionProvider())
+
+        # Beautiful autocompletion
+        autocompletion = self.get("autocompletion-popover")
+        autocompletion.set_relative_to(self.get("code_editor_container"))
+        autocompletion.set_position(Gtk.PositionType.BOTTOM)
+        autocompletion.show_all()
+
+        source_view.connect("focus-out-event", self.hide_autocompletion)
+
+        source_view.get_buffer().connect("changed", self.debounce_symbol_change)
+
+    def hide_autocompletion(self, *_):
+        """TODO"""
+        # add some delay, so that pressing the button in the completion works
+        autocompletion = self.get("autocompletion-popover")
+        GLib.timeout_add(100, autocompletion.popdown)
+
+    def get_text_iter_at_cursor(self):
+        """Get Gtk.TextIter at the current text cursor location."""
+        source_view = self.get("code_editor")
+        cursor = source_view.get_cursor_locations()[0]
+        return source_view.get_iter_at_location(cursor.x, cursor.y)[1]
+
+    def debounce_symbol_change(self, *_):
+        """Avoid wasting computation power when typing."""
+        if self.autocomplete_debounce is not None:
+            GLib.source_remove(self.autocomplete_debounce)
+
+        self.autocomplete_debounce = GLib.timeout_add(100, self.on_symbol_changed)
+
+    def on_symbol_changed(self, *_):
+        """The symbol/code text input was changed by the user."""
+        self.autocomplete_debounce = None
+
+        source_view = self.get("code_editor")
+        autocompletion = self.get("autocompletion-popover")
+
+        if not source_view.is_focus():
+            autocompletion.popdown()
+            return
+
+        suggestion_widgets = self.get("autocomplete-suggestions")
+        suggestion_widgets.forall(suggestion_widgets.remove)
+
+        # move the autocompletion to the text cursor
+        cursor = source_view.get_cursor_locations()[0]
+        cursor.y += 18
+        autocompletion.set_pointing_to(cursor)
+
+        text_iter = self.get_text_iter_at_cursor()
+        incomplete_parameter = get_incomplete_parameter(text_iter)
+        incomplete_function = get_incomplete_function_name(text_iter)
+        suggested_names = propose_function_names(incomplete_function)
+        suggested_names += propose_symbols(incomplete_parameter)
+        suggested_names = set(suggested_names)  # get unique names
+
+        if len(suggested_names) == 0:
+            autocompletion.popdown()
+            return
+
+        autocompletion.popup()  # ffs was this hard to find
+
+        for name in suggested_names:
+            button = Gtk.Button(label=name)
+            button.connect("clicked", self.on_autocompletion_clicked)
+            button.show_all()
+            suggestion_widgets.insert(button, -1)
+
+    def on_autocompletion_clicked(self, button):
+        """An autocompletion suggestion was selected and should be inserted."""
+        source_view = self.get("code_editor")
+        end_iter = self.get_text_iter_at_cursor()
+
+        # the word the user is currently typing in
+        incomplete_name = get_incomplete_function_name(end_iter)
+
+        # the text of the autocompletion entry that was selected
+        selected_proposal = button.get_label()
+
+        if incomplete_name is None:
+            logger.error('Failed to autocomplete "%s" with "%s"', incomplete_name, selected_proposal)
+            return
+
+        # the complete current input up to the cursor
+        buffer = source_view.get_buffer()
+        left = buffer.get_text(buffer.get_start_iter(), end_iter, True)
+        right = buffer.get_text(end_iter, buffer.get_end_iter(), True)
+
+        # remove the unfinished word
+        left = left[:-len(incomplete_name)]
+
+        # insert the autocompletion
+        source_view.get_buffer().set_text(left + selected_proposal + right)
 
     def _on_delete_button_clicked(self, *_):
         """The delete button on a single mapped key was clicked."""

@@ -28,7 +28,6 @@ useful GtkSource examples
 
 import re
 
-from gi.repository import GtkSource, GObject
 from inputremapper.system_mapping import system_mapping
 from inputremapper.injection.macros.parse import FUNCTIONS
 
@@ -50,8 +49,27 @@ PARAMETER = r".*?[(,=]\s*"
 FUNCTION_CHAIN = r".*?\)\s*\.\s*"
 
 
-def _propose_symbols(iter):
-    """Find key names that match the input at the cursor."""
+def get_incomplete_function_name(iter):
+    """Get the word that is written left to the TextIter."""
+    left_text = _get_left_text(iter)
+
+    # match foo in:
+    #  bar().foo
+    #  bar()\n.foo
+    #  bar().\nfoo
+    #  bar(\nfoo
+    #  bar(KEY_A,\nfoo
+    #  foo
+    match = re.match(rf"(?:{FUNCTION_CHAIN}|{PARAMETER}|^)(\w+)$", left_text)
+
+    if match is None:
+        return None
+
+    return match[1]
+
+
+def get_incomplete_parameter(iter):
+    """Get the parameter that is written left to the TextIter."""
     left_text = _get_left_text(iter)
 
     # match foo in:
@@ -62,58 +80,34 @@ def _propose_symbols(iter):
     match = re.match(rf"(?:{PARAMETER}|^)(\w+)$", left_text)
 
     if match is None:
-        return
+        return None
 
-    match = match[1]
+    return match[1]
+
+
+def propose_symbols(incomplete_name):
+    """Find key names that match the input at the cursor."""
+    if incomplete_name is None:
+        return []
+
+    incomplete_name = incomplete_name.lower()
 
     return [
-        GtkSource.CompletionItem(label=name, text=name)
+        name  # GtkSource.CompletionItem(label=name, text=name)
         for name in list(system_mapping.list_names())
-        if match in name.lower() and match != name.lower()
+        if incomplete_name in name.lower() and incomplete_name != name.lower()
     ]
 
 
-def _propose_function_names(iter):
+def propose_function_names(incomplete_name):
     """Find function names that match the input at the cursor."""
-    left_text = _get_left_text(iter)
+    if incomplete_name is None:
+        return []
 
-    # match foo in:
-    #  bar().foo
-    #  bar()\n.foo
-    #  bar().\nfoo
-    #  bar(\nfoo
-    #  foo
-    match = re.match(rf"(?:{FUNCTION_CHAIN}|{PARAMETER}|^)(\w+)$", left_text)
-
-    if match is None:
-        return
-
-    match = match[1]
+    incomplete_name = incomplete_name.lower()
 
     return [
-        GtkSource.CompletionItem(label=name, text=name)
+        name
         for name in FUNCTION_NAMES
-        if match in name.lower() and match != name.lower()
+        if incomplete_name in name.lower() and incomplete_name != name.lower()
     ]
-
-
-class FunctionCompletionProvider(GObject.GObject, GtkSource.CompletionProvider):
-    """Autocomplete function names"""
-
-    def do_get_name(self):
-        return "Functions"
-
-    def do_populate(self, context):
-        _, iter = context.get_iter()
-        context.add_proposals(self, _propose_function_names(iter), True)
-
-
-class KeyCompletionProvider(GObject.GObject, GtkSource.CompletionProvider):
-    """Autocomplete key names"""
-
-    def do_get_name(self):
-        return "Keys"
-
-    def do_populate(self, context):
-        _, iter = context.get_iter()
-        context.add_proposals(self, _propose_symbols(iter), True)

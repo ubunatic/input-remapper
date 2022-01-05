@@ -274,3 +274,4 @@ while input-remapper reads from multiple InputDevices it injects the mapped lett
 - [python-evdev](https://python-evdev.readthedocs.io/en/stable/)
 - [Python Unix Domain Sockets](https://pymotw.com/2/socket/uds.html)
 - [GNOME HIG](https://developer.gnome.org/hig/stable/)
+- [GtkSource Example](https://github.com/wolfthefallen/py-GtkSourceCompletion-example)

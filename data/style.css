@@ -43,12 +43,28 @@ list button {
     background: transparent;
 }
 
+.code-editor-text-view > * {
+    border-radius: 2px;
+}
+
 .copyright {
     font-size: 7pt;
 }
 
 .advanced-editor-key-list label {
     padding: 6px;
+}
+
+.autocompletion button {
+    background: transparent;
+    border: 0px;
+    box-shadow: none;
+    padding: 6px;
+}
+
+.autocompletion {
+    padding: 0px;
+    box-shadow: none;
 }
 
 .no-border {

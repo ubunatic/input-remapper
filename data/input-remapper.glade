@@ -3,15 +3,6 @@
 <interface>
   <requires lib="gtk+" version="3.22"/>
   <requires lib="gtksourceview" version="4.0"/>
-  <object class="GtkTextView">
-    <property name="visible">True</property>
-    <property name="can-focus">True</property>
-    <property name="left-margin">12</property>
-    <property name="right-margin">12</property>
-    <property name="top-margin">12</property>
-    <property name="bottom-margin">12</property>
-    <property name="monospace">True</property>
-  </object>
   <object class="GtkImage" id="about-icon">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
@@ -21,6 +12,16 @@
     <property name="visible">True</property>
     <property name="can-focus">False</property>
     <property name="icon-name">dialog-ok</property>
+  </object>
+  <object class="GtkSourceView" id="code_editor_old">
+    <property name="visible">True</property>
+    <property name="can-focus">True</property>
+    <property name="left-margin">2</property>
+    <property name="right-margin">2</property>
+    <property name="monospace">True</property>
+    <property name="show-line-numbers">True</property>
+    <property name="tab-width">2</property>
+    <property name="auto-indent">True</property>
   </object>
   <object class="GtkImage" id="copy-icon">
     <property name="visible">True</property>
@@ -968,7 +969,7 @@ To give your keys back their original mapping.</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkScrolledWindow">
+                              <object class="GtkScrolledWindow" id="code_editor_container">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <child>
@@ -977,15 +978,18 @@ To give your keys back their original mapping.</property>
                                     <property name="can-focus">False</property>
                                     <property name="shadow-type">none</property>
                                     <child>
-                                      <object class="GtkSourceView" id="code_editor">
+                                      <object class="GtkTextView" id="code_editor">
                                         <property name="visible">True</property>
                                         <property name="can-focus">True</property>
-                                        <property name="left-margin">2</property>
-                                        <property name="right-margin">2</property>
+                                        <property name="left-margin">10</property>
+                                        <property name="right-margin">10</property>
+                                        <property name="top-margin">10</property>
+                                        <property name="bottom-margin">10</property>
                                         <property name="monospace">True</property>
-                                        <property name="show-line-numbers">True</property>
-                                        <property name="tab-width">2</property>
-                                        <property name="auto-indent">True</property>
+                                        <style>
+                                          <class name="transparent"/>
+                                          <class name="code-editor-text-view"/>
+                                        </style>
                                       </object>
                                     </child>
                                   </object>
@@ -1323,6 +1327,42 @@ Macros allow multiple characters to be written with a single key-press. Informat
         </child>
       </object>
     </child>
+  </object>
+  <object class="GtkPopover" id="autocompletion-popover">
+    <property name="can-focus">False</property>
+    <property name="relative-to">advanced_editor</property>
+    <property name="modal">False</property>
+    <property name="constrain-to">none</property>
+    <child>
+      <object class="GtkScrolledWindow">
+        <property name="visible">True</property>
+        <property name="can-focus">True</property>
+        <property name="min-content-width">200</property>
+        <property name="min-content-height">0</property>
+        <property name="max-content-height">300</property>
+        <property name="propagate-natural-width">True</property>
+        <property name="propagate-natural-height">True</property>
+        <child>
+          <object class="GtkViewport">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="shadow-type">none</property>
+            <child>
+              <object class="GtkListBox" id="autocomplete-suggestions">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <style>
+                  <class name="transparent"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <style>
+      <class name="autocompletion"/>
+    </style>
   </object>
   <object class="GtkDialog" id="confirm-delete">
     <property name="can-focus">False</property>
