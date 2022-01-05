@@ -130,7 +130,10 @@ class AdvancedEditor(EditableMapping, Editor):
 
         # Syntax Highlighting
         # Thanks to https://github.com/wolfthefallen/py-GtkSourceCompletion-example
-        python = GtkSource.LanguageManager().get_language("python")
+        language_manager = GtkSource.LanguageManager()
+        # fun fact: without saving LanguageManager into its own variable
+        # this doesn't work
+        python = language_manager.get_language("python")
         # there are some similarities with python, I don't know how I can specify
         # custom rules for input-remappers syntax.
         source_view.get_buffer().set_language(python)
