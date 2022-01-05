@@ -50,7 +50,6 @@ from inputremapper.groups import (
     TOUCHPAD,
     MOUSE,
 )
-from inputremapper.gui.editors.basic_editor import BasicEditor
 from inputremapper.gui.editors.advanced_editor import AdvancedEditor
 from inputremapper.key import Key
 from inputremapper.gui.reader import reader
@@ -148,11 +147,8 @@ class UserInterface:
         builder.connect_signals(self)
         self.builder = builder
 
-        self.advanced_editor = AdvancedEditor(self)
-        self.basic_editor = BasicEditor(self)
-
         # TODO read from config which one to show on start
-        self.active_editor = self.basic_editor
+        self.editor = AdvancedEditor(self)
 
         # set up the device selection
         # https://python-gtk-3-tutorial.readthedocs.io/en/latest/treeview.html#the-view
@@ -402,7 +398,7 @@ class UserInterface:
         if reader.are_new_devices_available():
             self.populate_devices()
 
-        self.active_editor.consume_newest_keycode(key)
+        self.editor.consume_newest_keycode(key)
 
         return True
 
@@ -678,7 +674,7 @@ class UserInterface:
 
         custom_mapping.load(self.group.get_preset_path(preset))
 
-        self.active_editor.load_custom_mapping()
+        self.editor.load_custom_mapping()
 
         autoload_switch = self.get("preset_autoload_switch")
 
@@ -754,19 +750,3 @@ class UserInterface:
         gdk_keycode = event.get_keyval()[1]
         if gdk_keycode == Gdk.KEY_Escape:
             self.about.hide()
-
-    def on_toggle_advanced_editor_toggled(self, button):
-        """Show the advanced editor."""
-        # TODO test
-        show_advanced_editor = button.get_active()
-        editor_stack = self.get("editor-stack")
-        children = editor_stack.get_children()
-
-        if show_advanced_editor:
-            self.active_editor = self.advanced_editor
-            editor_stack.set_visible_child(children[1])
-        else:
-            self.active_editor = self.basic_editor
-            editor_stack.set_visible_child(children[0])
-
-        self.active_editor.load_custom_mapping()

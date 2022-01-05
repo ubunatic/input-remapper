@@ -151,7 +151,7 @@ class AdvancedEditor(EditableMapping, Editor):
         source_view.get_buffer().connect("changed", self.on_symbol_changed)
 
     def hide_autocompletion(self, *_):
-        """TODO"""
+        """Hide the autocompletion popover."""
         # add some delay, so that pressing the button in the completion works
         autocompletion = self.get("autocompletion-popover")
         GLib.timeout_add(100, autocompletion.popdown)
