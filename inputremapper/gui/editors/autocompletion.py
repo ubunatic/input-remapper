@@ -241,6 +241,13 @@ class Autocompletion(Gtk.Popover):
 
         # move the autocompletion to the text cursor
         cursor = self.text_input.get_cursor_locations()[0]
+        # convert it to window coords, because the cursor values will be very large
+        # when scrolling down in the textview.
+        window_coords = self.text_input.buffer_to_window_coords(
+            Gtk.TextWindowType.TEXT, cursor.x, cursor.y
+        )
+        cursor.x = window_coords.window_x
+        cursor.y = window_coords.window_y
         cursor.y += 18
         self.set_pointing_to(cursor)
 
@@ -302,7 +309,7 @@ class Autocompletion(Gtk.Popover):
         left = left[: -len(incomplete_name)]
 
         # insert the autocompletion
-        self.text_input.get_buffer().set_text(left + selected_proposal + right)
+        buffer.set_text(left + selected_proposal + right)
 
         self.emit("suggestion-inserted")
 
