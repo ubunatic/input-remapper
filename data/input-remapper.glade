@@ -48,8 +48,7 @@
                 <property name="use-action-appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
-                <property name="can-default">True</property>
-                <property name="receives-default">False</property>
+                <property name="receives-default">True</property>
                 <property name="image">delete-icon-1</property>
               </object>
               <packing>
@@ -63,6 +62,8 @@
                 <property name="label" translatable="yes">Cancel</property>
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
+                <property name="can-default">True</property>
+                <property name="has-default">True</property>
                 <property name="receives-default">True</property>
               </object>
               <packing>
