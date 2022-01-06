@@ -712,7 +712,7 @@ To give your keys back their original mapping.</property>
                     <property name="can-focus">False</property>
                     <child>
                       <object class="GtkScrolledWindow">
-                        <property name="width-request">140</property>
+                        <property name="width-request">160</property>
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <child>
@@ -754,14 +754,12 @@ To give your keys back their original mapping.</property>
                       <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="margin-left">12</property>
-                        <property name="margin-right">12</property>
-                        <property name="margin-start">12</property>
-                        <property name="margin-end">12</property>
-                        <property name="margin-top">12</property>
-                        <property name="margin-bottom">12</property>
+                        <property name="margin-start">18</property>
+                        <property name="margin-end">18</property>
+                        <property name="margin-top">18</property>
+                        <property name="margin-bottom">18</property>
                         <property name="orientation">vertical</property>
-                        <property name="spacing">12</property>
+                        <property name="spacing">18</property>
                         <child>
                           <object class="GtkBox" id="advanced-editor-controls">
                             <property name="visible">True</property>
