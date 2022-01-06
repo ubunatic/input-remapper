@@ -51,7 +51,7 @@ def _get_left_text(iter):
 
 
 # regex to search for the beginning of a...
-PARAMETER = r".*?[(,=]\s*"
+PARAMETER = r".*?[(,=+]\s*"
 FUNCTION_CHAIN = r".*?\)\s*\.\s*"
 
 
@@ -84,6 +84,7 @@ def get_incomplete_parameter(iter):
     #  bar(a=foo
     #  bar(qux, foo
     #  foo
+    #  bar + foo
     match = re.match(rf"(?:{PARAMETER}|^)(\w+)$", left_text)
 
     if match is None:
