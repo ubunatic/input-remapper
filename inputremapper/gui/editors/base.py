@@ -34,21 +34,6 @@ from inputremapper.gui.reader import reader
 from inputremapper.gui.utils import CTX_KEYCODE, CTX_WARNING
 
 
-class Editor:
-    """Interface for all functions the editors have to provide."""
-
-    def consume_newest_keycode(self, key):
-        """Process the current output of the reader.
-
-        This can be used for recording buttons, like EditableMapping does.
-        """
-        raise NotImplementedError
-
-    def load_custom_mapping(self):
-        """Display the data from custom_mapping, make this ready for editing."""
-        raise NotImplementedError
-
-
 class EditableMapping:
     """A base class for editing a single mapping,
 

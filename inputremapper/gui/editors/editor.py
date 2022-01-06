@@ -24,7 +24,7 @@
 
 from gi.repository import Gtk, GLib, GtkSource
 
-from inputremapper.gui.editors.base import Editor, EditableMapping
+from inputremapper.gui.editors.base import EditableMapping
 from inputremapper.gui.custom_mapping import custom_mapping
 from inputremapper.gui.editors.autocompletion import Autocompletion
 
@@ -74,8 +74,8 @@ class SelectionLabel(Gtk.Label):
         return self.__str__()
 
 
-class AdvancedEditor(EditableMapping, Editor):
-    """Maintains the widgets of the advanced editor."""
+class Editor(EditableMapping):
+    """Maintains the widgets of the editor."""
 
     def __init__(self, user_interface):
         self.user_interface = user_interface
@@ -87,17 +87,17 @@ class AdvancedEditor(EditableMapping, Editor):
         self.timeout = GLib.timeout_add(100, self.check_add_new_key)
         self.active_selection_label = None
 
-        mapping_list = self.get("mapping_list_advanced")
+        mapping_list = self.get("mapping_list")
         mapping_list.connect("row-activated", self.on_mapping_selected)
 
         super().__init__(user_interface=user_interface)
 
     def _setup_recording_toggle(self):
         """Prepare the toggle button for recording key inputs."""
-        self.get("advanced_key_recording_toggle").connect(
+        self.get("key_recording_toggle").connect(
             "focus-out-event", self.on_key_recording_button_unfocus
         )
-        self.get("advanced_key_recording_toggle").connect(
+        self.get("key_recording_toggle").connect(
             "focus-in-event",
             self.on_key_recording_button_focus,
         )
@@ -146,7 +146,7 @@ class AdvancedEditor(EditableMapping, Editor):
         super()._on_delete_button_clicked()
 
     def get_delete_button(self):
-        return self.get("advanced-delete-mapping")
+        return self.get("delete-mapping")
 
     def get(self, name):
         """Get a widget from the window"""
@@ -154,7 +154,7 @@ class AdvancedEditor(EditableMapping, Editor):
 
     def check_add_new_key(self):
         """If needed, add a new empty mapping to the list for the user to configure."""
-        mapping_list = self.get("mapping_list_advanced")
+        mapping_list = self.get("mapping_list")
 
         selection_labels = [
             selection_label.get_children()[0]
@@ -172,11 +172,11 @@ class AdvancedEditor(EditableMapping, Editor):
 
     def on_key_recording_button_focus(self, *_):
         """Show user friendly instructions."""
-        self.get("advanced_key_recording_toggle").set_label("Press key")
+        self.get("key_recording_toggle").set_label("Press key")
 
     def on_key_recording_button_unfocus(self, *_):
         """Show user friendly instructions."""
-        self.get("advanced_key_recording_toggle").set_label("Change key")
+        self.get("key_recording_toggle").set_label("Change key")
 
     def on_mapping_selected(self, _=None, list_box_row=None):
         """One of the buttons in the left "key" column was clicked.
@@ -196,14 +196,14 @@ class AdvancedEditor(EditableMapping, Editor):
 
     def add_empty(self):
         """Add one empty row for a single mapped key."""
-        mapping_list = self.get("mapping_list_advanced")
+        mapping_list = self.get("mapping_list")
         mapping_selection = SelectionLabel()
         mapping_selection.set_label("new entry")
         mapping_selection.show_all()
         mapping_list.insert(mapping_selection, -1)
 
     def load_custom_mapping(self):
-        mapping_list = self.get("mapping_list_advanced")
+        mapping_list = self.get("mapping_list")
         mapping_list.forall(mapping_list.remove)
 
         for key, output in custom_mapping:
@@ -227,7 +227,7 @@ class AdvancedEditor(EditableMapping, Editor):
     """EditableMapping"""
 
     def get_recording_toggle(self):
-        return self.get("advanced_key_recording_toggle")
+        return self.get("key_recording_toggle")
 
     def set_symbol(self, symbol):
         self.get("code_editor").get_buffer().set_text(symbol or "")

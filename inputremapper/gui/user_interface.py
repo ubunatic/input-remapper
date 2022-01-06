@@ -51,7 +51,7 @@ from inputremapper.groups import (
     TOUCHPAD,
     MOUSE,
 )
-from inputremapper.gui.editors.advanced_editor import AdvancedEditor
+from inputremapper.gui.editors.editor import Editor
 from inputremapper.key import Key
 from inputremapper.gui.reader import reader
 from inputremapper.gui.helper import is_helper_running
@@ -149,7 +149,7 @@ class UserInterface:
         self.builder = builder
 
         # TODO read from config which one to show on start
-        self.editor = AdvancedEditor(self)
+        self.editor = Editor(self)
 
         # set up the device selection
         # https://python-gtk-3-tutorial.readthedocs.io/en/latest/treeview.html#the-view

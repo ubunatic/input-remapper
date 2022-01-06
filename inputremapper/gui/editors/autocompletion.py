@@ -19,7 +19,7 @@
 # along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""Autocompletion for the advanced editor."""
+"""Autocompletion for the editor."""
 
 
 import re

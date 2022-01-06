@@ -779,7 +779,7 @@ To give your keys back their original mapping.</property>
                 <property name="can-focus">False</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkBox" id="advanced_editor">
+                  <object class="GtkBox" id="editor">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <child>
@@ -793,12 +793,12 @@ To give your keys back their original mapping.</property>
                             <property name="can-focus">False</property>
                             <property name="shadow-type">none</property>
                             <child>
-                              <object class="GtkListBox" id="mapping_list_advanced">
+                              <object class="GtkListBox" id="mapping_list">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <property name="selection-mode">browse</property>
                                 <style>
-                                  <class name="advanced-editor-key-list"/>
+                                  <class name="editor-key-list"/>
                                 </style>
                               </object>
                             </child>
@@ -833,12 +833,12 @@ To give your keys back their original mapping.</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">18</property>
                         <child>
-                          <object class="GtkBox" id="advanced-editor-controls">
+                          <object class="GtkBox" id="editor-controls">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="spacing">12</property>
                             <child>
-                              <object class="GtkToggleButton" id="advanced_key_recording_toggle">
+                              <object class="GtkToggleButton" id="key_recording_toggle">
                                 <property name="label" translatable="yes">Change key</property>
                                 <property name="width-request">100</property>
                                 <property name="visible">True</property>
@@ -864,7 +864,7 @@ To give your keys back their original mapping.</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkButton" id="advanced-delete-mapping">
+                              <object class="GtkButton" id="delete-mapping">
                                 <property name="label" translatable="yes">Delete</property>
                                 <property name="width-request">80</property>
                                 <property name="visible">True</property>
