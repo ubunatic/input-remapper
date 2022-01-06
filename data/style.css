@@ -72,4 +72,9 @@ list button {
     box-shadow: none;
 }
 
+.code-editor-text-view {
+  /* extra space between text editor and line numbers */
+  padding-left: 18px;
+}
+
 /* @theme_bg_color, @theme_fg_color */

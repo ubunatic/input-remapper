@@ -106,6 +106,14 @@ class AdvancedEditor(EditableMapping, Editor):
         """Prepare the code editor."""
         source_view = self.get("code_editor")
 
+        # without this the wrapping ScrolledWindow acts weird when new lines are added,
+        # not offering enough space to the text editor so the whole thing is suddenly
+        # scrollable by a few pixels. Found this after making blind guesses whith
+        # settings in glade.
+        source_view.set_resize_mode(Gtk.ResizeMode.IMMEDIATE)
+
+        source_view.get_buffer().connect("changed", self.line_numbers_if_multiline)
+
         # Syntax Highlighting
         # Thanks to https://github.com/wolfthefallen/py-GtkSourceCompletion-example
         language_manager = GtkSource.LanguageManager()
@@ -119,6 +127,11 @@ class AdvancedEditor(EditableMapping, Editor):
         autocompletion = Autocompletion(source_view)
         autocompletion.set_relative_to(self.get("code_editor_container"))
         autocompletion.connect("suggestion-inserted", self.save_changes)
+
+    def line_numbers_if_multiline(self, *_):
+        """Show line numbers if a macro is being edited."""
+        symbol = self.get_symbol() or ""
+        self.get("code_editor").set_show_line_numbers("\n" in symbol)
 
     def _on_delete_button_clicked(self, *_):
         """The delete button on a single mapped key was clicked."""
@@ -229,7 +242,7 @@ class AdvancedEditor(EditableMapping, Editor):
         """Get the assigned symbol from the middle column."""
         buffer = self.get("code_editor").get_buffer()
         symbol = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
-        # TODO make sure to test that this never returns ""
+        # TODO make sure to test that this never returns "" (I wonder why?)
         return symbol if symbol else None
 
     def set_key(self, key):

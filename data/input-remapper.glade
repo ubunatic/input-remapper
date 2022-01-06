@@ -824,6 +824,8 @@ To give your keys back their original mapping.</property>
                               <object class="GtkSourceView" id="code_editor">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
+                                <property name="valign">start</property>
+                                <property name="resize-mode">immediate</property>
                                 <property name="left-margin">10</property>
                                 <property name="right-margin">10</property>
                                 <property name="top-margin">10</property>
