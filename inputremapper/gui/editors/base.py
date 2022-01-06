@@ -103,7 +103,11 @@ class EditableMapping:
         text_input.connect("focus-out-event", self.save_changes)
 
         delete_button = self.get_delete_button()
-        delete_button.connect("button-press-event", self._on_delete_button_clicked)
+        delete_button.connect("clicked", self._on_delete_button_clicked)
+
+    def get(self, name):
+        """Get a widget from the window"""
+        return self.user_interface.builder.get_object(name)
 
     def on_recording_toggle_focus(self, *_):
         """Refresh useful usage information."""

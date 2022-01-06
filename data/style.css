@@ -77,12 +77,4 @@ list button {
   padding-left: 18px;
 }
 
-.delete-mapping-button {
-  /* because gtk likes to draw a focused button even though it is not focused */
-  border: 0px;
-  background: inherit;
-  color: inherit;
-  outline: 0px;
-}
-
 /* @theme_bg_color, @theme_fg_color */

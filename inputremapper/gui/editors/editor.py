@@ -148,10 +148,6 @@ class Editor(EditableMapping):
     def get_delete_button(self):
         return self.get("delete-mapping")
 
-    def get(self, name):
-        """Get a widget from the window"""
-        return self.user_interface.builder.get_object(name)
-
     def check_add_new_key(self):
         """If needed, add a new empty mapping to the list for the user to configure."""
         mapping_list = self.get("mapping_list")
