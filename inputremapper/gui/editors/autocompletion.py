@@ -64,6 +64,7 @@ def get_incomplete_function_name(iter):
     #  bar()\n.foo
     #  bar().\nfoo
     #  bar(\nfoo
+    #  bar(\nqux=foo
     #  bar(KEY_A,\nfoo
     #  foo
     match = re.match(rf"(?:{FUNCTION_CHAIN}|{PARAMETER}|^)(\w+)$", left_text)
@@ -141,7 +142,7 @@ def propose_function_parameters(text_iter):
             # the name of the function for which the parameters are being
             # autocompleted is found
             remaining = left_text[0:i]
-            match = re.match(rf"(?:{FUNCTION_CHAIN}|^)(\w+)$", remaining)
+            match = re.match(rf"(?:{FUNCTION_CHAIN}|{PARAMETER}|^)(\w+)$", remaining)
 
             if match is None:
                 return []
