@@ -19,18 +19,18 @@
 # along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""Autocompletion providers for the advanced editor.
-
-Thanks a lot to https://github.com/wolfthefallen/py-GtkSourceCompletion-example for
-useful GtkSource examples
-"""
+"""Autocompletion for the advanced editor."""
 
 
 import re
 
+from gi.repository import Gtk, GLib, GObject, GtkSource
+
 from inputremapper.system_mapping import system_mapping
 from inputremapper.injection.macros.parse import FUNCTIONS
 from inputremapper.injection.macros.parse import remove_comments, remove_whitespaces
+from inputremapper.logger import logger
+
 
 # no shorthand names
 FUNCTION_NAMES = [name for name in FUNCTIONS.keys() if len(name) > 1]
@@ -113,3 +113,143 @@ def propose_function_names(incomplete_name):
         for name in FUNCTION_NAMES
         if incomplete_name in name.lower() and incomplete_name != name.lower()
     ]
+
+
+class Autocompletion(Gtk.Popover):
+    """Provide keyboard-controllable beautiful autocompletions.
+
+    The one provided via source_view.get_completion() is not very appealing
+    """
+
+    __gtype_name__ = "Popover"
+
+    def __init__(self, text_input):
+        """Create an autocompletion popover.
+
+        It will remain hidden until there is something to autocomplete.
+
+        Parameters
+        ----------
+        text_input : Gtk.SourceView | Gtk.TextView
+            The widget that contains the text that should be autocompleted
+        """
+        super().__init__(
+            # Don't switch the focus to the popover when it shows
+            modal=False,
+            # Always show the popover below the cursor, don't move it to a different
+            # position based on the location within the window
+            transitions_enabled=False,
+        )
+
+        self.text_input = text_input
+
+        scrolled_window = Gtk.ScrolledWindow(
+            min_content_width=200,
+            max_content_height=200,
+            propagate_natural_width=True,
+            propagate_natural_height=True,
+        )
+        viewport = Gtk.Viewport()
+        self.list_box = Gtk.ListBox()
+        self.list_box.get_style_context().add_class("transparent")
+
+        self.add(scrolled_window)
+        scrolled_window.add(viewport)
+        viewport.add(self.list_box)
+
+        self.get_style_context().add_class("autocompletion")
+
+        self.set_position(Gtk.PositionType.BOTTOM)
+
+        self.show_all()
+
+    def hide(self, *_):
+        """Hide the autocompletion popover."""
+        # add some delay, so that pressing the button in the completion works before
+        # the popover is hidden due to focus-out-event
+        GLib.timeout_add(100, self.popdown)
+
+    def _get_text_iter_at_cursor(self):
+        """Get Gtk.TextIter at the current text cursor location."""
+        cursor = self.text_input.get_cursor_locations()[0]
+        return self.text_input.get_iter_at_location(cursor.x, cursor.y)[1]
+
+    def update(self, *_):
+        """Find new autocompletion suggestions and display them. Hide if none."""
+        if not self.text_input.is_focus():
+            self.popdown()
+            return
+
+        self.list_box.forall(self.list_box.remove)
+
+        # move the autocompletion to the text cursor
+        cursor = self.text_input.get_cursor_locations()[0]
+        cursor.y += 18
+        self.set_pointing_to(cursor)
+
+        text_iter = self._get_text_iter_at_cursor()
+        incomplete_parameter = get_incomplete_parameter(text_iter)
+        incomplete_function = get_incomplete_function_name(text_iter)
+        suggested_names = propose_function_names(incomplete_function)
+        suggested_names += propose_symbols(incomplete_parameter)
+        suggested_names = set(suggested_names)  # get unique names
+
+        if len(suggested_names) == 0:
+            self.popdown()
+            return
+
+        self.popup()  # ffs was this hard to find
+
+        # add visible autocompletion entries
+        for name in suggested_names:
+            button = Gtk.ToggleButton(label=name)
+            button.connect(
+                "clicked",
+                # TODO make sure to test the correct button is passed
+                lambda button: self._on_suggestion_clicked(text_iter, button),
+            )
+            button.show_all()
+            self.list_box.insert(button, -1)
+
+    def _on_suggestion_clicked(self, text_iter, button):
+        """An autocompletion suggestion was selected and should be inserted.
+
+        Parameters
+        ----------
+        text_iter : Gtk.TextIter
+            Where to put the autocompleted word
+        button : Gtk.Button
+            The button that contained the autocompletion suggestion in its label
+        """
+        # the word the user is currently typing in
+        incomplete_name = get_incomplete_function_name(text_iter)
+
+        # the text of the autocompletion entry that was selected
+        selected_proposal = button.get_label()
+
+        if incomplete_name is None:
+            # maybe the text was changed
+            logger.error(
+                'Failed to autocomplete "%s" with "%s"',
+                incomplete_name,
+                selected_proposal,
+            )
+            return
+
+        # the complete current input up to the cursor
+        buffer = self.text_input.get_buffer()
+        left = buffer.get_text(buffer.get_start_iter(), text_iter, True)
+        right = buffer.get_text(text_iter, buffer.get_end_iter(), True)
+
+        # remove the unfinished word
+        left = left[: -len(incomplete_name)]
+
+        # insert the autocompletion
+        self.text_input.get_buffer().set_text(left + selected_proposal + right)
+
+        self.emit("suggestion-inserted")
+
+
+GObject.signal_new(
+    "suggestion-inserted", Autocompletion, GObject.SignalFlags.RUN_FIRST, None, []
+)
