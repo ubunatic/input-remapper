@@ -346,8 +346,8 @@ class Autocompletion(Gtk.Popover):
 
             # "top" as in "towards the top of the screen".
             # this is heavily based on trial and error
-            top_threshold = height - row_height * 2
-            bottom_threshold = row_height
+            top_threshold = height - row_height
+            bottom_threshold = 0
             vadjustment = self.scrolled_window.get_vadjustment()
 
             if y_offset > current_y_scroll + top_threshold:
