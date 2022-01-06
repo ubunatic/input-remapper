@@ -320,15 +320,33 @@ class Autocompletion(Gtk.Popover):
             if event.keyval == Gdk.KEY_Up:
                 new_index -= 1
 
+            if new_index < 0:
+                new_index = len(self.list_box.get_children()) - 1
+
             new_selected_row = self.list_box.get_row_at_index(new_index)
 
         self.list_box.select_row(new_selected_row)
 
+        row_height = new_selected_row.get_allocation().height
+
         if new_selected_row:
             y_offset = new_selected_row.translate_coordinates(self.list_box, 0, 0)[1]
             height = self.scrolled_window.get_max_content_height()
-            if y_offset > height / 2:
-                self.scrolled_window.get_vadjustment().set_value(y_offset - height / 2)
+            current_y_scroll = self.scrolled_window.get_vadjustment().get_value()
+
+            # "top" as in "towards the top of the screen".
+            # this is heavily based on trial and error
+            top_threshold = height - row_height * 2
+            bottom_threshold = row_height
+            vadjustment = self.scrolled_window.get_vadjustment()
+
+            if y_offset > current_y_scroll + top_threshold:
+                # keeps the selected element approximately in the middle
+                vadjustment.set_value(y_offset - top_threshold)
+
+            if y_offset < current_y_scroll + bottom_threshold:
+                # scroll up because the element is not visible anymore
+                vadjustment.set_value(y_offset - bottom_threshold)
 
         # don't change editor contents
         return Gdk.EVENT_STOP
