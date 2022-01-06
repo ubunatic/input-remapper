@@ -169,6 +169,9 @@ def propose_function_parameters(text_iter):
         if char == "(":
             brackets -= 1
 
+    if function_name == "":
+        return []
+
     # get all parameter names that are already in use
     used_parameters = re.findall(r"(\w+)=", left_text[i:])
 
@@ -176,7 +179,7 @@ def propose_function_parameters(text_iter):
     add_call = FUNCTIONS.get(function_name)
 
     if add_call is None:
-        logger.debug("Unknown function %s", add_call)
+        logger.debug("Unknown function %s", function_name)
         return []
 
     # look up possible parameters
@@ -238,19 +241,17 @@ class Autocompletion(Gtk.Popover):
 
         self.text_input = text_input
 
-        scrolled_window = Gtk.ScrolledWindow(
+        self.scrolled_window = Gtk.ScrolledWindow(
             min_content_width=200,
             max_content_height=200,
             propagate_natural_width=True,
             propagate_natural_height=True,
         )
-        viewport = Gtk.Viewport()
         self.list_box = Gtk.ListBox()
         self.list_box.get_style_context().add_class("transparent")
+        self.scrolled_window.add(self.list_box)
 
-        self.add(scrolled_window)
-        scrolled_window.add(viewport)
-        viewport.add(self.list_box)
+        self.add(self.scrolled_window)
 
         self.get_style_context().add_class("autocompletion")
 
@@ -322,6 +323,12 @@ class Autocompletion(Gtk.Popover):
             new_selected_row = self.list_box.get_row_at_index(new_index)
 
         self.list_box.select_row(new_selected_row)
+
+        if new_selected_row:
+            y_offset = new_selected_row.translate_coordinates(self.list_box, 0, 0)[1]
+            height = self.scrolled_window.get_max_content_height()
+            if y_offset > height / 2:
+                self.scrolled_window.get_vadjustment().set_value(y_offset - height / 2)
 
         # don't change editor contents
         return Gdk.EVENT_STOP

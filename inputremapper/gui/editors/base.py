@@ -163,7 +163,7 @@ class EditableMapping:
         symbol = self.get_symbol() or ""
         correct_case = system_mapping.correct_case(symbol)
         if symbol != correct_case:
-            self.get_text_input().set_text(correct_case)
+            self.get_text_input().get_buffer().set_text(correct_case)
 
         # make sure the custom_mapping is up to date
         key = self.get_key()

@@ -74,6 +74,7 @@ class SelectionLabel(Gtk.Label):
         return self.__str__()
 
 
+# TODO when quickly clicking the delete button it deletes too much
 class AdvancedEditor(EditableMapping, Editor):
     """Maintains the widgets of the advanced editor."""
 
@@ -108,17 +109,18 @@ class AdvancedEditor(EditableMapping, Editor):
 
         # without this the wrapping ScrolledWindow acts weird when new lines are added,
         # not offering enough space to the text editor so the whole thing is suddenly
-        # scrollable by a few pixels. Found this after making blind guesses whith
-        # settings in glade.
+        # scrollable by a few pixels.
+        # Found this after making blind guesses with settings in glade, and then
+        # actually looking at the snaphot preview! In glades editor this didn have an
+        # effect.
         source_view.set_resize_mode(Gtk.ResizeMode.IMMEDIATE)
 
         source_view.get_buffer().connect("changed", self.line_numbers_if_multiline)
 
         # Syntax Highlighting
         # Thanks to https://github.com/wolfthefallen/py-GtkSourceCompletion-example
-        language_manager = GtkSource.LanguageManager()
-        # fun fact: without saving LanguageManager into its own variable
-        # this doesn't work
+        # language_manager = GtkSource.LanguageManager()
+        # fun fact: without saving LanguageManager into its own variable it doesn't work
         #  python = language_manager.get_language("python")
         # source_view.get_buffer().set_language(python)
         # TODO there are some similarities with python, but overall it's quite useless.
@@ -130,8 +132,15 @@ class AdvancedEditor(EditableMapping, Editor):
 
     def line_numbers_if_multiline(self, *_):
         """Show line numbers if a macro is being edited."""
+        code_editor = self.get("code_editor")
         symbol = self.get_symbol() or ""
-        self.get("code_editor").set_show_line_numbers("\n" in symbol)
+
+        if "\n" in symbol:
+            code_editor.set_show_line_numbers(True)
+            code_editor.get_style_context().add_class("multiline")
+        else:
+            code_editor.set_show_line_numbers(False)
+            code_editor.get_style_context().remove_class("multiline")
 
     def _on_delete_button_clicked(self, *_):
         """The delete button on a single mapped key was clicked."""

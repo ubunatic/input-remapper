@@ -72,7 +72,7 @@ list button {
     box-shadow: none;
 }
 
-.code-editor-text-view {
+.code-editor-text-view.multiline {
   /* extra space between text editor and line numbers */
   padding-left: 18px;
 }
