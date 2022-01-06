@@ -168,9 +168,12 @@ class Autocompletion(Gtk.Popover):
         self.show_all()
 
     def navigate(self, _, event):
-        # catch arrow events from the text_input to navigate the autocompletion
-        # once navigated in there, catch enter to select an entry
+        """Using the keyboard to select an autocompletion suggestion."""
         if not self.visible:
+            return
+
+        if event.keyval == Gdk.KEY_Escape:
+            self.popdown()
             return
 
         if event.keyval not in [Gdk.KEY_Down, Gdk.KEY_Up, Gdk.KEY_Return]:
@@ -184,9 +187,8 @@ class Autocompletion(Gtk.Popover):
                 # nothing selected, forward the event to the text editor
                 return
 
-            # a row is selected and should be activated
-            lol = selected_row.get_children()[0]
-            lol.emit("clicked")
+            # a row is selected and should be used for autocompletion
+            selected_row.get_children()[0].emit("clicked")
             return Gdk.EVENT_STOP
 
         if selected_row is None:
