@@ -390,6 +390,10 @@ class Autocompletion(Gtk.Popover):
         cursor.x = window_coords.window_x
         cursor.y = window_coords.window_y
         cursor.y += 12
+
+        if self.text_input.get_show_line_numbers():
+            cursor.x += 25
+
         self.set_pointing_to(cursor)
 
         text_iter = self._get_text_iter_at_cursor()
