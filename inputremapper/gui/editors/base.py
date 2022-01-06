@@ -166,7 +166,7 @@ class EditableMapping:
         """Blocks until the user decided about an action."""
         confirm_delete = self.get("confirm-delete")
 
-        text = f'Are you sure to delete this mapping?'
+        text = f"Are you sure to delete this mapping?"
         self.get("confirm-delete-label").set_text(text)
 
         confirm_delete.show()

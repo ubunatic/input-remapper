@@ -231,6 +231,10 @@ class AdvancedEditor(EditableMapping, Editor):
 
     def set_symbol(self, symbol):
         self.get("code_editor").get_buffer().set_text(symbol or "")
+        # move cursor location to the beginning, like any code editor does
+        Gtk.TextView.do_move_cursor(
+            self.get("code_editor"), Gtk.MovementStep.BUFFER_ENDS, -1, False
+        )
 
     def get_text_input(self):
         return self.get("code_editor")
