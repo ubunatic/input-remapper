@@ -128,6 +128,11 @@ def propose_function_parameters(text_iter):
     """Find parameter names that match the function at the cursor."""
     left_text = _get_left_text(text_iter)
 
+    if left_text.endswith("="):
+        # this is not the time to propose more parameters, the pervious one
+        # is not completely configured.
+        return []
+
     # find the current function that is being constructed
     #   "qux().foo(bar=key(), blub, 5,"
     # should result in
@@ -135,8 +140,16 @@ def propose_function_parameters(text_iter):
     function_name = ""
     brackets = 0
     i = 0
+    comma_found = False
     for i in range(len(left_text) - 1, 0, -1):
         char = left_text[i]
+
+        if char == "=" and not comma_found:
+            # one parameter is not fully configured yet, don't suggest more parameters
+            return []
+
+        if char == ",":
+            comma_found = True
 
         if char == "(" and brackets == 0:
             # the name of the function for which the parameters are being
