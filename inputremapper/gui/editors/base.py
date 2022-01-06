@@ -151,16 +151,37 @@ class EditableMapping:
 
     def _on_delete_button_clicked(self, *_):
         """Destroy the row and remove it from the config."""
+        accept = Gtk.ResponseType.ACCEPT
+        if len(self.get_symbol()) > 0 and self.show_confirm_delete() != accept:
+            return
+
         key = self.get_key()
         if key is not None:
             custom_mapping.clear(key)
 
         self.set_symbol("")
+        self.load_custom_mapping()
+
+    def show_confirm_delete(self):
+        """Blocks until the user decided about an action."""
+        confirm_delete = self.get("confirm-delete")
+
+        text = f'Are you sure to delete this mapping?'
+        self.get("confirm-delete-label").set_text(text)
+
+        confirm_delete.show()
+        response = confirm_delete.run()
+        confirm_delete.hide()
+        return response
 
     def save_changes(self, *_):
         """Save the preset and correct the input casing."""
         # correct case
-        symbol = self.get_symbol() or ""
+        symbol = self.get_symbol()
+
+        if not symbol:
+            return
+
         correct_case = system_mapping.correct_case(symbol)
         if symbol != correct_case:
             self.get_text_input().get_buffer().set_text(correct_case)
@@ -238,7 +259,7 @@ class EditableMapping:
         symbol = self.get_symbol()
 
         # the symbol is empty and therefore the mapping is not complete
-        if symbol is None:
+        if not symbol:
             return
 
         # else, the keycode has changed, the symbol is set, all good

@@ -728,6 +728,9 @@ class UserInterface:
             logger.error(error)
 
         for _, symbol in custom_mapping:
+            if not symbol:
+                continue
+
             if is_this_a_macro(symbol):
                 continue
 

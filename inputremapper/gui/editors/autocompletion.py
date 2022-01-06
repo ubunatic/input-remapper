@@ -335,8 +335,9 @@ class Autocompletion(Gtk.Popover):
     def _scroll_to_row(self, row):
         """Scroll up or down so that the row is visible."""
         # unfortunately, it seems that without focusing the row it won't happen
-        # automatically, so here is a custom solution. The focus should not leave
-        # the code editor.
+        # automatically (or whatever the reason for this is, just a wild guess)
+        # (the focus should not leave the code editor, so that continuing
+        # to write code is possible), so here is a custom solution.
         row_height = row.get_allocation().height
 
         if row:
@@ -344,19 +345,14 @@ class Autocompletion(Gtk.Popover):
             height = self.scrolled_window.get_max_content_height()
             current_y_scroll = self.scrolled_window.get_vadjustment().get_value()
 
-            # "top" as in "towards the top of the screen".
-            # this is heavily based on trial and error
-            top_threshold = height - row_height
-            bottom_threshold = 0
             vadjustment = self.scrolled_window.get_vadjustment()
 
-            if y_offset > current_y_scroll + top_threshold:
-                # keeps the selected element approximately in the middle
-                vadjustment.set_value(y_offset - top_threshold)
+            if y_offset > current_y_scroll + (height - row_height):
+                vadjustment.set_value(y_offset - (height - row_height))
 
-            if y_offset < current_y_scroll + bottom_threshold:
+            if y_offset < current_y_scroll:
                 # scroll up because the element is not visible anymore
-                vadjustment.set_value(y_offset - bottom_threshold)
+                vadjustment.set_value(y_offset)
 
     def _get_text_iter_at_cursor(self):
         """Get Gtk.TextIter at the current text cursor location."""

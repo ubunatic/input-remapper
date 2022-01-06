@@ -74,7 +74,6 @@ class SelectionLabel(Gtk.Label):
         return self.__str__()
 
 
-# TODO when quickly clicking the delete button it deletes too much
 class AdvancedEditor(EditableMapping, Editor):
     """Maintains the widgets of the advanced editor."""
 
@@ -145,7 +144,6 @@ class AdvancedEditor(EditableMapping, Editor):
     def _on_delete_button_clicked(self, *_):
         """The delete button on a single mapped key was clicked."""
         super()._on_delete_button_clicked()
-        self.load_custom_mapping()
 
     def get_delete_button(self):
         return self.get("advanced-delete-mapping")
@@ -248,11 +246,14 @@ class AdvancedEditor(EditableMapping, Editor):
         return self.active_selection_label.key
 
     def get_symbol(self):
-        """Get the assigned symbol from the middle column."""
+        """Get the assigned symbol from the middle column.
+
+        If there is no symbol, this returns None. This is important for
+        some other logic down the road in custom_mapping or something.
+        """
         buffer = self.get("code_editor").get_buffer()
         symbol = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
-        # TODO make sure to test that this never returns "" (I wonder why?)
-        return symbol if symbol else None
+        return symbol
 
     def set_key(self, key):
         """Show what the user is currently pressing in ther user interface."""

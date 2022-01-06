@@ -101,8 +101,8 @@ class Mapping(ConfigBase):
         if not isinstance(new_key, Key):
             raise TypeError(f"Expected {new_key} to be a Key object")
 
-        if symbol is None:
-            raise ValueError("Expected `symbol` not to be None")
+        if not symbol:
+            raise ValueError("Expected `symbol` not to be empty")
 
         symbol = symbol.strip()
         self.clear(new_key)  # this also clears all equivalent keys
