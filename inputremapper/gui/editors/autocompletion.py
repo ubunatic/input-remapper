@@ -169,8 +169,7 @@ def propose_function_parameters(text_iter):
     # look up possible parameters
     parameters = get_macro_argument_names(add_call)
     return [
-        (f"{name}=", f"{name}=") for name in parameters
-        if name not in used_parameters
+        (f"{name}=", f"{name}=") for name in parameters if name not in used_parameters
     ]
 
 
@@ -276,11 +275,13 @@ class Autocompletion(Gtk.Popover):
             self.popdown()
             return
 
-        if event.keyval not in [Gdk.KEY_Down, Gdk.KEY_Up, Gdk.KEY_Return]:
-            # not one of the keys that controls the autocompletion
-            return
-
         selected_row = self.list_box.get_selected_row()
+
+        if event.keyval not in [Gdk.KEY_Down, Gdk.KEY_Up, Gdk.KEY_Return]:
+            # not one of the keys that controls the autocompletion. Deselect
+            # the row but keep it open
+            self.list_box.select_row(None)
+            return
 
         if event.keyval == Gdk.KEY_Return:
             if selected_row is None:
@@ -388,30 +389,17 @@ class Autocompletion(Gtk.Popover):
             )
             return
 
-        # the complete current input up to the cursor
-        buffer = self.text_input.get_buffer()
-        left = buffer.get_text(buffer.get_start_iter(), text_iter, True)
-        right = buffer.get_text(text_iter, buffer.get_end_iter(), True)
-
-        # remove the unfinished word
-        if len(incomplete_name) > 0:
-            left = left[: -len(incomplete_name)]
-
         # insert the autocompletion
-        buffer.set_text(left + selected_proposal + right)
-
-        # it will scroll up after set_text. Return to the cursor as quickly as possible
-        GLib.idle_add(
-            lambda: self.text_input.scroll_to_iter(
-                self._get_text_iter_at_cursor(),
-                within_margin=0,
-                # if use_align is True it is not possible to scroll by dragging the
-                # scroll bars anymore
-                use_align=False,
-                xalign=1.0,
-                yalign=1.0,
-            )
+        Gtk.TextView.do_move_cursor(
+            self.text_input,
+            Gtk.MovementStep.VISUAL_POSITIONS,
+            -len(incomplete_name),
+            False,
         )
+        Gtk.TextView.do_delete_from_cursor(
+            self.text_input, Gtk.DeleteType.CHARS, len(incomplete_name)
+        )
+        Gtk.TextView.do_insert_at_cursor(self.text_input, selected_proposal)
 
         self.emit("suggestion-inserted")
 
