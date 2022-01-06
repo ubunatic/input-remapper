@@ -34,33 +34,6 @@ from inputremapper.gui.reader import reader
 from inputremapper.gui.utils import CTX_KEYCODE, CTX_WARNING
 
 
-store = Gtk.ListStore(str)
-
-
-def populate_store():
-    """Fill the dropdown for key suggestions with values."""
-    for name in system_mapping.list_names():
-        store.append([name])
-
-    extra = [
-        "mouse(up, 1)",
-        "mouse(down, 1)",
-        "mouse(left, 1)",
-        "mouse(right, 1)",
-        "wheel(up, 1)",
-        "wheel(down, 1)",
-        "wheel(left, 1)",
-        "wheel(right, 1)",
-    ]
-
-    for key in extra:
-        # add some more keys to the dropdown list
-        store.append([key])
-
-
-populate_store()
-
-
 class Editor:
     """Interface for all functions the editors have to provide."""
 
@@ -294,11 +267,6 @@ class EditableMapping:
             return
 
         self._reset()
-
-    def match(self, _, key, tree_iter):
-        """Search the avilable names."""
-        value = store.get_value(tree_iter, 0)
-        return key in value.lower()
 
     def _reset(self, *_):
         self.input_has_arrived = False

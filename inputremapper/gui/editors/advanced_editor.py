@@ -19,7 +19,7 @@
 # along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""The advanced editor with a multiline code editor."""
+"""An implementation of the editor with multiline code input and autocompletion."""
 
 
 from gi.repository import Gtk, GLib, GtkSource
