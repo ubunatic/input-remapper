@@ -327,10 +327,20 @@ class Autocompletion(Gtk.Popover):
 
         self.list_box.select_row(new_selected_row)
 
-        row_height = new_selected_row.get_allocation().height
+        self._scroll_to_row(new_selected_row)
 
-        if new_selected_row:
-            y_offset = new_selected_row.translate_coordinates(self.list_box, 0, 0)[1]
+        # don't change editor contents
+        return Gdk.EVENT_STOP
+
+    def _scroll_to_row(self, row):
+        """Scroll up or down so that the row is visible."""
+        # unfortunately, it seems that without focusing the row it won't happen
+        # automatically, so here is a custom solution. The focus should not leave
+        # the code editor.
+        row_height = row.get_allocation().height
+
+        if row:
+            y_offset = row.translate_coordinates(self.list_box, 0, 0)[1]
             height = self.scrolled_window.get_max_content_height()
             current_y_scroll = self.scrolled_window.get_vadjustment().get_value()
 
@@ -347,9 +357,6 @@ class Autocompletion(Gtk.Popover):
             if y_offset < current_y_scroll + bottom_threshold:
                 # scroll up because the element is not visible anymore
                 vadjustment.set_value(y_offset - bottom_threshold)
-
-        # don't change editor contents
-        return Gdk.EVENT_STOP
 
     def _get_text_iter_at_cursor(self):
         """Get Gtk.TextIter at the current text cursor location."""
