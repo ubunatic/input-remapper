@@ -340,6 +340,15 @@ class Autocompletion(Gtk.Popover):
         # insert the autocompletion
         buffer.set_text(left + selected_proposal + right)
 
+        # it will scroll up after set_text. Return to the cursor as quickly as possible
+        GLib.idle_add(lambda: self.text_input.scroll_to_iter(
+            self._get_text_iter_at_cursor(),
+            within_margin=0,
+            use_align=True,
+            xalign=0,
+            yalign=1.0,
+        ))
+
         self.emit("suggestion-inserted")
 
 
