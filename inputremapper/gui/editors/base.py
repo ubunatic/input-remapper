@@ -159,6 +159,7 @@ class EditableMapping:
 
     def save_changes(self, *_):
         """Save the preset and correct the input casing."""
+        print("save_changes")
         # correct case
         symbol = self.get_symbol() or ""
         correct_case = system_mapping.correct_case(symbol)

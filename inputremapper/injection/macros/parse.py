@@ -83,6 +83,18 @@ def use_safe_argument_names(keyword_args):
             del keyword_args[built_in]
 
 
+def get_macro_argument_names(function):
+    """Certain names, like "else" or "type" cannot be used as parameters in python.
+
+    Removes the "_" in from of them for displaying them correctly.
+    """
+    # don't include "self"
+    return [
+        name[1:] if name.startswith("_") else name
+        for name in inspect.getfullargspec(function).args[1:]
+    ]
+
+
 def get_num_parameters(function):
     """Get the number of required parameters and the maximum number of parameters."""
     fullargspec = inspect.getfullargspec(function)

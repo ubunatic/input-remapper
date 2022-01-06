@@ -27,8 +27,12 @@ import re
 from gi.repository import Gdk, Gtk, GLib, GObject, GtkSource
 
 from inputremapper.system_mapping import system_mapping
-from inputremapper.injection.macros.parse import FUNCTIONS
-from inputremapper.injection.macros.parse import remove_comments, remove_whitespaces
+from inputremapper.injection.macros.parse import (
+    FUNCTIONS,
+    get_macro_argument_names,
+    remove_comments,
+    remove_whitespaces,
+)
 from inputremapper.logger import logger
 
 
@@ -65,7 +69,7 @@ def get_incomplete_function_name(iter):
     match = re.match(rf"(?:{FUNCTION_CHAIN}|{PARAMETER}|^)(\w+)$", left_text)
 
     if match is None:
-        return None
+        return ""
 
     return match[1]
 
@@ -87,31 +91,85 @@ def get_incomplete_parameter(iter):
     return match[1]
 
 
-def propose_symbols(incomplete_name):
+def propose_symbols(text_iter):
     """Find key names that match the input at the cursor."""
+    incomplete_name = get_incomplete_parameter(text_iter)
+
     if incomplete_name is None or len(incomplete_name) <= 2:
         return []
 
     incomplete_name = incomplete_name.lower()
 
     return [
-        name  # GtkSource.CompletionItem(label=name, text=name)
+        (name, name)
         for name in list(system_mapping.list_names())
         if incomplete_name in name.lower() and incomplete_name != name.lower()
     ]
 
 
-def propose_function_names(incomplete_name):
+def propose_function_names(text_iter):
     """Find function names that match the input at the cursor."""
+    incomplete_name = get_incomplete_function_name(text_iter)
+
     if incomplete_name is None or len(incomplete_name) <= 1:
         return []
 
     incomplete_name = incomplete_name.lower()
 
     return [
-        name
+        (name, f"{name}({', '.join(get_macro_argument_names(FUNCTIONS[name]))})")
         for name in FUNCTION_NAMES
         if incomplete_name in name.lower() and incomplete_name != name.lower()
+    ]
+
+
+def propose_function_parameters(text_iter):
+    """Find parameter names that match the function at the cursor."""
+    left_text = _get_left_text(text_iter)
+
+    # find the current function that is being constructed
+    #   "qux().foo(bar=key(), blub, 5,"
+    # should result in
+    #   "foo"
+    function_name = ""
+    brackets = 0
+    i = 0
+    for i in range(len(left_text) - 1, 0, -1):
+        char = left_text[i]
+
+        if char == "(" and brackets == 0:
+            # the name of the function for which the parameters are being
+            # autocompleted is found
+            remaining = left_text[0:i]
+            match = re.match(rf"(?:{FUNCTION_CHAIN}|^)(\w+)$", remaining)
+
+            if match is None:
+                return []
+
+            function_name = match[1]
+            break
+
+        if char == ")":
+            brackets += 1
+
+        if char == "(":
+            brackets -= 1
+
+    # get all parameter names that are already in use
+    used_parameters = re.findall(r"(\w+)=", left_text[i:])
+
+    # usually something like add_key or add_if_eq
+    add_call = FUNCTIONS.get(function_name)
+
+    if add_call is None:
+        logger.debug("Unknown function %s", add_call)
+        return []
+
+    # look up possible parameters
+    parameters = get_macro_argument_names(add_call)
+    return [
+        (f"{name}=", f"{name}=") for name in parameters
+        if name not in used_parameters
     ]
 
 
@@ -189,9 +247,7 @@ class Autocompletion(Gtk.Popover):
 
         # add some delay, so that pressing the button in the completion works before
         # the popover is hidden due to focus-out-event
-        text_input.connect(
-            "focus-out-event", lambda *_: GLib.timeout_add(100, self.popdown)
-        )
+        text_input.connect("focus-out-event", self.on_text_input_unfocus)
 
         text_input.get_buffer().connect("changed", debounce(100)(self.update))
 
@@ -201,6 +257,14 @@ class Autocompletion(Gtk.Popover):
 
         self.show_all()
         self.popdown()  # hidden by default. this needs to happen after show_all!
+
+    def on_text_input_unfocus(self, *_):
+        """The code editor was unfocused."""
+        GLib.timeout_add(100, self.popdown)
+        # "(input-remapper-gtk:97611): Gtk-WARNING **: 16:33:56.464: GtkTextView -
+        # did not receive focus-out-event. If you connect a handler to this signal,
+        # it must return FALSE so the text view gets the event as well"
+        return False
 
     def navigate(self, _, event):
         """Using the keyboard to select an autocompletion suggestion."""
@@ -281,11 +345,9 @@ class Autocompletion(Gtk.Popover):
         self.set_pointing_to(cursor)
 
         text_iter = self._get_text_iter_at_cursor()
-        incomplete_parameter = get_incomplete_parameter(text_iter)
-        incomplete_function = get_incomplete_function_name(text_iter)
-        suggested_names = propose_function_names(incomplete_function)
-        suggested_names += propose_symbols(incomplete_parameter)
-        suggested_names = set(suggested_names)  # get unique names
+        suggested_names = propose_function_names(text_iter)
+        suggested_names += propose_symbols(text_iter)
+        suggested_names += propose_function_parameters(text_iter)
 
         if len(suggested_names) == 0:
             self.popdown()
@@ -294,31 +356,27 @@ class Autocompletion(Gtk.Popover):
         self.popup()  # ffs was this hard to find
 
         # add visible autocompletion entries
-        for name in suggested_names:
-            button = Gtk.ToggleButton(label=name)
+        for name, display_name in suggested_names:
+            button = Gtk.ToggleButton(label=display_name)
             button.connect(
                 "clicked",
-                # TODO make sure to test the correct button is passed
-                lambda button: self._on_suggestion_clicked(text_iter, button),
+                # TODO make sure to test the correct name is passed
+                lambda *_, name=name: self._on_suggestion_clicked(text_iter, name),
             )
             button.show_all()
             self.list_box.insert(button, -1)
 
-    def _on_suggestion_clicked(self, text_iter, button):
+    def _on_suggestion_clicked(self, text_iter, selected_proposal):
         """An autocompletion suggestion was selected and should be inserted.
 
         Parameters
         ----------
         text_iter : Gtk.TextIter
             Where to put the autocompleted word
-        button : Gtk.Button
-            The button that contained the autocompletion suggestion in its label
+        selected_proposal : str
         """
         # the word the user is currently typing in
         incomplete_name = get_incomplete_function_name(text_iter)
-
-        # the text of the autocompletion entry that was selected
-        selected_proposal = button.get_label()
 
         if incomplete_name is None:
             # maybe the text was changed
@@ -335,19 +393,24 @@ class Autocompletion(Gtk.Popover):
         right = buffer.get_text(text_iter, buffer.get_end_iter(), True)
 
         # remove the unfinished word
-        left = left[: -len(incomplete_name)]
+        if len(incomplete_name) > 0:
+            left = left[: -len(incomplete_name)]
 
         # insert the autocompletion
         buffer.set_text(left + selected_proposal + right)
 
         # it will scroll up after set_text. Return to the cursor as quickly as possible
-        GLib.idle_add(lambda: self.text_input.scroll_to_iter(
-            self._get_text_iter_at_cursor(),
-            within_margin=0,
-            use_align=True,
-            xalign=0,
-            yalign=1.0,
-        ))
+        GLib.idle_add(
+            lambda: self.text_input.scroll_to_iter(
+                self._get_text_iter_at_cursor(),
+                within_margin=0,
+                # if use_align is True it is not possible to scroll by dragging the
+                # scroll bars anymore
+                use_align=False,
+                xalign=1.0,
+                yalign=1.0,
+            )
+        )
 
         self.emit("suggestion-inserted")
 
