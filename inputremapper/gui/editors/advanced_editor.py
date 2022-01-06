@@ -111,10 +111,10 @@ class AdvancedEditor(EditableMapping, Editor):
         language_manager = GtkSource.LanguageManager()
         # fun fact: without saving LanguageManager into its own variable
         # this doesn't work
-        python = language_manager.get_language("python")
-        # there are some similarities with python, I don't know how I can specify
-        # custom rules for input-remappers syntax.
-        source_view.get_buffer().set_language(python)
+        #  python = language_manager.get_language("python")
+        # source_view.get_buffer().set_language(python)
+        # TODO there are some similarities with python, but overall it's quite useless.
+        #  commented out until there is proper highlighting for input-remappers syntax.
 
         autocompletion = Autocompletion(source_view)
         autocompletion.set_relative_to(self.get("code_editor_container"))

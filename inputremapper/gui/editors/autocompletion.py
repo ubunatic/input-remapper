@@ -337,7 +337,7 @@ class Autocompletion(Gtk.Popover):
         # move the autocompletion to the text cursor
         cursor = self.text_input.get_cursor_locations()[0]
         # convert it to window coords, because the cursor values will be very large
-        # when scrolling down in the textview.
+        # when the TextView is in a scrolled down ScrolledWindow.
         window_coords = self.text_input.buffer_to_window_coords(
             Gtk.TextWindowType.TEXT, cursor.x, cursor.y
         )
@@ -363,42 +363,40 @@ class Autocompletion(Gtk.Popover):
             button.connect(
                 "clicked",
                 # TODO make sure to test the correct name is passed
-                lambda *_, name=name: self._on_suggestion_clicked(text_iter, name),
+                lambda *_, name=name: self._on_suggestion_clicked(name),
             )
             button.show_all()
             self.list_box.insert(button, -1)
 
-    def _on_suggestion_clicked(self, text_iter, selected_proposal):
+    def _on_suggestion_clicked(self, selected_proposal):
         """An autocompletion suggestion was selected and should be inserted.
 
         Parameters
         ----------
-        text_iter : Gtk.TextIter
-            Where to put the autocompleted word
         selected_proposal : str
         """
-        # the word the user is currently typing in
-        incomplete_name = get_incomplete_function_name(text_iter)
+        buffer = self.text_input.get_buffer()
 
-        if incomplete_name is None:
-            # maybe the text was changed
-            logger.error(
-                'Failed to autocomplete "%s" with "%s"',
-                incomplete_name,
-                selected_proposal,
-            )
-            return
+        # make sure to replace the complete unfinished word. Look to the right and
+        # remove whatever there is
+        cursor_iter = self._get_text_iter_at_cursor()
+        right = buffer.get_text(cursor_iter, buffer.get_end_iter(), True)
+        match = re.match(r"^(\w+)", right)
+        right = match[1] if match else ""
+        Gtk.TextView.do_delete_from_cursor(
+            self.text_input, Gtk.DeleteType.CHARS, len(right)
+        )
+
+        # do the same to the left
+        cursor_iter = self._get_text_iter_at_cursor()
+        left = buffer.get_text(buffer.get_start_iter(), cursor_iter, True)
+        match = re.match(r".*?(\w+)$", re.sub("\n", " ", left))
+        left = match[1] if match else ""
+        Gtk.TextView.do_delete_from_cursor(
+            self.text_input, Gtk.DeleteType.CHARS, -len(left)
+        )
 
         # insert the autocompletion
-        Gtk.TextView.do_move_cursor(
-            self.text_input,
-            Gtk.MovementStep.VISUAL_POSITIONS,
-            -len(incomplete_name),
-            False,
-        )
-        Gtk.TextView.do_delete_from_cursor(
-            self.text_input, Gtk.DeleteType.CHARS, len(incomplete_name)
-        )
         Gtk.TextView.do_insert_at_cursor(self.text_input, selected_proposal)
 
         self.emit("suggestion-inserted")
