@@ -35,7 +35,8 @@
       <object class="GtkBox" id="error_dialog_lkdjfa">
         <property name="can-focus">False</property>
         <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
+        <property name="spacing">1</property>
+        <property name="baseline-position">top</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox">
             <property name="can-focus">False</property>
@@ -81,14 +82,14 @@
           <object class="GtkLabel" id="confirm-delete-label">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
-            <property name="margin-start">30</property>
-            <property name="margin-end">30</property>
-            <property name="margin-bottom">24</property>
+            <property name="margin-start">50</property>
+            <property name="margin-end">50</property>
+            <property name="margin-top">32</property>
           </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">2</property>
+            <property name="position">1</property>
           </packing>
         </child>
       </object>
