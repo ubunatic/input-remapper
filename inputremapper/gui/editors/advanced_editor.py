@@ -74,30 +74,6 @@ class SelectionLabel(Gtk.Label):
         return self.__str__()
 
 
-debounces = {}
-
-
-def debounce(timeout):
-    """Debounce a function call to improve performance."""
-
-    def decorator(func):
-        def clear_debounce(self, *args):
-            debounces[func.__name__] = None
-            return func(self, *args)
-
-        def wrapped(self, *args):
-            if debounces.get(func.__name__) is not None:
-                GLib.source_remove(debounces[func.__name__])
-
-            debounces[func.__name__] = GLib.timeout_add(
-                timeout, lambda: clear_debounce(self, *args)
-            )
-
-        return wrapped
-
-    return decorator
-
-
 class AdvancedEditor(EditableMapping, Editor):
     """Maintains the widgets of the advanced editor."""
 
@@ -142,15 +118,7 @@ class AdvancedEditor(EditableMapping, Editor):
 
         autocompletion = Autocompletion(source_view)
         autocompletion.set_relative_to(self.get("code_editor_container"))
-        autocompletion.set_position(Gtk.PositionType.BOTTOM)
-        autocompletion.show_all()
         autocompletion.connect("suggestion-inserted", self.save_changes)
-
-        source_view.connect("focus-out-event", autocompletion.hide)
-
-        source_view.get_buffer().connect(
-            "changed", debounce(100)(autocompletion.update)
-        )
 
     def _on_delete_button_clicked(self, *_):
         """The delete button on a single mapped key was clicked."""

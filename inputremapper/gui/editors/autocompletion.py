@@ -115,6 +115,30 @@ def propose_function_names(incomplete_name):
     ]
 
 
+debounces = {}
+
+
+def debounce(timeout):
+    """Debounce a function call to improve performance."""
+
+    def decorator(func):
+        def clear_debounce(self, *args):
+            debounces[func.__name__] = None
+            return func(self, *args)
+
+        def wrapped(self, *args):
+            if debounces.get(func.__name__) is not None:
+                GLib.source_remove(debounces[func.__name__])
+
+            debounces[func.__name__] = GLib.timeout_add(
+                timeout, lambda: clear_debounce(self, *args)
+            )
+
+        return wrapped
+
+    return decorator
+
+
 class Autocompletion(Gtk.Popover):
     """Provide keyboard-controllable beautiful autocompletions.
 
@@ -163,9 +187,20 @@ class Autocompletion(Gtk.Popover):
 
         text_input.connect("key-press-event", self.navigate)
 
+        # add some delay, so that pressing the button in the completion works before
+        # the popover is hidden due to focus-out-event
+        text_input.connect(
+            "focus-out-event", lambda *_: GLib.timeout_add(100, self.popdown)
+        )
+
+        text_input.get_buffer().connect("changed", debounce(100)(self.update))
+
+        self.set_position(Gtk.PositionType.BOTTOM)
+
         self.visible = False
 
         self.show_all()
+        self.popdown()  # hidden by default. this needs to happen after show_all!
 
     def navigate(self, _, event):
         """Using the keyboard to select an autocompletion suggestion."""
@@ -212,12 +247,6 @@ class Autocompletion(Gtk.Popover):
         # don't change editor contents
         return Gdk.EVENT_STOP
 
-    def hide(self, *_):
-        """Hide the autocompletion popover."""
-        # add some delay, so that pressing the button in the completion works before
-        # the popover is hidden due to focus-out-event
-        GLib.timeout_add(100, self.popdown)
-
     def _get_text_iter_at_cursor(self):
         """Get Gtk.TextIter at the current text cursor location."""
         cursor = self.text_input.get_cursor_locations()[0]
@@ -248,7 +277,7 @@ class Autocompletion(Gtk.Popover):
         )
         cursor.x = window_coords.window_x
         cursor.y = window_coords.window_y
-        cursor.y += 18
+        cursor.y += 12
         self.set_pointing_to(cursor)
 
         text_iter = self._get_text_iter_at_cursor()
