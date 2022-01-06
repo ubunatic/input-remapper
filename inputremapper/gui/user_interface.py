@@ -24,6 +24,7 @@
 
 import math
 import os
+import re
 import sys
 
 from gi.repository import Gtk, GtkSource, Gdk, GLib, GObject
@@ -731,7 +732,8 @@ class UserInterface:
                 continue
 
             if system_mapping.get(symbol) is None:
-                self.show_status(CTX_MAPPING, f'Unknown mapping "{symbol}"')
+                trimmed = re.sub(r"\s+", " ", symbol).strip()
+                self.show_status(CTX_MAPPING, f'Unknown mapping "{trimmed}"')
                 break
         else:
             # no broken mappings found

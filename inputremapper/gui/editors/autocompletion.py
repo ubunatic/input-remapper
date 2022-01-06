@@ -24,7 +24,7 @@
 
 import re
 
-from gi.repository import Gtk, GLib, GObject, GtkSource
+from gi.repository import Gdk, Gtk, GLib, GObject, GtkSource
 
 from inputremapper.system_mapping import system_mapping
 from inputremapper.injection.macros.parse import FUNCTIONS
@@ -161,7 +161,54 @@ class Autocompletion(Gtk.Popover):
 
         self.set_position(Gtk.PositionType.BOTTOM)
 
+        text_input.connect("key-press-event", self.navigate)
+
+        self.visible = False
+
         self.show_all()
+
+    def navigate(self, _, event):
+        # catch arrow events from the text_input to navigate the autocompletion
+        # once navigated in there, catch enter to select an entry
+        if not self.visible:
+            return
+
+        if event.keyval not in [Gdk.KEY_Down, Gdk.KEY_Up, Gdk.KEY_Return]:
+            # not one of the keys that controls the autocompletion
+            return
+
+        selected_row = self.list_box.get_selected_row()
+
+        if event.keyval == Gdk.KEY_Return:
+            if selected_row is None:
+                # nothing selected, forward the event to the text editor
+                return
+
+            # a row is selected and should be activated
+            lol = selected_row.get_children()[0]
+            lol.emit("clicked")
+            return Gdk.EVENT_STOP
+
+        if selected_row is None:
+            # select the first row
+            new_selected_row = self.list_box.get_row_at_index(0)
+        else:
+            # select the next row
+            selected_index = selected_row.get_index()
+            new_index = selected_index
+
+            if event.keyval == Gdk.KEY_Down:
+                new_index += 1
+
+            if event.keyval == Gdk.KEY_Up:
+                new_index -= 1
+
+            new_selected_row = self.list_box.get_row_at_index(new_index)
+
+        self.list_box.select_row(new_selected_row)
+
+        # don't change editor contents
+        return Gdk.EVENT_STOP
 
     def hide(self, *_):
         """Hide the autocompletion popover."""
@@ -173,6 +220,14 @@ class Autocompletion(Gtk.Popover):
         """Get Gtk.TextIter at the current text cursor location."""
         cursor = self.text_input.get_cursor_locations()[0]
         return self.text_input.get_iter_at_location(cursor.x, cursor.y)[1]
+
+    def popup(self):
+        self.visible = True
+        super().popup()
+
+    def popdown(self):
+        self.visible = False
+        super().popdown()
 
     def update(self, *_):
         """Find new autocompletion suggestions and display them. Hide if none."""
