@@ -40,6 +40,10 @@ class EditableMapping:
     Manages a text input to show the configured output, a ToggleButton to activate key
     recording and a delete button. After finishing recording keys, it will
     automatically focus the text input.
+
+    This exists for historical reasons. If there is ever the need to implement a
+    different editor this might help to get there faster. At some point there were
+    two editors present and it was possible to switch between the two.
     """
 
     """To be overwritten by inheriting class"""
