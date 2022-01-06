@@ -306,6 +306,8 @@ class Autocompletion(Gtk.Popover):
             selected_row.get_children()[0].emit("clicked")
             return Gdk.EVENT_STOP
 
+        num_rows = len(self.list_box.get_children())
+
         if selected_row is None:
             # select the first row
             new_selected_row = self.list_box.get_row_at_index(0)
@@ -321,7 +323,10 @@ class Autocompletion(Gtk.Popover):
                 new_index -= 1
 
             if new_index < 0:
-                new_index = len(self.list_box.get_children()) - 1
+                new_index = num_rows - 1
+
+            if new_index > num_rows - 1:
+                new_index = 0
 
             new_selected_row = self.list_box.get_row_at_index(new_index)
 
