@@ -13,6 +13,21 @@
     <property name="can-focus">False</property>
     <property name="icon-name">dialog-ok</property>
   </object>
+  <object class="GtkImage" id="copy-icon">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="icon-name">edit-copy</property>
+  </object>
+  <object class="GtkImage" id="delete-icon">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="icon-name">edit-delete</property>
+  </object>
+  <object class="GtkImage" id="delete-icon-1">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="icon-name">gtk-delete</property>
+  </object>
   <object class="GtkMessageDialog" id="confirm-delete">
     <property name="can-focus">False</property>
     <property name="type-hint">dialog</property>
@@ -82,21 +97,6 @@
       <action-widget response="-3">button1</action-widget>
       <action-widget response="-6">button2</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkImage" id="copy-icon">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="icon-name">edit-copy</property>
-  </object>
-  <object class="GtkImage" id="delete-icon">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="icon-name">edit-delete</property>
-  </object>
-  <object class="GtkImage" id="delete-icon-1">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="icon-name">gtk-delete</property>
   </object>
   <object class="GtkImage" id="edit_icon">
     <property name="visible">True</property>
@@ -900,6 +900,7 @@ To give your keys back their original mapping.</property>
                                 <property name="can-focus">True</property>
                                 <property name="valign">start</property>
                                 <property name="resize-mode">immediate</property>
+                                <property name="wrap-mode">word</property>
                                 <property name="left-margin">10</property>
                                 <property name="right-margin">10</property>
                                 <property name="top-margin">10</property>
