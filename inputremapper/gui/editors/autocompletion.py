@@ -138,7 +138,7 @@ class Autocompletion(Gtk.Popover):
             modal=False,
             # Always show the popover below the cursor, don't move it to a different
             # position based on the location within the window
-            transitions_enabled=False,
+            constrain_to=Gtk.PopoverConstraint.NONE,
         )
 
         self.text_input = text_input

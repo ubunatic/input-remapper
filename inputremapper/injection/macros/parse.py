@@ -364,6 +364,11 @@ def remove_comments(macro):
     return result
 
 
+def clean(code):
+    """Remove everything irrelevant for the macro."""
+    return remove_whitespaces(remove_comments(code), '"')
+
+
 def parse(macro, context, return_errors=False):
     """parse and generate a Macro that can be run as often as you want.
 
@@ -383,9 +388,7 @@ def parse(macro, context, return_errors=False):
     """
     macro = handle_plus_syntax(macro)
 
-    macro = remove_comments(macro)
-
-    macro = remove_whitespaces(macro, '"')
+    macro = clean(macro)
 
     if return_errors:
         logger.spam("checking the syntax of %s", macro)

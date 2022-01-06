@@ -32,6 +32,7 @@ from inputremapper.logger import logger
 from inputremapper.paths import touch
 from inputremapper.config import ConfigBase, config
 from inputremapper.key import Key
+from inputremapper.injection.macros.parse import clean
 
 
 def split_key(key):
@@ -105,7 +106,9 @@ class Mapping(ConfigBase):
 
         symbol = symbol.strip()
         self.clear(new_key)  # this also clears all equivalent keys
-        logger.debug('%s maps to "%s"', new_key, symbol)
+
+        logger.debug('%s maps to "%s"', new_key, clean(symbol))
+
         self._mapping[new_key] = symbol
 
         if previous_key is not None:
@@ -183,7 +186,7 @@ class Mapping(ConfigBase):
                 if None in key:
                     continue
 
-                logger.spam("%s maps to %s", key, symbol)
+                logger.spam("%s maps to %s", key, clean(symbol))
                 self._mapping[key] = symbol
 
             # add any metadata of the mapping
