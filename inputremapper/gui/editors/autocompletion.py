@@ -30,6 +30,7 @@ import re
 
 from inputremapper.system_mapping import system_mapping
 from inputremapper.injection.macros.parse import FUNCTIONS
+from inputremapper.injection.macros.parse import remove_comments, remove_whitespaces
 
 # no shorthand names
 FUNCTION_NAMES = [name for name in FUNCTIONS.keys() if len(name) > 1]
@@ -40,7 +41,8 @@ FUNCTION_NAMES.remove("ifeq")
 def _get_left_text(iter):
     buffer = iter.get_buffer()
     result = buffer.get_text(buffer.get_start_iter(), iter, True)
-    result = re.sub(r"\s", "", result)
+    result = remove_comments(result)
+    result = remove_whitespaces(result, '"')
     return result.lower()
 
 

@@ -347,7 +347,9 @@ class TestIntegration(unittest.TestCase):
             self.user_interface.on_key_press(
                 self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
             )
-            self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_r))
+            self.user_interface.on_key_press(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_r)
+            )
             reader_get_devices_patch.assert_called_once()
 
     def test_ctrl_del(self):

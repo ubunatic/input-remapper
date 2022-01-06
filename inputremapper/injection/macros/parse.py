@@ -324,7 +324,7 @@ def handle_plus_syntax(macro):
     return output
 
 
-def _remove_whitespaces(macro, delimiter='"'):
+def remove_whitespaces(macro, delimiter='"'):
     """Remove whitespaces, tabs, newlines and such outside of string quotes."""
     result = ""
     for i, chunk in enumerate(macro.split(delimiter)):
@@ -339,7 +339,7 @@ def _remove_whitespaces(macro, delimiter='"'):
     return result[: -len(delimiter)]
 
 
-def _remove_comments(macro):
+def remove_comments(macro):
     """Remove comments from the macro and return the resulting code."""
     # keep hashtags inside quotes intact
     result = ""
@@ -383,9 +383,9 @@ def parse(macro, context, return_errors=False):
     """
     macro = handle_plus_syntax(macro)
 
-    macro = _remove_comments(macro)
+    macro = remove_comments(macro)
 
-    macro = _remove_whitespaces(macro, '"')
+    macro = remove_whitespaces(macro, '"')
 
     if return_errors:
         logger.spam("checking the syntax of %s", macro)

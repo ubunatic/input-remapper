@@ -30,7 +30,7 @@ from inputremapper.gui.editors.autocompletion import (
     propose_symbols,
     propose_function_names,
     get_incomplete_parameter,
-    get_incomplete_function_name
+    get_incomplete_function_name,
 )
 from inputremapper.logger import logger
 
@@ -80,18 +80,28 @@ class SelectionLabel(Gtk.Label):
         return self.__str__()
 
 
-autocomplete_debounce = None
+debounces = {}
 
 
-def debounce(func):
-    """Debounce a function call"""
-    def wrapped(self, *args):
-        if autocomplete_debounce is not None:
-            GLib.source_remove(self.autocomplete_debounce)
+def debounce(timeout):
+    """Debounce a function call to improve performance."""
 
-        GLib.timeout_add(50, lambda: func(self, *args))
+    def decorator(func):
+        def clear_debounce(self, *args):
+            debounces[func.__name__] = None
+            return func(self, *args)
 
-    return wrapped
+        def wrapped(self, *args):
+            if debounces.get(func.__name__) is not None:
+                GLib.source_remove(debounces[func.__name__])
+
+            debounces[func.__name__] = GLib.timeout_add(
+                timeout, lambda: clear_debounce(self, *args)
+            )
+
+        return wrapped
+
+    return decorator
 
 
 class AdvancedEditor(EditableMapping, Editor):
@@ -109,8 +119,6 @@ class AdvancedEditor(EditableMapping, Editor):
 
         mapping_list = self.get("mapping_list_advanced")
         mapping_list.connect("row-activated", self.on_mapping_selected)
-
-        self.autocomplete_debounce = None
 
         super().__init__(user_interface=user_interface)
 
@@ -151,7 +159,8 @@ class AdvancedEditor(EditableMapping, Editor):
 
     def hide_autocompletion(self, *_):
         """Hide the autocompletion popover."""
-        # add some delay, so that pressing the button in the completion works
+        # add some delay, so that pressing the button in the completion works before
+        # the popover is hidden due to focus-out-event
         autocompletion = self.get("autocompletion-popover")
         GLib.timeout_add(100, autocompletion.popdown)
 
@@ -161,11 +170,9 @@ class AdvancedEditor(EditableMapping, Editor):
         cursor = source_view.get_cursor_locations()[0]
         return source_view.get_iter_at_location(cursor.x, cursor.y)[1]
 
-    @debounce
+    @debounce(100)
     def on_symbol_changed(self, *_):
         """The symbol/code text input was changed by the user."""
-        self.autocomplete_debounce = None
-
         source_view = self.get("code_editor")
         autocompletion = self.get("autocompletion-popover")
 
@@ -194,34 +201,48 @@ class AdvancedEditor(EditableMapping, Editor):
 
         autocompletion.popup()  # ffs was this hard to find
 
+        # add visible autocompletion entries
         for name in suggested_names:
             button = Gtk.Button(label=name)
-            button.connect("clicked", self.on_autocompletion_clicked)
+            button.connect(
+                "clicked", lambda *_: self.on_autocompletion_clicked(text_iter, button)
+            )
             button.show_all()
             suggestion_widgets.insert(button, -1)
 
-    def on_autocompletion_clicked(self, button):
-        """An autocompletion suggestion was selected and should be inserted."""
+    def on_autocompletion_clicked(self, text_iter, button):
+        """An autocompletion suggestion was selected and should be inserted.
+
+        Parameters
+        ----------
+        text_iter : Gtk.TextIter
+            Where to put the autocompleted word
+        button : Gtk.Button
+            The button that contained the autocompletion suggestion in its label
+        """
         source_view = self.get("code_editor")
-        end_iter = self.get_text_iter_at_cursor()
 
         # the word the user is currently typing in
-        incomplete_name = get_incomplete_function_name(end_iter)
+        incomplete_name = get_incomplete_function_name(text_iter)
 
         # the text of the autocompletion entry that was selected
         selected_proposal = button.get_label()
 
         if incomplete_name is None:
-            logger.error('Failed to autocomplete "%s" with "%s"', incomplete_name, selected_proposal)
+            logger.error(
+                'Failed to autocomplete "%s" with "%s"',
+                incomplete_name,
+                selected_proposal,
+            )
             return
 
         # the complete current input up to the cursor
         buffer = source_view.get_buffer()
-        left = buffer.get_text(buffer.get_start_iter(), end_iter, True)
-        right = buffer.get_text(end_iter, buffer.get_end_iter(), True)
+        left = buffer.get_text(buffer.get_start_iter(), text_iter, True)
+        right = buffer.get_text(text_iter, buffer.get_end_iter(), True)
 
         # remove the unfinished word
-        left = left[:-len(incomplete_name)]
+        left = left[: -len(incomplete_name)]
 
         # insert the autocompletion
         source_view.get_buffer().set_text(left + selected_proposal + right)
