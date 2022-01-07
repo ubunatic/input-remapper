@@ -214,13 +214,23 @@ def debounce(timeout):
     return decorator
 
 
+class SuggestionLabel(Gtk.Label):
+    """A label with some extra internal information."""
+
+    __gtype_name__ = "SuggestionLabel"
+
+    def __init__(self, display_name, suggestion):
+        super().__init__(label=display_name)
+        self.suggestion = suggestion
+
+
 class Autocompletion(Gtk.Popover):
     """Provide keyboard-controllable beautiful autocompletions.
 
     The one provided via source_view.get_completion() is not very appealing
     """
 
-    __gtype_name__ = "Popover"
+    __gtype_name__ = "Autocompletion"
 
     def __init__(self, text_input):
         """Create an autocompletion popover.
@@ -415,10 +425,9 @@ class Autocompletion(Gtk.Popover):
 
         # add visible autocompletion entries
         for suggestion, display_name in suggested_names:
-            button = Gtk.Label(label=display_name)
-            button.suggestion = suggestion
-            self.list_box.insert(button, -1)
-            button.show_all()
+            label = SuggestionLabel(display_name, suggestion)
+            self.list_box.insert(label, -1)
+            label.show_all()
 
     def _on_suggestion_clicked(self, _, selected_row):
         """An autocompletion suggestion was selected and should be inserted."""

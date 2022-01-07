@@ -38,7 +38,7 @@ class SelectionLabel(Gtk.Label):
     This wrapper serves as a storage for the information the inherited label represents.
     """
 
-    __gtype_name__ = "Label"
+    __gtype_name__ = "SelectionLabel"
 
     def __init__(self):
         super().__init__()
