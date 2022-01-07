@@ -190,6 +190,8 @@ class Editor(EditableMapping):
         else:
             self.set_symbol(custom_mapping.get_symbol(key))
 
+        self.get("window").set_focus(self.get_text_input())
+
     def add_empty(self):
         """Add one empty row for a single mapped key."""
         mapping_list = self.get("mapping_list")
