@@ -252,6 +252,11 @@ class Autocompletion(Gtk.Popover):
         self.list_box.get_style_context().add_class("transparent")
         self.scrolled_window.add(self.list_box)
 
+        self.list_box.connect(
+            "row-activated",
+            self._on_suggestion_clicked,
+        )
+
         self.add(self.scrolled_window)
 
         self.get_style_context().add_class("autocompletion")
@@ -304,7 +309,7 @@ class Autocompletion(Gtk.Popover):
                 return
 
             # a row is selected and should be used for autocompletion
-            selected_row.get_children()[0].emit("clicked")
+            self.list_box.emit("row-activated", selected_row)
             return Gdk.EVENT_STOP
 
         num_rows = len(self.list_box.get_children())
@@ -409,23 +414,16 @@ class Autocompletion(Gtk.Popover):
         self.popup()  # ffs was this hard to find
 
         # add visible autocompletion entries
-        for name, display_name in suggested_names:
-            button = Gtk.ToggleButton(label=display_name)
-            button.connect(
-                "clicked",
-                # TODO make sure to test the correct name is passed
-                lambda *_, name=name: self._on_suggestion_clicked(name),
-            )
-            button.show_all()
+        for suggestion, display_name in suggested_names:
+            button = Gtk.Label(label=display_name)
+            button.suggestion = suggestion
             self.list_box.insert(button, -1)
+            button.show_all()
 
-    def _on_suggestion_clicked(self, selected_proposal):
-        """An autocompletion suggestion was selected and should be inserted.
-
-        Parameters
-        ----------
-        selected_proposal : str
-        """
+    def _on_suggestion_clicked(self, _, selected_row):
+        """An autocompletion suggestion was selected and should be inserted."""
+        selected_label = selected_row.get_children()[0]
+        suggestion = selected_label.suggestion
         buffer = self.text_input.get_buffer()
 
         # make sure to replace the complete unfinished word. Look to the right and
@@ -448,7 +446,7 @@ class Autocompletion(Gtk.Popover):
         )
 
         # insert the autocompletion
-        Gtk.TextView.do_insert_at_cursor(self.text_input, selected_proposal)
+        Gtk.TextView.do_insert_at_cursor(self.text_input, suggestion)
 
         self.emit("suggestion-inserted")
 

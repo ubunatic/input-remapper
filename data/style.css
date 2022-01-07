@@ -55,10 +55,7 @@ list button {
     padding: 11px;
 }
 
-.autocompletion button {
-    background: transparent;
-    border: 0px;
-    box-shadow: none;
+.autocompletion label {
     padding: 6px;
 }
 
