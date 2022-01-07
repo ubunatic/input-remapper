@@ -48,21 +48,18 @@ class SystemMapping:
         """Construct the system_mapping."""
         self._mapping = None
         self._xmodmap = None
-        self._case_insensitive_mapping = {}
+        self._case_insensitive_mapping = None
 
     def __getattribute__(self, key):
         """To lazy load system_mapping info only when needed.
 
-        For example, this helps to keep logs of input-remapper-control clear when it doesnt
-        need it the information.
+        For example, this helps to keep logs of input-remapper-control clear when it
+        doesnt need it the information.
         """
-        if key == "_mapping" and object.__getattribute__(self, "_mapping") is None:
-            object.__setattr__(self, "_mapping", {})
-            object.__getattribute__(self, "populate")()
-
-        if key == "_xmodmap" and object.__getattribute__(self, "_xmodmap") is None:
-            object.__setattr__(self, "_xmodmap", {})
-            object.__getattribute__(self, "populate")()
+        for attribute in ["_mapping", "_xmodmap", "_case_insensitive_mapping"]:
+            if key == attribute and object.__getattribute__(self, attribute) is None:
+                object.__setattr__(self, attribute, {})
+                object.__getattribute__(self, "populate")()
 
         return object.__getattribute__(self, key)
 
