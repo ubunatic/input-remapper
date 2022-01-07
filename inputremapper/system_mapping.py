@@ -47,7 +47,7 @@ class SystemMapping:
     def __init__(self):
         """Construct the system_mapping."""
         self._mapping = None
-        self._xmodmap = {}
+        self._xmodmap = None
         self._case_insensitive_mapping = {}
 
     def __getattribute__(self, key):
@@ -58,6 +58,10 @@ class SystemMapping:
         """
         if key == "_mapping" and object.__getattribute__(self, "_mapping") is None:
             object.__setattr__(self, "_mapping", {})
+            object.__getattribute__(self, "populate")()
+
+        if key == "_xmodmap" and object.__getattribute__(self, "_xmodmap") is None:
+            object.__setattr__(self, "_xmodmap", {})
             object.__getattribute__(self, "populate")()
 
         return object.__getattribute__(self, key)

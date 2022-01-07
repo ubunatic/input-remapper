@@ -205,7 +205,6 @@ class Editor(EditableMapping):
         for key, output in custom_mapping:
             mapping_selection = SelectionLabel()
             mapping_selection.set_key(key)
-            mapping_selection.set_label(key.beautify())
             mapping_list.insert(mapping_selection, -1)
 
         self.check_add_new_key()
