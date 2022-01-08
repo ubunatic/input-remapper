@@ -214,7 +214,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="apply_system_layout">
-                    <property name="label" translatable="yes">Restore Defaults</property>
+                    <property name="label" translatable="yes">Restore defaults</property>
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
