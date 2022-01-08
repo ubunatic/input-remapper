@@ -114,22 +114,29 @@ class Editor:
         self.device = user_interface.group
 
         # keys were not pressed yet
-        self.input_has_arrived = False
+        self._input_has_arrived = False
 
         toggle = self.get_recording_toggle()
-        toggle.connect("focus-out-event", self._reset)
+        toggle.connect("focus-out-event", self._reset_keycode_consumption)
         toggle.connect("focus-out-event", lambda *_: toggle.set_active(False))
-        toggle.connect("focus-in-event", self.on_recording_toggle_focus)
+        toggle.connect("focus-in-event", self._on_recording_toggle_focus)
         # Don't leave the input when using arrow keys or tab. wait for the
         # window to consume the keycode from the reader. I.e. a tab input should
         # be recorded, instead of causing the recording to stop.
         toggle.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
 
         text_input = self.get_text_input()
-        text_input.connect("focus-out-event", self.save_changes)
+        text_input.connect("focus-out-event", self.save_changes_of_current_mapping)
 
         delete_button = self.get_delete_button()
         delete_button.connect("clicked", self._on_delete_button_clicked)
+
+    def clear(self):
+        """Clear all inputs, reset the state."""
+        self.set_key(None)
+        self.set_symbol_input_text("")
+        self.active_selection_label = None
+        self._reset_keycode_consumption()
 
     def _setup_recording_toggle(self):
         """Prepare the toggle button for recording key inputs."""
@@ -184,7 +191,7 @@ class Editor:
 
         autocompletion = Autocompletion(source_view)
         autocompletion.set_relative_to(self.get("code_editor_container"))
-        autocompletion.connect("suggestion-inserted", self.save_changes)
+        autocompletion.connect("suggestion-inserted", self.save_changes_of_current_mapping)
 
     def show_line_numbers_if_multiline(self, *_):
         """Show line numbers if a macro is being edited."""
@@ -248,7 +255,7 @@ class Editor:
 
         Load the information from that mapping entry into the editor.
         """
-        self.save_changes()
+        self.save_changes_of_current_mapping()
 
         self.active_selection_label = selection_label
 
@@ -346,9 +353,9 @@ class Editor:
         """Get a widget from the window"""
         return self.user_interface.builder.get_object(name)
 
-    def on_recording_toggle_focus(self, *_):
+    def _on_recording_toggle_focus(self, *_):
         """Refresh useful usage information."""
-        self._reset()
+        self._reset_keycode_consumption()
         reader.clear()
         self.user_interface.can_modify_mapping()
 
@@ -357,7 +364,7 @@ class Editor:
         accept = Gtk.ResponseType.ACCEPT
         if (
             len(self.get_symbol_input_text()) > 0
-            and self.show_confirm_delete() != accept
+            and self._show_confirm_delete() != accept
         ):
             return
 
@@ -370,7 +377,7 @@ class Editor:
 
         self.load_custom_mapping()
 
-    def show_confirm_delete(self):
+    def _show_confirm_delete(self):
         """Blocks until the user decided about an action."""
         confirm_delete = self.get("confirm-delete")
 
@@ -382,7 +389,7 @@ class Editor:
         confirm_delete.hide()
         return response
 
-    def save_changes(self, *_):
+    def save_changes_of_current_mapping(self, *_):
         """Save the preset and correct the input casing."""
         # correct case
         symbol = self.get_symbol_input_text()
@@ -417,6 +424,7 @@ class Editor:
             # TODO wtf? _switch_focus_if_complete uses self.get_key, but
                _set_key is called after it
         """
+        print("consume_newest_keycode")
         self._switch_focus_if_complete()
 
         if key is None:
@@ -451,7 +459,7 @@ class Editor:
         previous_key = self.get_key()
 
         # it might end up being a key combination, wait for more
-        self.input_has_arrived = True
+        self._input_has_arrived = True
 
         # keycode didn't change, do nothing
         if key == previous_key:
@@ -480,11 +488,11 @@ class Editor:
         the focus needs to switch.
         """
         if not self.is_waiting_for_input():
-            self._reset()
+            self._reset_keycode_consumption()
             return
 
         all_keys_released = reader.get_unreleased_keys() is None
-        if all_keys_released and self.input_has_arrived and self.get_key():
+        if all_keys_released and self._input_has_arrived and self.get_key():
             # A key was pressed and then released.
             # Switch to the symbol. idle_add this so that the
             # keycode event won't write into the symbol input as well.
@@ -495,10 +503,10 @@ class Editor:
         if not all_keys_released:
             # currently the user is using the widget, and certain keys have already
             # reached it.
-            self.input_has_arrived = True
+            self._input_has_arrived = True
             return
 
-        self._reset()
+        self._reset_keycode_consumption()
 
-    def _reset(self, *_):
-        self.input_has_arrived = False
+    def _reset_keycode_consumption(self, *_):
+        self._input_has_arrived = False

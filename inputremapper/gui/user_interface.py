@@ -312,7 +312,7 @@ class UserInterface:
     def __del__(self, *_):
         """Safely close the application."""
         logger.debug("Closing window")
-        self.editor.save_changes()
+        self.editor.save_changes_of_current_mapping()
         self.window.hide()
         for timeout in self.timeouts:
             GLib.source_remove(timeout)
@@ -493,7 +493,12 @@ class UserInterface:
         if len(custom_mapping) > 0 and self.show_confirm_delete() != accept:
             return
 
+        # avoid having the text of the symbol input leak into the custom_mapping again
+        # via a gazillion hooks, causing the preset to be saved again after deleting.
+        self.editor.clear()
+
         delete_preset(self.group.name, self.preset_name)
+
         self.populate_presets()
 
     @with_preset_name
@@ -558,7 +563,7 @@ class UserInterface:
 
     def on_select_device(self, dropdown):
         """List all presets, create one if none exist yet."""
-        self.editor.save_changes()
+        self.editor.save_changes_of_current_mapping()
 
         if self.group and dropdown.get_active_id() == self.group.key:
             return
@@ -633,7 +638,7 @@ class UserInterface:
 
     def create_preset(self, copy=False):
         """Create a new preset and select it."""
-        self.editor.save_changes()
+        self.editor.save_changes_of_current_mapping()
         name = self.group.name
         preset = self.preset_name
 
@@ -648,11 +653,11 @@ class UserInterface:
             custom_mapping.save(path)
             self.get("preset_selection").append(new_preset, new_preset)
             # triggers on_select_preset
-            # for whatever reason I have to use set_active_id twice for this
-            # to work in tests all of the sudden. The first set_active_id will provide
-            # the wrong active id to on_select_preset.
             self.get("preset_selection").set_active_id(new_preset)
-            self.get("preset_selection").set_active_id(new_preset)
+            if self.get("preset_selection").get_active_id() != new_preset:
+                # for whatever reason I have to use set_active_id twice for this
+                # to work in tests all of the sudden
+                self.get("preset_selection").set_active_id(new_preset)
         except PermissionError as error:
             error = str(error)
             self.show_status(CTX_ERROR, "Permission denied!", error)
@@ -664,11 +669,11 @@ class UserInterface:
         # active_id stays the same
         # TODO TEST using the scroll wheel to select a preset caused this not to save,
         #  because the focus would not leave the editor and therefore custom_mapping
-        #  would not change. now that self.editor.save_changes is used it makes sure
-        #  changes are in custom_mapping
+        #  would not change. now that self.editor.save_changes_of_current_mapping is
+        #  used it makes sure changes are in custom_mapping
         if self.preset_name is not None:
             # save the previous preset
-            self.editor.save_changes()
+            self.editor.save_changes_of_current_mapping()
 
         if dropdown.get_active_id() == self.preset_name:
             return

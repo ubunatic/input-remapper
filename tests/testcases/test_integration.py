@@ -510,7 +510,9 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(self.toggle.get_label(), "Press Key")
 
+        print("# consume_newest_keycode")
         self.editor.consume_newest_keycode(Key(EV_KEY, 30, 1))
+        print("# assert")
         self.assertEqual(len(custom_mapping), 0)  # not released yet
         self.assertEqual(selection_label.get_key(), (EV_KEY, 30, 1))
         # this is KEY_A in linux/input-event-codes.h,
@@ -611,7 +613,7 @@ class TestIntegration(unittest.TestCase):
         selection_label = self.get_selection_labels()[-1]
         self.selection_labels.select_row(selection_label)
         self.assertIsNone(selection_label.get_key())
-        self.assertFalse(self.editor.input_has_arrived)
+        self.assertFalse(self.editor._input_has_arrived)
 
         if self.toggle.get_active():
             self.assertEqual(self.toggle.get_label(), "Press Key")
@@ -640,7 +642,7 @@ class TestIntegration(unittest.TestCase):
             # holding down
             self.assertIsNotNone(reader.get_unreleased_keys())
             self.assertGreater(len(reader.get_unreleased_keys()), 0)
-            self.assertTrue(self.editor.input_has_arrived)
+            self.assertTrue(self.editor._input_has_arrived)
             self.assertTrue(self.toggle.get_active())
 
             # release all the keys
@@ -652,7 +654,7 @@ class TestIntegration(unittest.TestCase):
 
             # released
             self.assertIsNone(reader.get_unreleased_keys())
-            self.assertFalse(self.editor.input_has_arrived)
+            self.assertFalse(self.editor._input_has_arrived)
 
             if expect_success:
                 print("### budmtschdumdum go go into ma ha")
@@ -670,7 +672,7 @@ class TestIntegration(unittest.TestCase):
         if not expect_success:
             self.assertIsNone(selection_label.get_key())
             self.assertEqual(self.editor.get_symbol_input_text(), SET_KEY_FIRST)
-            self.assertFalse(self.editor.input_has_arrived)
+            self.assertFalse(self.editor._input_has_arrived)
             # it won't switch the focus to the symbol input
             self.assertTrue(self.toggle.get_active())
             self.assertEqual(custom_mapping.has_unsaved_changes(), changed)
@@ -999,7 +1001,9 @@ class TestIntegration(unittest.TestCase):
             self.assertIn("Permission denied", status)
 
         with patch.object(
-            self.user_interface, "show_confirm_delete", lambda: Gtk.ResponseType.ACCEPT
+            self.user_interface,
+            "show_confirm_delete",
+            lambda: Gtk.ResponseType.ACCEPT,
         ):
             self.user_interface.on_delete_preset_clicked(None)
             self.assertFalse(os.path.exists(preset_path))
