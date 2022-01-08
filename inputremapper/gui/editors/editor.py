@@ -19,15 +19,20 @@
 # along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""An implementation of the editor with multiline code input and autocompletion."""
+"""The editor with multiline code input, recording toggle and autocompletion."""
 
 
-from gi.repository import Gtk, GLib, GtkSource
+import re
 
-from inputremapper.gui.editors.base import EditableMapping
-from inputremapper.gui.custom_mapping import custom_mapping
+from gi.repository import Gtk, GLib, GtkSource, Gdk
+
 from inputremapper.gui.editors.autocompletion import Autocompletion
-
+from inputremapper.system_mapping import system_mapping
+from inputremapper.gui.custom_mapping import custom_mapping
+from inputremapper.key import Key
+from inputremapper.logger import logger
+from inputremapper.gui.reader import reader
+from inputremapper.gui.utils import CTX_KEYCODE, CTX_WARNING
 
 # TODO test
 
@@ -83,7 +88,7 @@ class SelectionLabel(Gtk.ListBoxRow):
         return self.__str__()
 
 
-class Editor(EditableMapping):
+class Editor:
     """Maintains the widgets of the editor."""
 
     def __init__(self, user_interface):
@@ -99,7 +104,25 @@ class Editor(EditableMapping):
         selection_labels = self.get("selection_labels")
         selection_labels.connect("row-activated", self.on_mapping_selected)
 
-        super().__init__(user_interface=user_interface)
+        self.device = user_interface.group
+
+        # keys were not pressed yet
+        self.input_has_arrived = False
+
+        toggle = self.get_recording_toggle()
+        toggle.connect("focus-out-event", self._reset)
+        toggle.connect("focus-out-event", lambda *_: toggle.set_active(False))
+        toggle.connect("focus-in-event", self.on_recording_toggle_focus)
+        # Don't leave the input when using arrow keys or tab. wait for the
+        # window to consume the keycode from the reader. I.e. a tab input should
+        # be recorded, instead of causing the recording to stop.
+        toggle.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
+
+        text_input = self.get_text_input()
+        text_input.connect("focus-out-event", self.save_changes)
+
+        delete_button = self.get_delete_button()
+        delete_button.connect("clicked", self._on_delete_button_clicked)
 
     def _setup_recording_toggle(self):
         """Prepare the toggle button for recording key inputs."""
@@ -168,10 +191,6 @@ class Editor(EditableMapping):
             code_editor.set_show_line_numbers(False)
             code_editor.get_style_context().remove_class("multiline")
 
-    def _on_delete_button_clicked(self, *_):
-        """The delete button on a single mapped key was clicked."""
-        super()._on_delete_button_clicked()
-
     def get_delete_button(self):
         return self.get("delete-mapping")
 
@@ -236,8 +255,6 @@ class Editor(EditableMapping):
         selection_labels.select_row(rows[0])
         self.on_mapping_selected(selection_label=rows[0])
 
-    """EditableMapping"""
-
     def get_recording_toggle(self):
         return self.get("key_recording_toggle")
 
@@ -277,3 +294,163 @@ class Editor(EditableMapping):
     def set_key(self, key):
         """Show what the user is currently pressing in ther user interface."""
         self.active_selection_label.set_key(key)
+
+    def get(self, name):
+        """Get a widget from the window"""
+        return self.user_interface.builder.get_object(name)
+
+    def on_recording_toggle_focus(self, *_):
+        """Refresh useful usage information."""
+        self._reset()
+        reader.clear()
+        self.user_interface.can_modify_mapping()
+
+    def _on_delete_button_clicked(self, *_):
+        """Destroy the row and remove it from the config."""
+        accept = Gtk.ResponseType.ACCEPT
+        if len(self.get_symbol()) > 0 and self.show_confirm_delete() != accept:
+            return
+
+        key = self.get_key()
+        if key is not None:
+            custom_mapping.clear(key)
+
+        self.set_symbol("")
+        self.load_custom_mapping()
+
+    def show_confirm_delete(self):
+        """Blocks until the user decided about an action."""
+        confirm_delete = self.get("confirm-delete")
+
+        text = f"Are you sure to delete this mapping?"
+        self.get("confirm-delete-label").set_text(text)
+
+        confirm_delete.show()
+        response = confirm_delete.run()
+        confirm_delete.hide()
+        return response
+
+    def save_changes(self, *_):
+        """Save the preset and correct the input casing."""
+        # correct case
+        symbol = self.get_symbol()
+
+        if not symbol:
+            return
+
+        correct_case = system_mapping.correct_case(symbol)
+        if symbol != correct_case:
+            self.get_text_input().get_buffer().set_text(correct_case)
+
+        # make sure the custom_mapping is up to date
+        key = self.get_key()
+        if correct_case is not None and key is not None:
+            custom_mapping.change(key, correct_case)
+
+        # save to disk if required
+        if custom_mapping.has_unsaved_changes():
+            self.user_interface.save_preset()
+
+    def _is_waiting_for_input(self):
+        """Check if the user is interacting with the ToggleButton for key recording."""
+        return self.get_recording_toggle().get_active()
+
+    def consume_newest_keycode(self, key):
+        """To capture events from keyboards, mice and gamepads.
+
+        Parameters
+        ----------
+        key : Key or None
+            If None will unfocus the input widget
+            # TODO wtf? _switch_focus_if_complete uses self.get_key, but
+               _set_key is called after it
+        """
+        self._switch_focus_if_complete()
+
+        if key is None:
+            return
+
+        if not self._is_waiting_for_input():
+            return
+
+        if key is not None and not isinstance(key, Key):
+            raise TypeError("Expected new_key to be a Key object")
+
+        # keycode is already set by some other row
+        if key is not None:
+            existing = custom_mapping.get_symbol(key)
+            if existing is not None:
+                existing = re.sub(r"\s", "", existing)
+                msg = f'"{key.beautify()}" already mapped to "{existing}"'
+                logger.info("%s %s", key, msg)
+                self.user_interface.show_status(CTX_KEYCODE, msg)
+                return True
+
+            if key.is_problematic():
+                self.user_interface.show_status(
+                    CTX_WARNING,
+                    "ctrl, alt and shift may not combine properly",
+                    "Your system might reinterpret combinations "
+                    + "with those after they are injected, and by doing so "
+                    + "break them.",
+                )
+
+        # the newest_keycode is populated since the ui regularly polls it
+        # in order to display it in the status bar.
+        previous_key = self.get_key()
+
+        # no input
+        if key is None:
+            return
+
+        # it might end up being a key combination, wait for more
+        self.input_has_arrived = True
+
+        # keycode didn't change, do nothing
+        if key == previous_key:
+            logger.debug("%s didn't change", previous_key)
+            return
+
+        self.set_key(key)
+
+        symbol = self.get_symbol()
+
+        # the symbol is empty and therefore the mapping is not complete
+        if not symbol:
+            return
+
+        # else, the keycode has changed, the symbol is set, all good
+        custom_mapping.change(new_key=key, symbol=symbol, previous_key=previous_key)
+
+    def _switch_focus_if_complete(self):
+        """If keys are released, it will switch to the text_input.
+
+        States:
+        1. not doing anything, waiting for the user to start using it
+        2. user focuses it, no keys pressed
+        3. user presses keys
+        4. user releases keys. no keys are pressed, just like in step 2, but this time
+        the focus needs to switch.
+        """
+        if not self._is_waiting_for_input():
+            self._reset()
+            return
+
+        all_keys_released = reader.get_unreleased_keys() is None
+        if all_keys_released and self.input_has_arrived and self.get_key():
+            # A key was pressed and then released.
+            # Switch to the symbol. idle_add this so that the
+            # keycode event won't write into the symbol input as well.
+            window = self.user_interface.window
+            GLib.idle_add(lambda: window.set_focus(self.get_text_input()))
+
+        if not all_keys_released:
+            # currently the user is using the widget, and certain keys have already
+            # reached it.
+            self.input_has_arrived = True
+            return
+
+        self._reset()
+
+    def _reset(self, *_):
+        self.input_has_arrived = False
