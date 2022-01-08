@@ -597,7 +597,7 @@ def quick_cleanup(log=True):
 
     custom_mapping.empty()
     custom_mapping.clear_config()
-    custom_mapping.changed = False
+    custom_mapping.set_has_unsaved_changes(False)
 
     clear_write_history()
 

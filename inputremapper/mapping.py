@@ -58,7 +58,7 @@ class Mapping(ConfigBase):
 
     def __init__(self):
         self._mapping = {}  # a mapping of Key objects to strings
-        self.changed = False
+        self._changed = False
 
         # are there actually any keys set in the mapping file?
         self.num_saved_keys = 0
@@ -74,12 +74,12 @@ class Mapping(ConfigBase):
 
     def set(self, *args):
         """Set a config value. See `ConfigBase.set`."""
-        self.changed = True
+        self._changed = True
         return super().set(*args)
 
     def remove(self, *args):
         """Remove a config value. See `ConfigBase.remove`."""
-        self.changed = True
+        self._changed = True
         return super().remove(*args)
 
     def change(self, new_key, symbol, previous_key=None):
@@ -101,24 +101,43 @@ class Mapping(ConfigBase):
         if not isinstance(new_key, Key):
             raise TypeError(f"Expected {new_key} to be a Key object")
 
-        if not symbol:
+        if symbol is None or symbol.strip() == "":
+            # TODO test .strip
             raise ValueError("Expected `symbol` not to be empty")
 
         symbol = symbol.strip()
+
+        if previous_key is None and self._mapping.get(new_key):
+            # the key didn't change
+            # TODO test
+            previous_key = new_key
+
+        key_changed = new_key != previous_key
+        if not key_changed and symbol == self._mapping.get(new_key):
+            # nothing was changed, no need to act
+            # TODO test
+            return
+
         self.clear(new_key)  # this also clears all equivalent keys
 
         logger.debug('%s maps to "%s"', new_key, clean(symbol))
 
         self._mapping[new_key] = symbol
 
-        if previous_key is not None:
-            code_changed = new_key != previous_key
-            if code_changed:
-                # clear previous mapping of that code, because the line
-                # representing that one will now represent a different one
-                self.clear(previous_key)
+        if key_changed and previous_key is not None:
+            # clear previous mapping of that code, because the line
+            # representing that one will now represent a different one
+            self.clear(previous_key)
 
-        self.changed = True
+        self._changed = True
+
+    def has_unsaved_changes(self):
+        """Check if there are unsaved changed."""
+        return self._changed
+
+    def set_has_unsaved_changes(self, changed):
+        """Write down if there are unsaved changes, or if they have been saved."""
+        self._changed = changed
 
     def clear(self, key):
         """Remove a keycode from the mapping.
@@ -134,14 +153,14 @@ class Mapping(ConfigBase):
             if permutation in self._mapping:
                 logger.debug("%s cleared", permutation)
                 del self._mapping[permutation]
-                self.changed = True
+                self._changed = True
                 # there should be only one variation of the permutations
                 # in the mapping actually
 
     def empty(self):
         """Remove all mappings and custom configs without saving."""
         self._mapping = {}
-        self.changed = True
+        self._changed = True
         self.clear_config()
 
     def load(self, path):
@@ -157,6 +176,7 @@ class Mapping(ConfigBase):
             raise FileNotFoundError(f'Tried to load non-existing preset "{path}"')
 
         self.empty()
+        self._changed = False
 
         with open(path, "r") as file:
             preset_dict = json.load(file)
@@ -195,14 +215,14 @@ class Mapping(ConfigBase):
                     continue
                 self._config[key] = preset_dict[key]
 
-        self.changed = False
+        self._changed = False
         self.num_saved_keys = len(self)
 
     def clone(self):
         """Create a copy of the mapping."""
         mapping = Mapping()
         mapping._mapping = copy.deepcopy(self._mapping)
-        mapping.changed = self.changed
+        mapping.set_has_unsaved_changes(self)._changed
         return mapping
 
     def save(self, path):
@@ -234,7 +254,7 @@ class Mapping(ConfigBase):
             json.dump(preset_dict, file, indent=4)
             file.write("\n")
 
-        self.changed = False
+        self._changed = False
         self.num_saved_keys = len(self)
 
     def get_symbol(self, key):

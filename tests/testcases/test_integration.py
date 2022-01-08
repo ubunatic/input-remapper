@@ -597,7 +597,7 @@ class TestIntegration(unittest.TestCase):
         """
         self.assertIsNone(reader.get_unreleased_keys())
 
-        changed = custom_mapping.changed
+        changed = custom_mapping.has_unsaved_changes()
 
         # wait for the window to create a new empty row if needed
         time.sleep(0.1)
@@ -667,7 +667,7 @@ class TestIntegration(unittest.TestCase):
             self.assertFalse(selection_label.input_has_arrived)
             # it won't switch the focus to the symbol input
             self.assertTrue(selection_label.key_recording_toggle.is_focus())
-            self.assertEqual(custom_mapping.changed, changed)
+            self.assertEqual(custom_mapping.has_unsaved_changes(), changed)
             return selection_label
 
         if char and code_first:
@@ -680,7 +680,7 @@ class TestIntegration(unittest.TestCase):
         self.set_focus(None)
         correct_case = system_mapping.correct_case(char)
         self.assertEqual(selection_label.get_symbol(), correct_case)
-        self.assertFalse(custom_mapping.changed)
+        self.assertFalse(custom_mapping.has_unsaved_changes())
 
         self.set_focus(selection_label.text_input)
         self.set_focus(None)
@@ -960,7 +960,7 @@ class TestIntegration(unittest.TestCase):
 
         # otherwise save won't do anything
         custom_mapping.change(Key(EV_KEY, 14, 1), "c", None)
-        self.assertTrue(custom_mapping.changed)
+        self.assertTrue(custom_mapping.has_unsaved_changes())
 
         def save(_):
             raise PermissionError
@@ -1025,14 +1025,14 @@ class TestIntegration(unittest.TestCase):
     def test_avoids_redundant_saves(self):
         custom_mapping.change(Key(EV_KEY, 14, 1), "abcd", None)
 
-        custom_mapping.changed = False
+        custom_mapping.set_has_unsaved_changes(False)
         self.user_interface.save_preset()
 
         with open(get_preset_path("Foo Device", "new preset")) as f:
             content = f.read()
             self.assertNotIn("abcd", content)
 
-        custom_mapping.changed = True
+        custom_mapping.set_has_unsaved_changes(True)
         self.user_interface.save_preset()
 
         with open(get_preset_path("Foo Device", "new preset")) as f:
@@ -1201,17 +1201,17 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.get("left_joystick_purpose").set_active_id(BUTTONS)
         self.user_interface.get("right_joystick_purpose").set_active_id(BUTTONS)
         self.user_interface.get("joystick_mouse_speed").set_value(1)
-        custom_mapping.changed = False
+        custom_mapping.set_has_unsaved_changes(False)
 
         # select a device that is not a gamepad
         self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device"))
         self.assertFalse(self.user_interface.get("gamepad_config").is_visible())
-        self.assertFalse(custom_mapping.changed)
+        self.assertFalse(custom_mapping.has_unsaved_changes())
 
         # select a gamepad
         self.user_interface.on_select_device(FakeDeviceDropdown("gamepad"))
         self.assertTrue(self.user_interface.get("gamepad_config").is_visible())
-        self.assertFalse(custom_mapping.changed)
+        self.assertFalse(custom_mapping.has_unsaved_changes())
 
         # set stuff
         gtk_iteration()
@@ -1225,7 +1225,7 @@ class TestIntegration(unittest.TestCase):
         config.set("gamepad.joystick.left_purpose", MOUSE)
         config.set("gamepad.joystick.right_purpose", MOUSE)
         config.set("gamepad.joystick.pointer_speed", 50)
-        self.assertTrue(custom_mapping.changed)
+        self.assertTrue(custom_mapping.has_unsaved_changes())
         left_purpose = custom_mapping.get("gamepad.joystick.left_purpose")
         right_purpose = custom_mapping.get("gamepad.joystick.right_purpose")
         pointer_speed = custom_mapping.get("gamepad.joystick.pointer_speed")
@@ -1236,7 +1236,7 @@ class TestIntegration(unittest.TestCase):
         # select a device that is not a gamepad again
         self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device"))
         self.assertFalse(self.user_interface.get("gamepad_config").is_visible())
-        self.assertFalse(custom_mapping.changed)
+        self.assertFalse(custom_mapping.has_unsaved_changes())
 
     def test_wont_start(self):
         error_icon = self.user_interface.get("error_status_icon")

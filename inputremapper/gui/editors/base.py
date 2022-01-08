@@ -154,10 +154,11 @@ class EditableMapping:
         # make sure the custom_mapping is up to date
         key = self.get_key()
         if correct_case is not None and key is not None:
-            custom_mapping.change(new_key=key, symbol=correct_case, previous_key=None)
+            custom_mapping.change(key, correct_case)
 
-        # save to disk
-        self.user_interface.save_preset()
+        # save to disk if required
+        if custom_mapping.has_unsaved_changes():
+            self.user_interface.save_preset()
 
     def _is_waiting_for_input(self):
         """Check if the user is interacting with the ToggleButton for key recording."""

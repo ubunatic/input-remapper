@@ -415,7 +415,8 @@ class Autocompletion(Gtk.Popover):
         text_iter = self._get_text_iter_at_cursor()
         suggested_names = propose_function_names(text_iter)
         suggested_names += propose_symbols(text_iter)
-        suggested_names += propose_function_parameters(text_iter)
+        # TODO backup code of propose_function_parameters somewhere
+        # suggested_names += propose_function_parameters(text_iter)
 
         if len(suggested_names) == 0:
             self.popdown()

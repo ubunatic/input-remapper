@@ -492,7 +492,7 @@ class UserInterface:
         if len(custom_mapping) > 0 and self.show_confirm_delete() != accept:
             return
 
-        custom_mapping.changed = False
+        custom_mapping.set_has_unsaved_changes(False)
         delete_preset(self.group.name, self.preset_name)
         self.populate_presets()
 
@@ -565,7 +565,7 @@ class UserInterface:
 
         # selecting a device will also automatically select a different
         # preset. Prevent another unsaved-changes dialog to pop up
-        custom_mapping.changed = False
+        custom_mapping.set_has_unsaved_changes(False)
 
         group_key = dropdown.get_active_id()
 
@@ -687,7 +687,7 @@ class UserInterface:
 
         self.initialize_gamepad_config()
 
-        custom_mapping.changed = False
+        custom_mapping.set_has_unsaved_changes(False)
 
     def on_left_joystick_changed(self, dropdown):
         """Set the purpose of the left joystick."""
@@ -708,7 +708,7 @@ class UserInterface:
 
     def save_preset(self, *_):
         """Write changes to presets to disk."""
-        if not custom_mapping.changed:
+        if not custom_mapping.has_unsaved_changes():
             logger.spam("Not saving because mapping did not change")
             return
 
@@ -716,7 +716,7 @@ class UserInterface:
             path = self.group.get_preset_path(self.preset_name)
             custom_mapping.save(path)
 
-            custom_mapping.changed = False
+            custom_mapping.set_has_unsaved_changes(False)
 
             # after saving the config, its modification date will be the
             # newest, so populate_presets will automatically select the
