@@ -120,8 +120,8 @@ class Editor:
         self.timeout = GLib.timeout_add(100, self.check_add_new_key)
         self.active_selection_label = None
 
-        selection_labels = self.get("selection_labels")
-        selection_labels.connect("row-selected", self.on_mapping_selected)
+        selection_label_listbox = self.get("selection_label_listbox")
+        selection_label_listbox.connect("row-selected", self.on_mapping_selected)
 
         self.device = user_interface.group
 
@@ -144,11 +144,28 @@ class Editor:
         delete_button.connect("clicked", self._on_delete_button_clicked)
 
     def clear(self):
-        """Clear all inputs, reset the state."""
-        self.set_key(None)
+        """Clear all inputs, reset the state.
+
+        This is really important to do before loading a different preset.
+        Otherwise the inputs will be read and then saved into the next preset.
+        """
+        if self.active_selection_label:
+            self.set_key(None)
+
         self.set_symbol_input_text("")
-        self.active_selection_label = None
+        # TODO test that after deleting the last preset it shows the help text again:
+        self.disable_symbol_input()
         self._reset_keycode_consumption()
+
+        selection_label_listbox = self.get("selection_label_listbox")
+
+        if len(selection_label_listbox.get_children()) == 0:
+            # TODO test_shared_presets fails if this is not there. why?
+            self.add_empty()
+
+        selection_label_listbox.select_row(selection_label_listbox.get_children()[0])
+        # TODO test that after deleting the last preset it selects the empty row
+        #  by default. active_selection_label should be set correctly afterwards
 
     def _setup_recording_toggle(self):
         """Prepare the toggle button for recording key inputs."""
@@ -224,11 +241,11 @@ class Editor:
 
     def check_add_new_key(self):
         """If needed, add a new empty mapping to the list for the user to configure."""
-        selection_labels = self.get("selection_labels")
+        selection_label_listbox = self.get("selection_label_listbox")
 
-        selection_labels = selection_labels.get_children()
+        selection_label_listbox = selection_label_listbox.get_children()
 
-        for selection_label in selection_labels:
+        for selection_label in selection_label_listbox:
             if selection_label.get_key() is None:
                 # unfinished row found
                 break
@@ -258,7 +275,10 @@ class Editor:
         text_input.set_sensitive(True)
         text_input.set_opacity(1)
 
-        if self.get_symbol_input_text() == SET_KEY_FIRST:
+        buffer = text_input.get_buffer()
+        symbol = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+        if symbol == SET_KEY_FIRST:
+            # TODO test that SET_KEY_FIRST is overwritten
             # don't overwrite user input
             self.set_symbol_input_text("")
 
@@ -288,35 +308,35 @@ class Editor:
 
     def add_empty(self):
         """Add one empty row for a single mapped key."""
-        selection_labels = self.get("selection_labels")
+        selection_label_listbox = self.get("selection_label_listbox")
         mapping_selection = SelectionLabel()
         mapping_selection.set_label("new entry")
         mapping_selection.show_all()
-        selection_labels.insert(mapping_selection, -1)
+        selection_label_listbox.insert(mapping_selection, -1)
 
     @ensure_everything_saved
     def load_custom_mapping(self):
         """Display the entries in custom_mapping."""
         self.set_symbol_input_text("")
 
-        selection_labels = self.get("selection_labels")
-        selection_labels.forall(selection_labels.remove)
+        selection_label_listbox = self.get("selection_label_listbox")
+        selection_label_listbox.forall(selection_label_listbox.remove)
 
         for key, output in custom_mapping:
             selection_label = SelectionLabel()
             selection_label.set_key(key)
-            selection_labels.insert(selection_label, -1)
+            selection_label_listbox.insert(selection_label, -1)
 
         self.check_add_new_key()
 
         # select the first entry
-        rows = selection_labels.get_children()
+        selection_labels = selection_label_listbox.get_children()
 
-        if len(rows) == 0:
+        if len(selection_labels) == 0:
             self.add_empty()
-            rows = selection_labels.get_children()
+            selection_labels = selection_label_listbox.get_children()
 
-        selection_labels.select_row(rows[0])
+        selection_label_listbox.select_row(selection_labels[0])
 
     def get_recording_toggle(self):
         return self.get("key_recording_toggle")
@@ -363,7 +383,7 @@ class Editor:
         return symbol
 
     def set_key(self, key):
-        """Show what the user is currently pressing in ther user interface."""
+        """Show what the user is currently pressing in the user interface."""
         self.active_selection_label.set_key(key)
 
     def get(self, name):

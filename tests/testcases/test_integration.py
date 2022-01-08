@@ -261,7 +261,9 @@ class TestIntegration(unittest.TestCase):
         self.editor = self.user_interface.editor
         self.toggle = self.editor.get_recording_toggle()
         self.original_on_close = self.user_interface.on_close
-        self.selection_labels = self.user_interface.get("selection_labels")
+        self.selection_label_listbox = self.user_interface.get(
+            "selection_label_listbox"
+        )
 
         self.grab_fails = False
 
@@ -285,7 +287,7 @@ class TestIntegration(unittest.TestCase):
         gtk_iteration()
 
     def get_selection_labels(self):
-        return self.selection_labels.get_children()
+        return self.selection_label_listbox.get_children()
 
     def get_status_text(self):
         status_bar = self.user_interface.get("status_bar")
@@ -498,9 +500,9 @@ class TestIntegration(unittest.TestCase):
     def test_editor_simple(self):
         self.assertEqual(self.toggle.get_label(), "Change Key")
 
-        self.assertEqual(len(self.selection_labels.get_children()), 1)
+        self.assertEqual(len(self.selection_label_listbox.get_children()), 1)
 
-        selection_label = self.selection_labels.get_children()[0]
+        selection_label = self.selection_label_listbox.get_children()[0]
         self.set_focus(self.toggle)
         self.toggle.set_active(True)
         self.assertEqual(self.toggle.get_label(), "Press Key")
@@ -529,7 +531,7 @@ class TestIntegration(unittest.TestCase):
         # new empty entry was added
         gtk_iteration()
         self.assertEqual(
-            len(self.selection_labels.get_children()),
+            len(self.selection_label_listbox.get_children()),
             2,
         )
 
@@ -542,7 +544,7 @@ class TestIntegration(unittest.TestCase):
         time.sleep(0.1)
         gtk_iteration()
         self.assertEqual(
-            len(self.selection_labels.get_children()),
+            len(self.selection_label_listbox.get_children()),
             2,
         )
 
@@ -611,7 +613,7 @@ class TestIntegration(unittest.TestCase):
 
         # the empty selection_label is expected to be the last one
         selection_label = self.get_selection_labels()[-1]
-        self.selection_labels.select_row(selection_label)
+        self.selection_label_listbox.select_row(selection_label)
         self.assertIsNone(selection_label.get_key())
         self.assertFalse(self.editor._input_has_arrived)
 
@@ -714,7 +716,9 @@ class TestIntegration(unittest.TestCase):
         # focus the toggle after selecting a different selection_label.
         # It resets the reader
         self.editor.add_empty()
-        self.selection_labels.select_row(self.selection_labels.get_children()[-1])
+        self.selection_label_listbox.select_row(
+            self.selection_label_listbox.get_children()[-1]
+        )
         self.set_focus(self.toggle)
         self.toggle.set_active(True)
 
@@ -752,7 +756,9 @@ class TestIntegration(unittest.TestCase):
 
         """edit first selection_label"""
 
-        self.selection_labels.select_row(self.selection_labels.get_children()[0])
+        self.selection_label_listbox.select_row(
+            self.selection_label_listbox.get_children()[0]
+        )
         self.assertEqual(self.editor.get_key(), ev_1)
         self.set_focus(self.editor.get_text_input())
         self.editor.set_symbol_input_text("c")
@@ -888,7 +894,7 @@ class TestIntegration(unittest.TestCase):
             num_selection_labels_after : int
                 after deleting, how many selection_labels are expected to still be there
             """
-            self.selection_labels.select_row(selection_label)
+            self.selection_label_listbox.select_row(selection_label)
 
             if code is not None and symbol is not None:
                 self.assertEqual(
@@ -944,7 +950,7 @@ class TestIntegration(unittest.TestCase):
         # there is no empty selection_label at the moment, so after removing that one,
         # which is the only selection_label, one empty selection_label will be there.
         # So the number of selection_labels won't change.
-        remove(self.selection_labels.get_children()[-1], None, None, 1)
+        remove(self.selection_label_listbox.get_children()[-1], None, None, 1)
 
     def test_problematic_combination(self):
         combination = Key((EV_KEY, KEY_LEFTSHIFT, 1), (EV_KEY, 82, 1))
@@ -1159,6 +1165,7 @@ class TestIntegration(unittest.TestCase):
         gtk_iteration()
         self.assertEqual(self.user_interface.preset_name, "new preset")
 
+        print(custom_mapping._mapping)
         self.assertEqual(len(custom_mapping), 1)
         self.assertEqual(custom_mapping.get_symbol(key_10), "a")
 
@@ -1197,7 +1204,7 @@ class TestIntegration(unittest.TestCase):
         )
 
     def test_copy_preset(self):
-        selection_labels = self.selection_labels
+        selection_labels = self.selection_label_listbox
         self.add_mapping_via_ui(Key(EV_KEY, 81, 1), "a")
         time.sleep(0.1)
         gtk_iteration()
@@ -1212,7 +1219,6 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.on_create_preset_clicked()
 
         # the preset should be empty, only one empty selection_label present
-        print(selection_labels.get_children())
         self.assertEqual(len(selection_labels.get_children()), 1)
         self.assertIsNone(custom_mapping.get("a.b"))
 
@@ -1698,9 +1704,11 @@ class TestIntegration(unittest.TestCase):
         self.assertIn("asdf.json", os.listdir(get_preset_path("Foo Device")))
 
         # 2. switch to the different device, there should be no preset named asdf
+        print("\nselect device")
         self.user_interface.on_select_device(FakeDeviceDropdown("Bar Device"))
         self.assertEqual(self.user_interface.preset_name, "new preset")
         self.assertNotIn("asdf.json", os.listdir(get_preset_path("Bar Device")))
+        print("assert")
         self.assertEqual(self.editor.get_symbol_input_text(), "")
 
         # 3. switch to the device with the same name as the first one

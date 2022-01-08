@@ -120,7 +120,7 @@ class Mapping(ConfigBase):
 
         self.clear(new_key)  # this also clears all equivalent keys
 
-        logger.debug('%s maps to "%s"', new_key, clean(symbol))
+        logger.debug('changing %s to "%s"', new_key, clean(symbol))
 
         self._mapping[new_key] = symbol
 

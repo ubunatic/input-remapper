@@ -810,7 +810,7 @@ Gives your keys back their original function</property>
                             <property name="can-focus">False</property>
                             <property name="shadow-type">none</property>
                             <child>
-                              <object class="GtkListBox" id="selection_labels">
+                              <object class="GtkListBox" id="selection_label_listbox">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <property name="selection-mode">browse</property>

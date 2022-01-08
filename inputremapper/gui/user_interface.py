@@ -91,7 +91,7 @@ ICON_NAMES = {
 ICON_PRIORITIES = [GRAPHICS_TABLET, TOUCHPAD, GAMEPAD, MOUSE, KEYBOARD, UNKNOWN]
 
 
-def with_group(func):
+def if_group_selected(func):
     """Decorate a function to only execute if a device is selected."""
     # this should only happen if no device was found at all
     def wrapped(self, *args, **kwargs):
@@ -103,7 +103,7 @@ def with_group(func):
     return wrapped
 
 
-def with_preset_name(func):
+def if_preset_selected(func):
     """Decorate a function to only execute if a preset is selected."""
     # this should only happen if no device was found at all
     def wrapped(self, *args, **kwargs):
@@ -361,7 +361,7 @@ class UserInterface:
 
         self.select_newest_preset()
 
-    @with_group
+    @if_group_selected
     @ensure_everything_saved
     def populate_presets(self):
         """Show the available presets for the selected device.
@@ -419,7 +419,7 @@ class UserInterface:
 
         return True
 
-    @with_group
+    @if_group_selected
     def on_restore_defaults_clicked(self, *_):
         """Stop injecting the mapping."""
         self.dbus.stop_injecting(self.group.key)
@@ -500,7 +500,7 @@ class UserInterface:
         self.get("preset_name_input").set_text("")
         self.populate_presets()
 
-    @with_preset_name
+    @if_preset_selected
     def on_delete_preset_clicked(self, _):
         """Delete a preset from the file system."""
         accept = Gtk.ResponseType.ACCEPT
@@ -515,7 +515,7 @@ class UserInterface:
 
         self.populate_presets()
 
-    @with_preset_name
+    @if_preset_selected
     def on_apply_preset_clicked(self, _):
         """Apply a preset without saving changes."""
         self.save_preset()
@@ -578,8 +578,6 @@ class UserInterface:
     @ensure_everything_saved
     def on_select_device(self, dropdown):
         """List all presets, create one if none exist yet."""
-        self.editor.gather_changes_and_save()
-
         if self.group and dropdown.get_active_id() == self.group.key:
             return
 
@@ -587,6 +585,8 @@ class UserInterface:
 
         if group_key is None:
             return
+
+        self.editor.clear()  # TODO test
 
         logger.debug('Selecting device "%s"', group_key)
 
@@ -641,20 +641,19 @@ class UserInterface:
         else:
             self.get("apply_system_layout").set_opacity(0.4)
 
-    @with_preset_name
+    @if_preset_selected
     def on_copy_preset_clicked(self, *_):
         """Copy the current preset and select it."""
         self.create_preset(copy=True)
 
-    @with_group
+    @if_group_selected
     def on_create_preset_clicked(self, *_):
-        """Create a new preset and select it."""
+        """Create a new empty preset and select it."""
         self.create_preset()
 
     @ensure_everything_saved
     def create_preset(self, copy=False):
         """Create a new preset and select it."""
-        self.editor.gather_changes_and_save()
         name = self.group.name
         preset = self.preset_name
 
@@ -663,6 +662,7 @@ class UserInterface:
                 new_preset = get_available_preset_name(name, preset, copy)
             else:
                 new_preset = get_available_preset_name(name)
+                self.editor.clear()
                 custom_mapping.empty()
 
             path = self.group.get_preset_path(new_preset)
@@ -696,6 +696,7 @@ class UserInterface:
             return
 
         logger.debug('Selecting preset "%s"', preset)
+        self.editor.clear()
         self.preset_name = preset
 
         custom_mapping.load(self.group.get_preset_path(preset))
@@ -740,6 +741,7 @@ class UserInterface:
 
         try:
             assert self.preset_name is not None
+            print('shitduhurensohn', self.preset_name)
             path = self.group.get_preset_path(self.preset_name)
             custom_mapping.save(path)
 
