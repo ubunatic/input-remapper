@@ -711,9 +711,11 @@ class TestIntegration(unittest.TestCase):
         self.set_focus(None)
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
 
-        # focus different selection_label. It resets the reader
+        # focus the toggle after selecting a different selection_label.
+        # It resets the reader
         self.editor.add_empty()
         self.selection_labels.select_row(self.selection_labels.get_children()[-1])
+        self.set_focus(self.toggle)
         self.toggle.set_active(True)
 
         self.assertEqual(reader.get_unreleased_keys(), None)

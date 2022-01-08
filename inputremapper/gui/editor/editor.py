@@ -268,8 +268,6 @@ class Editor:
 
         Load the information from that mapping entry into the editor.
         """
-        reader.clear()
-
         self.active_selection_label = selection_label
 
         if selection_label is None:
