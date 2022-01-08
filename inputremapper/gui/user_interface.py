@@ -312,7 +312,7 @@ class UserInterface:
     def __del__(self, *_):
         """Safely close the application."""
         logger.debug("Closing window")
-        self.save_preset()
+        self.editor.save_changes()
         self.window.hide()
         for timeout in self.timeouts:
             GLib.source_remove(timeout)
@@ -492,7 +492,6 @@ class UserInterface:
         if len(custom_mapping) > 0 and self.show_confirm_delete() != accept:
             return
 
-        custom_mapping.set_has_unsaved_changes(False)
         delete_preset(self.group.name, self.preset_name)
         self.populate_presets()
 
@@ -558,14 +557,10 @@ class UserInterface:
 
     def on_select_device(self, dropdown):
         """List all presets, create one if none exist yet."""
-        self.save_preset()
+        self.editor.save_changes()
 
         if self.group and dropdown.get_active_id() == self.group.key:
             return
-
-        # selecting a device will also automatically select a different
-        # preset. Prevent another unsaved-changes dialog to pop up
-        custom_mapping.set_has_unsaved_changes(False)
 
         group_key = dropdown.get_active_id()
 
@@ -637,7 +632,7 @@ class UserInterface:
 
     def create_preset(self, copy=False):
         """Create a new preset and select it."""
-        self.save_preset()
+        self.editor.save_changes()
         name = self.group.name
         preset = self.preset_name
 
@@ -661,7 +656,11 @@ class UserInterface:
         """Show the mappings of the preset."""
         # beware in tests that this function won't be called at all if the
         # active_id stays the same
-        self.save_preset()
+        # TODO TEST using the scroll wheel to select a preset caused this not to save,
+        #  because the focus would not leave the editor and therefore custom_mapping
+        #  would not change. now that self.editor.save_changes is used it makes sure
+        #  changes are in custom_mapping
+        self.editor.save_changes()
 
         if dropdown.get_active_id() == self.preset_name:
             return
@@ -707,7 +706,7 @@ class UserInterface:
         custom_mapping.set("gamepad.joystick.pointer_speed", speed)
 
     def save_preset(self, *_):
-        """Write changes to presets to disk."""
+        """Write changes in the custom_mapping to disk."""
         if not custom_mapping.has_unsaved_changes():
             logger.spam("Not saving because mapping did not change")
             return
@@ -715,8 +714,6 @@ class UserInterface:
         try:
             path = self.group.get_preset_path(self.preset_name)
             custom_mapping.save(path)
-
-            custom_mapping.set_has_unsaved_changes(False)
 
             # after saving the config, its modification date will be the
             # newest, so populate_presets will automatically select the
