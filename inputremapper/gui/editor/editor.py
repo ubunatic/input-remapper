@@ -32,7 +32,7 @@ from inputremapper.gui.custom_mapping import custom_mapping
 from inputremapper.key import Key
 from inputremapper.logger import logger
 from inputremapper.gui.reader import reader
-from inputremapper.gui.utils import CTX_KEYCODE, CTX_WARNING, gtk_iteration
+from inputremapper.gui.utils import CTX_KEYCODE, CTX_WARNING
 
 # TODO test
 
@@ -219,6 +219,12 @@ class Editor:
         return True
 
     def disable_symbol_input(self):
+        """Display help information and dont allow entering a symbol yet.
+
+        Without this, maybe a user enters a symbol or writes a macro, switches
+        presets accidentally before configuring the key and then it's gone. It can
+        only be saved to the preset if a key is configured. This avoids that pitfall.
+        """
         text_input = self.get_text_input()
         text_input.set_sensitive(False)
         text_input.set_opacity(0.5)
@@ -228,6 +234,7 @@ class Editor:
             self.set_symbol_input_text(SET_KEY_FIRST)
 
     def enable_symbol_input(self):
+        """Don't display help information anymore and allow changing the symbol."""
         text_input = self.get_text_input()
         text_input.set_sensitive(True)
         text_input.set_opacity(1)
