@@ -277,13 +277,16 @@ class Editor:
         selection_labels.insert(mapping_selection, -1)
 
     def load_custom_mapping(self):
+        """Display the entries in custom_mapping."""
+        self.set_symbol_input_text("")
+
         selection_labels = self.get("selection_labels")
         selection_labels.forall(selection_labels.remove)
 
         for key, output in custom_mapping:
-            mapping_selection = SelectionLabel()
-            mapping_selection.set_key(key)
-            selection_labels.insert(mapping_selection, -1)
+            selection_label = SelectionLabel()
+            selection_label.set_key(key)
+            selection_labels.insert(selection_label, -1)
 
         self.check_add_new_key()
 
@@ -295,7 +298,6 @@ class Editor:
             rows = selection_labels.get_children()
 
         selection_labels.select_row(rows[0])
-        self.on_mapping_selected(selection_label=rows[0])
 
     def get_recording_toggle(self):
         return self.get("key_recording_toggle")

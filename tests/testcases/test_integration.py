@@ -596,9 +596,8 @@ class TestIntegration(unittest.TestCase):
         ----------
         key : Key or None
         expect_success : boolean
-            If this change on the empty selection_label is going to result in a change
-            in the mapping eventually. False if this change is going to
-            cause a duplicate.
+            If the key can be stored in the selection label. False if this change
+            is going to cause a duplicate.
         """
         self.assertIsNone(reader.get_unreleased_keys())
 
@@ -670,7 +669,7 @@ class TestIntegration(unittest.TestCase):
 
         if not expect_success:
             self.assertIsNone(selection_label.get_key())
-            self.assertEqual(self.editor.get_symbol_input_text(), "")
+            self.assertEqual(self.editor.get_symbol_input_text(), SET_KEY_FIRST)
             self.assertFalse(self.editor.input_has_arrived)
             # it won't switch the focus to the symbol input
             self.assertTrue(self.toggle.get_active())
@@ -699,7 +698,7 @@ class TestIntegration(unittest.TestCase):
         ev_1 = Key(EV_KEY, 41, 1)
 
         # focus
-        self.set_focus(self.get_selection_labels()[0].key_recording_toggle)
+        self.set_focus(self.toggle)
         send_event_to_reader(new_event(*ev_1.keys[0]))
         reader.read()
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
@@ -712,8 +711,7 @@ class TestIntegration(unittest.TestCase):
 
         # focus different selection_label
         self.editor.add_empty()
-        key_recording_toggle = self.get_selection_labels()[1].key_recording_toggle
-        key_recording_toggle.set_active(True)
+        self.toggle.set_active(True)
 
         self.assertEqual(reader.get_unreleased_keys(), None)
 
@@ -736,7 +734,7 @@ class TestIntegration(unittest.TestCase):
         # add two selection_labels by modifiying the one empty selection_label that
         # exists. Insert lowercase, it should be corrected to uppercase as stored
         # in system_mapping
-        self.add_mapping_via_ui(ev_1, "foo_bar", record_key_first=False)
+        self.add_mapping_via_ui(ev_1, "foo_bar")
         self.add_mapping_via_ui(ev_2, "k(b).k(c)")
 
         # one empty selection_label added automatically again
@@ -1662,7 +1660,8 @@ class TestIntegration(unittest.TestCase):
 
     def test_shared_presets(self):
         # devices with the same name (but different key because the key is
-        # unique) share the same presets
+        # unique) share the same presets.
+        # Those devices would usually be of the same model of keyboard for example
 
         # 1. create a preset
         self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device 2"))
@@ -1673,13 +1672,13 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.save_preset()
         self.assertIn("asdf.json", os.listdir(get_preset_path("Foo Device")))
 
-        # 2. switch to the other device, there should be no preset named asdf
+        # 2. switch to the different device, there should be no preset named asdf
         self.user_interface.on_select_device(FakeDeviceDropdown("Bar Device"))
         self.assertEqual(self.user_interface.preset_name, "new preset")
         self.assertNotIn("asdf.json", os.listdir(get_preset_path("Bar Device")))
-        self.assertEqual(self.editor.get_symbol_input_text(), "")
+        self.assertEqual(self.editor.get_symbol_input_text(), SET_KEY_FIRST)
 
-        # 3. switch to the device with the same name
+        # 3. switch to the device with the same name as the first one
         self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device"))
         # the newest preset is asdf, it should be automatically selected
         self.assertEqual(self.user_interface.preset_name, "asdf")
