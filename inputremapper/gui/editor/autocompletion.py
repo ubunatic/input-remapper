@@ -262,6 +262,8 @@ class Autocompletion(Gtk.Popover):
         self.list_box.get_style_context().add_class("transparent")
         self.scrolled_window.add(self.list_box)
 
+        # row-activated is on-click,
+        # row-selected is when scrolling through it
         self.list_box.connect(
             "row-activated",
             self._on_suggestion_clicked,

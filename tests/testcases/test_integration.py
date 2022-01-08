@@ -586,8 +586,8 @@ class TestIntegration(unittest.TestCase):
         text = self.get_status_text()
         self.assertNotIn("...", text)
 
-    def change_empty_selection_label(self, key, symbol, code_first=True, expect_success=True):
-        """Modify the one empty selection_label that always exists.
+    def add_mapping_via_ui(self, key, symbol, code_first=True, expect_success=True):
+        """Modify the one empty mapping that always exists.
 
         Utility function for other tests.
 
@@ -611,14 +611,14 @@ class TestIntegration(unittest.TestCase):
         gtk_iteration()
 
         # the empty selection_label is expected to be the last one
-        selection_labels = self.get_selection_labels()
-        selection_label = selection_labels[-1]
+        selection_label = self.get_selection_labels()[-1]
+        self.selection_labels.select_row(selection_label)
         self.assertIsNone(selection_label.get_key())
         self.assertFalse(self.editor.input_has_arrived)
 
         if symbol and not code_first:
             # set the symbol to make the new selection_label complete
-            self.assertIsNone(self.editor.get_symbol())
+            self.assertEqual(self.editor.get_symbol(), "")
             self.editor.set_symbol(symbol)
             self.assertEqual(self.editor.get_symbol(), symbol)
 
@@ -664,7 +664,10 @@ class TestIntegration(unittest.TestCase):
             self.assertFalse(self.editor.input_has_arrived)
 
             if expect_success:
-                self.assertEqual(selection_label.get_key(), key)
+                self.assertEqual(self.editor.get_key(), key)
+                # the previously new entry, which has been edited now, is still the
+                # selected one
+                self.assertEqual(self.editor.active_selection_label, selection_label)
                 self.assertEqual(
                     self.editor.active_selection_label.get_label(),
                     key.beautify(),
@@ -674,7 +677,7 @@ class TestIntegration(unittest.TestCase):
 
         if not expect_success:
             self.assertIsNone(selection_label.get_key())
-            self.assertIsNone(self.editor.get_symbol())
+            self.assertEqual(self.editor.get_symbol(), "")
             self.assertFalse(self.editor.input_has_arrived)
             # it won't switch the focus to the symbol input
             self.assertTrue(self.toggle.get_active())
@@ -736,11 +739,11 @@ class TestIntegration(unittest.TestCase):
 
         """edit"""
 
-        # add two selection_labels by modifiying the one empty selection_label that exists.
-        # Insert lowercase, it should be corrected to uppercase as stored
+        # add two selection_labels by modifiying the one empty selection_label that
+        # exists. Insert lowercase, it should be corrected to uppercase as stored
         # in system_mapping
-        self.change_empty_selection_label(ev_1, "foo_bar", code_first=False)
-        self.change_empty_selection_label(ev_2, "k(b).k(c)")
+        self.add_mapping_via_ui(ev_1, "foo_bar", code_first=False)
+        self.add_mapping_via_ui(ev_2, "k(b).k(c)")
 
         # one empty selection_label added automatically again
         time.sleep(0.1)
@@ -752,24 +755,28 @@ class TestIntegration(unittest.TestCase):
 
         """edit first selection_label"""
 
-        selection_label = self.get_selection_labels()[0]
+        self.selection_labels.select_row(self.selection_labels.get_children()[0])
+        self.assertEqual(self.editor.get_key(), ev_1)
         self.set_focus(self.editor.get_text_input())
         self.editor.set_symbol("c")
+        print("##### unfocus")
         self.set_focus(None)
 
         # after unfocusing, it stores the mapping. So loading it again will retain
         # the mapping that was used
         preset_name = self.user_interface.preset_name
         preset_path = self.user_interface.group.get_preset_path(preset_name)
+        print("##### loading")
         custom_mapping.load(preset_path)
 
+        print("##### assert")
         self.assertEqual(custom_mapping.get_symbol(ev_1), "c")
         self.assertEqual(custom_mapping.get_symbol(ev_2), "k(b).k(c)")
 
         """add duplicate"""
 
         # try to add a duplicate keycode, it should be ignored
-        self.change_empty_selection_label(ev_2, "d", expect_success=False)
+        self.add_mapping_via_ui(ev_2, "d", expect_success=False)
         self.assertEqual(custom_mapping.get_symbol(ev_2), "k(b).k(c)")
         # and the number of selection_labels shouldn't change
         self.assertEqual(len(self.get_selection_labels()), num_selection_labels_target)
@@ -781,10 +788,10 @@ class TestIntegration(unittest.TestCase):
         ev_3 = Key(EV_ABS, evdev.ecodes.ABS_HAT0Y, -1)
         ev_4 = Key(EV_ABS, evdev.ecodes.ABS_HAT0Y, 1)
 
-        self.change_empty_selection_label(ev_1, "a")
-        self.change_empty_selection_label(ev_2, "b")
-        self.change_empty_selection_label(ev_3, "c")
-        self.change_empty_selection_label(ev_4, "d")
+        self.add_mapping_via_ui(ev_1, "a")
+        self.add_mapping_via_ui(ev_2, "b")
+        self.add_mapping_via_ui(ev_3, "c")
+        self.add_mapping_via_ui(ev_4, "d")
 
         self.assertEqual(custom_mapping.get_symbol(ev_1), "a")
         self.assertEqual(custom_mapping.get_symbol(ev_2), "b")
@@ -793,10 +800,10 @@ class TestIntegration(unittest.TestCase):
 
         # and trying to add them as duplicate selection_labels will be ignored for each
         # of them
-        self.change_empty_selection_label(ev_1, "e", expect_success=False)
-        self.change_empty_selection_label(ev_2, "f", expect_success=False)
-        self.change_empty_selection_label(ev_3, "g", expect_success=False)
-        self.change_empty_selection_label(ev_4, "h", expect_success=False)
+        self.add_mapping_via_ui(ev_1, "e", expect_success=False)
+        self.add_mapping_via_ui(ev_2, "f", expect_success=False)
+        self.add_mapping_via_ui(ev_3, "g", expect_success=False)
+        self.add_mapping_via_ui(ev_4, "h", expect_success=False)
 
         self.assertEqual(custom_mapping.get_symbol(ev_1), "a")
         self.assertEqual(custom_mapping.get_symbol(ev_2), "b")
@@ -820,7 +827,7 @@ class TestIntegration(unittest.TestCase):
         combination_5 = Key(ev_1, ev_3, ev_2)
         combination_6 = Key(ev_3, ev_1, ev_2)
 
-        self.change_empty_selection_label(combination_1, "a")
+        self.add_mapping_via_ui(combination_1, "a")
         self.assertEqual(custom_mapping.get_symbol(combination_1), "a")
         self.assertEqual(custom_mapping.get_symbol(combination_2), "a")
         self.assertIsNone(custom_mapping.get_symbol(combination_3))
@@ -830,7 +837,7 @@ class TestIntegration(unittest.TestCase):
 
         # it won't write the same combination again, even if the
         # first two events are in a different order
-        self.change_empty_selection_label(combination_2, "b", expect_success=False)
+        self.add_mapping_via_ui(combination_2, "b", expect_success=False)
         self.assertEqual(custom_mapping.get_symbol(combination_1), "a")
         self.assertEqual(custom_mapping.get_symbol(combination_2), "a")
         self.assertIsNone(custom_mapping.get_symbol(combination_3))
@@ -838,7 +845,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIsNone(custom_mapping.get_symbol(combination_5))
         self.assertIsNone(custom_mapping.get_symbol(combination_6))
 
-        self.change_empty_selection_label(combination_3, "c")
+        self.add_mapping_via_ui(combination_3, "c")
         self.assertEqual(custom_mapping.get_symbol(combination_1), "a")
         self.assertEqual(custom_mapping.get_symbol(combination_2), "a")
         self.assertEqual(custom_mapping.get_symbol(combination_3), "c")
@@ -849,7 +856,7 @@ class TestIntegration(unittest.TestCase):
         # same as with combination_2, the existing combination_3 blocks
         # combination_4 because they have the same keys and end in the
         # same key.
-        self.change_empty_selection_label(combination_4, "d", expect_success=False)
+        self.add_mapping_via_ui(combination_4, "d", expect_success=False)
         self.assertEqual(custom_mapping.get_symbol(combination_1), "a")
         self.assertEqual(custom_mapping.get_symbol(combination_2), "a")
         self.assertEqual(custom_mapping.get_symbol(combination_3), "c")
@@ -857,7 +864,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIsNone(custom_mapping.get_symbol(combination_5))
         self.assertIsNone(custom_mapping.get_symbol(combination_6))
 
-        self.change_empty_selection_label(combination_5, "e")
+        self.add_mapping_via_ui(combination_5, "e")
         self.assertEqual(custom_mapping.get_symbol(combination_1), "a")
         self.assertEqual(custom_mapping.get_symbol(combination_2), "a")
         self.assertEqual(custom_mapping.get_symbol(combination_3), "c")
@@ -875,9 +882,9 @@ class TestIntegration(unittest.TestCase):
         """Comprehensive test for selection_labels 2."""
         # sleeps are added to be able to visually follow and debug the test.
         # add two selection_labels by modifiying the one empty selection_label that exists
-        selection_label_1 = self.change_empty_selection_label(Key(EV_KEY, 10, 1), "a")
-        selection_label_2 = self.change_empty_selection_label(Key(EV_KEY, 11, 1), "b")
-        selection_label_3 = self.change_empty_selection_label(None, "c")
+        selection_label_1 = self.add_mapping_via_ui(Key(EV_KEY, 10, 1), "a")
+        selection_label_2 = self.add_mapping_via_ui(Key(EV_KEY, 11, 1), "b")
+        selection_label_3 = self.add_mapping_via_ui(None, "c")
 
         # no empty selection_label added because one is unfinished
         time.sleep(0.2)
@@ -919,10 +926,12 @@ class TestIntegration(unittest.TestCase):
             # accidentally used again, make sure to not provide any outdated
             # information that is supposed to be deleted
             self.assertIsNone(selection_label.get_key())
-            self.assertIsNone(self.editor.get_symbol())
+            self.assertEqual(self.editor.get_symbol(), "")
             if code is not None:
                 self.assertIsNone(custom_mapping.get_symbol(Key(EV_KEY, code, 1)))
-            self.assertEqual(len(self.get_selection_labels()), num_selection_labels_after)
+            self.assertEqual(
+                len(self.get_selection_labels()), num_selection_labels_after
+            )
 
         remove(selection_label_1, 10, "a", 2)
         remove(selection_label_2, 11, "b", 1)
@@ -933,7 +942,7 @@ class TestIntegration(unittest.TestCase):
 
     def test_problematic_combination(self):
         combination = Key((EV_KEY, KEY_LEFTSHIFT, 1), (EV_KEY, 82, 1))
-        self.change_empty_selection_label(combination, "b")
+        self.add_mapping_via_ui(combination, "b")
         text = self.get_status_text()
         self.assertIn("shift", text)
 
@@ -1166,7 +1175,7 @@ class TestIntegration(unittest.TestCase):
 
     def test_copy_preset(self):
         selection_labels = self.selection_labels
-        self.change_empty_selection_label(Key(EV_KEY, 81, 1), "a")
+        self.add_mapping_via_ui(Key(EV_KEY, 81, 1), "a")
         time.sleep(0.1)
         gtk_iteration()
         self.user_interface.save_preset()
@@ -1184,7 +1193,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIsNone(custom_mapping.get("a.b"), 3)
 
         # add one new selection_label again and a setting
-        self.change_empty_selection_label(Key(EV_KEY, 81, 1), "b")
+        self.add_mapping_via_ui(Key(EV_KEY, 81, 1), "b")
         time.sleep(0.1)
         gtk_iteration()
         self.user_interface.save_preset()
@@ -1433,7 +1442,7 @@ class TestIntegration(unittest.TestCase):
         keycode_from = 9
         keycode_to = 200
 
-        self.change_empty_selection_label(Key(EV_KEY, keycode_from, 1), "a")
+        self.add_mapping_via_ui(Key(EV_KEY, keycode_from, 1), "a")
         system_mapping.clear()
         system_mapping._set("a", keycode_to)
 
@@ -1535,7 +1544,7 @@ class TestIntegration(unittest.TestCase):
         keycode_from = 16
         keycode_to = 90
 
-        self.change_empty_selection_label(Key(EV_KEY, keycode_from, 1), "t")
+        self.add_mapping_via_ui(Key(EV_KEY, keycode_from, 1), "t")
         system_mapping.clear()
         system_mapping._set("t", keycode_to)
 
@@ -1652,7 +1661,7 @@ class TestIntegration(unittest.TestCase):
         # 1. create a preset
         self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device 2"))
         self.user_interface.on_create_preset_clicked()
-        self.change_empty_selection_label(Key(3, 2, 1), "qux")
+        self.add_mapping_via_ui(Key(3, 2, 1), "qux")
         self.user_interface.get("preset_name_input").set_text("asdf")
         self.user_interface.on_rename_button_clicked(None)
         self.user_interface.save_preset()

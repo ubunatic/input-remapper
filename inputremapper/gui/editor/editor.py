@@ -105,7 +105,7 @@ class Editor:
         self.active_selection_label = None
 
         selection_labels = self.get("selection_labels")
-        selection_labels.connect("row-activated", self.on_mapping_selected)
+        selection_labels.connect("row-selected", self.on_mapping_selected)
 
         self.device = user_interface.group
 
@@ -218,6 +218,9 @@ class Editor:
         Load the information from that mapping entry into the editor.
         """
         self.active_selection_label = selection_label
+
+        if selection_label is None:
+            return
 
         key = selection_label.key
         self.set_key(key)
@@ -371,11 +374,9 @@ class Editor:
         self._switch_focus_if_complete()
 
         if key is None:
-            print(1)
             return
 
         if not self._is_waiting_for_input():
-            print(2)
             return
 
         if not isinstance(key, Key):
@@ -409,7 +410,6 @@ class Editor:
         # keycode didn't change, do nothing
         if key == previous_key:
             logger.debug("%s didn't change", previous_key)
-            print(3)
             return
 
         self.set_key(key)
@@ -418,7 +418,6 @@ class Editor:
 
         # the symbol is empty and therefore the mapping is not complete
         if not symbol:
-            print(4)
             return
 
         # else, the keycode has changed, the symbol is set, all good

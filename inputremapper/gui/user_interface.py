@@ -59,8 +59,13 @@ from inputremapper.injection.injector import RUNNING, FAILED, NO_GRAB
 from inputremapper.daemon import Daemon
 from inputremapper.config import config
 from inputremapper.injection.macros.parse import is_this_a_macro, parse
-from inputremapper.gui.utils import CTX_ERROR, CTX_MAPPING, CTX_APPLY, CTX_WARNING,\
-    gtk_iteration
+from inputremapper.gui.utils import (
+    CTX_ERROR,
+    CTX_MAPPING,
+    CTX_APPLY,
+    CTX_WARNING,
+    gtk_iteration,
+)
 
 
 # TODO add to .deb and AUR dependencies
