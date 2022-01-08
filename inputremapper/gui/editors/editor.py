@@ -114,11 +114,11 @@ class Editor(EditableMapping):
 
     def _show_press_key(self, *_):
         """Show user friendly instructions."""
-        self.get("key_recording_toggle").set_label("Press key")
+        self.get("key_recording_toggle").set_label("Press Key")
 
     def _show_change_key(self, *_):
         """Show user friendly instructions."""
-        self.get("key_recording_toggle").set_label("Change key")
+        self.get("key_recording_toggle").set_label("Change Key")
 
     def _setup_source_view(self):
         """Prepare the code editor."""

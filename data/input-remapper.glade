@@ -214,7 +214,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="apply_system_layout">
-                    <property name="label" translatable="yes">Restore defaults</property>
+                    <property name="label" translatable="yes">Restore Defaults</property>
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
@@ -853,7 +853,7 @@ To give your keys back their original mapping.</property>
                             <property name="spacing">12</property>
                             <child>
                               <object class="GtkToggleButton" id="key_recording_toggle">
-                                <property name="label" translatable="yes">Change key</property>
+                                <property name="label" translatable="yes">Change Key</property>
                                 <property name="width-request">100</property>
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
