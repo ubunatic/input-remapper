@@ -711,6 +711,7 @@ class UserInterface:
     def save_preset(self, *_):
         """Write changes in the custom_mapping to disk."""
         if not custom_mapping.has_unsaved_changes():
+            # optimization, and also avoids tons of redundant logs
             logger.spam("Not saving because mapping did not change")
             return
 

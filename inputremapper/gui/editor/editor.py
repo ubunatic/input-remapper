@@ -76,27 +76,6 @@ class SelectionLabel(Gtk.ListBoxRow):
         else:
             self.label.set_label("new entry")
 
-    def remember_symbol(self, symbol):
-        """Remember the symbol.
-
-        If this SelectionLabel is not yet stored in custom_mapping because the mapping
-        is not complete, this information needs to be kept somewhere.
-        """
-        self.symbol = symbol
-
-    def get_symbol(self):
-        """Get the symbol this entry represents.
-
-        If there is nothing in custom_mapping, maybe this remembers what this was
-        supposed to map to. This is important if the entry was not finished yet
-        and therefore not stored.
-        """
-        if self.key:
-            return custom_mapping.get_symbol(self.key)
-
-        # this mapping was not complete yet, recall the symbol
-        return self.symbol
-
     def get_key(self):
         return self.key
 
@@ -111,6 +90,9 @@ class SelectionLabel(Gtk.ListBoxRow):
 
     def __repr__(self):
         return self.__str__()
+
+
+SET_KEY_FIRST = "Set the key first"
 
 
 class Editor:
@@ -189,7 +171,7 @@ class Editor:
         # effect.
         source_view.set_resize_mode(Gtk.ResizeMode.IMMEDIATE)
 
-        source_view.get_buffer().connect("changed", self.line_numbers_if_multiline)
+        source_view.get_buffer().connect("changed", self.show_line_numbers_if_multiline)
 
         # Syntax Highlighting
         # Thanks to https://github.com/wolfthefallen/py-GtkSourceCompletion-example
@@ -204,16 +186,18 @@ class Editor:
         autocompletion.set_relative_to(self.get("code_editor_container"))
         autocompletion.connect("suggestion-inserted", self.save_changes)
 
-    def line_numbers_if_multiline(self, *_):
+    def show_line_numbers_if_multiline(self, *_):
         """Show line numbers if a macro is being edited."""
         code_editor = self.get("code_editor")
         symbol = self.get_symbol_input_text() or ""
 
         if "\n" in symbol:
             code_editor.set_show_line_numbers(True)
+            code_editor.set_monospace(True)
             code_editor.get_style_context().add_class("multiline")
         else:
             code_editor.set_show_line_numbers(False)
+            code_editor.set_monospace(False)
             code_editor.get_style_context().remove_class("multiline")
 
     def get_delete_button(self):
@@ -234,13 +218,30 @@ class Editor:
 
         return True
 
+    def disable_symbol_input(self):
+        text_input = self.get_text_input()
+        text_input.set_sensitive(False)
+        text_input.set_opacity(0.5)
+
+        if self.get_symbol_input_text() == "":
+            # don't overwrite user input
+            self.set_symbol_input_text(SET_KEY_FIRST)
+
+    def enable_symbol_input(self):
+        text_input = self.get_text_input()
+        text_input.set_sensitive(True)
+        text_input.set_opacity(1)
+
+        if self.get_symbol_input_text() == SET_KEY_FIRST:
+            # don't overwrite user input
+            self.set_symbol_input_text("")
+
     def on_mapping_selected(self, _=None, selection_label=None):
         """One of the buttons in the left "key" column was clicked.
 
         Load the information from that mapping entry into the editor.
         """
-        if self.active_selection_label is not None:
-            self.active_selection_label.remember_symbol(self.get_symbol_input_text())
+        self.save_changes()
 
         self.active_selection_label = selection_label
 
@@ -251,11 +252,12 @@ class Editor:
         self.set_key(key)
 
         if key is None:
-            # clicked on an incomplete new mapping entry. Load the unfinished
-            # information from the SelectionLabel
-            self.set_symbol_input_text(selection_label.get_symbol())
+            self.set_symbol_input_text("")
+            self.disable_symbol_input()
+            # symbol input disabled until a key is configured
         else:
             self.set_symbol_input_text(custom_mapping.get_symbol(key))
+            self.enable_symbol_input()
 
         self.get("window").set_focus(self.get_text_input())
 
@@ -373,11 +375,6 @@ class Editor:
 
     def save_changes(self, *_):
         """Save the preset and correct the input casing."""
-        if self.active_selection_label:
-            # if this entry cannot be saved yet, remember it to avoid having
-            # to type in the mapping again.
-            self.active_selection_label.remember_symbol(self.get_symbol_input_text())
-
         # correct case
         symbol = self.get_symbol_input_text()
 
@@ -483,6 +480,7 @@ class Editor:
             # Switch to the symbol. idle_add this so that the
             # keycode event won't write into the symbol input as well.
             window = self.user_interface.window
+            self.enable_symbol_input()
             GLib.idle_add(lambda: window.set_focus(self.get_text_input()))
 
         if not all_keys_released:
