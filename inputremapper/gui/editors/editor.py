@@ -32,7 +32,7 @@ from inputremapper.gui.editors.autocompletion import Autocompletion
 # TODO test
 
 
-class SelectionLabel(Gtk.Label):
+class SelectionLabel(Gtk.ListBoxRow):
     """One label per mapping in the preset.
 
     This wrapper serves as a storage for the information the inherited label represents.
@@ -44,11 +44,17 @@ class SelectionLabel(Gtk.Label):
         super().__init__()
         self.key = None
 
+        label = Gtk.Label()
+
         # Make the child label widget break lines, important for
         # long combinations
-        self.set_line_wrap(True)
-        self.set_line_wrap_mode(2)
-        self.set_justify(Gtk.Justification.CENTER)
+        label.set_line_wrap(True)
+        label.set_line_wrap_mode(2)
+        label.set_justify(Gtk.Justification.CENTER)
+
+        self.label = label
+        self.add(label)
+
         self.show_all()
 
     def set_key(self, key):
@@ -60,12 +66,15 @@ class SelectionLabel(Gtk.Label):
         """
         self.key = key
         if key:
-            self.set_label(key.beautify())
+            self.label.set_label(key.beautify())
         else:
-            self.set_label("new entry")
+            self.label.set_label("new entry")
 
     def get_key(self):
         return self.key
+
+    def set_label(self, label):
+        return self.label.set_label(label)
 
     def __str__(self):
         return f"SelectionLabel({str(self.key)})"
@@ -87,8 +96,8 @@ class Editor(EditableMapping):
         self.timeout = GLib.timeout_add(100, self.check_add_new_key)
         self.active_selection_label = None
 
-        mapping_list = self.get("mapping_list")
-        mapping_list.connect("row-activated", self.on_mapping_selected)
+        selection_labels = self.get("selection_labels")
+        selection_labels.connect("row-activated", self.on_mapping_selected)
 
         super().__init__(user_interface=user_interface)
 
@@ -168,12 +177,9 @@ class Editor(EditableMapping):
 
     def check_add_new_key(self):
         """If needed, add a new empty mapping to the list for the user to configure."""
-        mapping_list = self.get("mapping_list")
+        selection_labels = self.get("selection_labels")
 
-        selection_labels = [
-            selection_label.get_children()[0]
-            for selection_label in mapping_list.get_children()
-        ]
+        selection_labels = selection_labels.get_children()
 
         for selection_label in selection_labels:
             if selection_label.get_key() is None:
@@ -184,12 +190,11 @@ class Editor(EditableMapping):
 
         return True
 
-    def on_mapping_selected(self, _=None, list_box_row=None):
+    def on_mapping_selected(self, _=None, selection_label=None):
         """One of the buttons in the left "key" column was clicked.
 
         Load the information from that mapping entry into the editor.
         """
-        selection_label = list_box_row.get_children()[0]
         self.active_selection_label = selection_label
 
         key = selection_label.key
@@ -204,32 +209,32 @@ class Editor(EditableMapping):
 
     def add_empty(self):
         """Add one empty row for a single mapped key."""
-        mapping_list = self.get("mapping_list")
+        selection_labels = self.get("selection_labels")
         mapping_selection = SelectionLabel()
         mapping_selection.set_label("new entry")
         mapping_selection.show_all()
-        mapping_list.insert(mapping_selection, -1)
+        selection_labels.insert(mapping_selection, -1)
 
     def load_custom_mapping(self):
-        mapping_list = self.get("mapping_list")
-        mapping_list.forall(mapping_list.remove)
+        selection_labels = self.get("selection_labels")
+        selection_labels.forall(selection_labels.remove)
 
         for key, output in custom_mapping:
             mapping_selection = SelectionLabel()
             mapping_selection.set_key(key)
-            mapping_list.insert(mapping_selection, -1)
+            selection_labels.insert(mapping_selection, -1)
 
         self.check_add_new_key()
 
         # select the first entry
-        rows = mapping_list.get_children()
+        rows = selection_labels.get_children()
 
         if len(rows) == 0:
             self.add_empty()
-            rows = mapping_list.get_children()
+            rows = selection_labels.get_children()
 
-        mapping_list.select_row(rows[0])
-        self.on_mapping_selected(list_box_row=rows[0])
+        selection_labels.select_row(rows[0])
+        self.on_mapping_selected(selection_label=rows[0])
 
     """EditableMapping"""
 

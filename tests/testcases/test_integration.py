@@ -286,8 +286,8 @@ class TestIntegration(unittest.TestCase):
         time.sleep(0.02)
         gtk_iteration()
 
-    def get_rows(self):
-        return self.user_interface.get("mapping_list").get_children()
+    def get_selection_labels(self):
+        return self.user_interface.get("selection_labels").get_children()
 
     def get_status_text(self):
         status_bar = self.user_interface.get("status_bar")
@@ -321,7 +321,7 @@ class TestIntegration(unittest.TestCase):
         self.assertFalse(closed)
 
         # while keys are being recorded no shortcut should work
-        rows = self.get_rows()
+        rows = self.get_selection_labels()
         row = rows[-1]
         self.set_focus(row.key_recording_toggle)
         self.user_interface.on_key_press(
@@ -499,7 +499,7 @@ class TestIntegration(unittest.TestCase):
 
     # TODO move all Row tests into separate class. TestBasicEditor or something
     def test_row_simple(self):
-        rows = self.user_interface.get("mapping_list").get_children()
+        rows = self.user_interface.get("selection_labels").get_children()
         self.assertEqual(len(rows), 1)
 
         row = rows[0]
@@ -524,7 +524,7 @@ class TestIntegration(unittest.TestCase):
 
         time.sleep(0.1)
         gtk_iteration()
-        self.assertEqual(len(self.user_interface.get("mapping_list").get_children()), 1)
+        self.assertEqual(len(self.user_interface.get("selection_labels").get_children()), 1)
 
         self.set_focus(row.text_input)
         row.text_input.set_text("Shift_L")
@@ -534,7 +534,7 @@ class TestIntegration(unittest.TestCase):
 
         time.sleep(0.1)
         gtk_iteration()
-        self.assertEqual(len(self.user_interface.get("mapping_list").get_children()), 2)
+        self.assertEqual(len(self.user_interface.get("selection_labels").get_children()), 2)
 
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 30, 1)), "Shift_L")
         self.assertEqual(row.get_symbol(), "Shift_L")
@@ -555,7 +555,7 @@ class TestIntegration(unittest.TestCase):
         send_event_to_reader(new_event(1, 61, 1))
         self.user_interface.consume_newest_keycode()
 
-        rows = self.get_rows()
+        rows = self.get_selection_labels()
         self.assertEqual(len(rows), 1)
         row = rows[0]
 
@@ -604,28 +604,28 @@ class TestIntegration(unittest.TestCase):
         gtk_iteration()
 
         # find the empty row
-        rows = self.get_rows()
-        row = rows[-1]
-        self.assertIsNone(row.get_key())
-        self.assertEqual(row.text_input.get_text(), "")
-        self.assertFalse(row.input_has_arrived)
+        selection_labels = self.get_selection_labels()
+        selection_label = selection_labels[-1]
+        self.assertIsNone(selection_label.get_key())
+        self.assertEqual(selection_label.text_input.get_text(), "")
+        self.assertFalse(selection_label.input_has_arrived)
 
         if char and not code_first:
             # set the symbol to make the new row complete
-            self.assertIsNone(row.get_symbol())
-            row.text_input.set_text(char)
-            self.assertEqual(row.get_symbol(), char)
+            self.assertIsNone(selection_label.get_symbol())
+            selection_label.text_input.set_text(char)
+            self.assertEqual(selection_label.get_symbol(), char)
 
-        if row.key_recording_toggle.is_focus():
-            self.assertEqual(row.key_recording_toggle.get_label(), "Press key")
+        if selection_label.key_recording_toggle.is_focus():
+            self.assertEqual(selection_label.key_recording_toggle.get_label(), "Press key")
         else:
-            self.assertEqual(row.key_recording_toggle.get_label(), "Click here")
+            self.assertEqual(selection_label.key_recording_toggle.get_label(), "Click here")
 
-        self.set_focus(row.key_recording_toggle)
+        self.set_focus(selection_label.key_recording_toggle)
         gtk_iteration()
         gtk_iteration()
-        self.assertIsNone(row.get_key())
-        self.assertEqual(row.key_recording_toggle.get_label(), "Press key")
+        self.assertIsNone(selection_label.get_key())
+        self.assertEqual(selection_label.key_recording_toggle.get_label(), "Press key")
 
         if key:
             # modifies the keycode in the row not by writing into the input,
@@ -641,8 +641,8 @@ class TestIntegration(unittest.TestCase):
             # holding down
             self.assertIsNotNone(reader.get_unreleased_keys())
             self.assertGreater(len(reader.get_unreleased_keys()), 0)
-            self.assertTrue(row.input_has_arrived)
-            self.assertTrue(row.key_recording_toggle.is_focus())
+            self.assertTrue(selection_label.input_has_arrived)
+            self.assertTrue(selection_label.key_recording_toggle.is_focus())
 
             # release all the keys
             for sub_key in key:
@@ -653,45 +653,45 @@ class TestIntegration(unittest.TestCase):
 
             # released
             self.assertIsNone(reader.get_unreleased_keys())
-            self.assertFalse(row.input_has_arrived)
+            self.assertFalse(selection_label.input_has_arrived)
 
             if expect_success:
-                self.assertEqual(row.get_key(), key)
-                self.assertEqual(row.key_recording_toggle.get_label(), key.beautify())
-                self.assertFalse(row.key_recording_toggle.is_focus())
+                self.assertEqual(selection_label.get_key(), key)
+                self.assertEqual(selection_label.key_recording_toggle.get_label(), key.beautify())
+                self.assertFalse(selection_label.key_recording_toggle.is_focus())
                 self.assertEqual(len(reader._unreleased), 0)
 
         if not expect_success:
-            self.assertIsNone(row.get_key())
-            self.assertIsNone(row.get_symbol())
-            self.assertFalse(row.input_has_arrived)
+            self.assertIsNone(selection_label.get_key())
+            self.assertIsNone(selection_label.get_symbol())
+            self.assertFalse(selection_label.input_has_arrived)
             # it won't switch the focus to the symbol input
-            self.assertTrue(row.key_recording_toggle.is_focus())
+            self.assertTrue(selection_label.key_recording_toggle.is_focus())
             self.assertEqual(custom_mapping.changed, changed)
-            return row
+            return selection_label
 
         if char and code_first:
             # set the symbol to make the new row complete
-            self.assertIsNone(row.get_symbol())
-            row.text_input.set_text(char)
-            self.assertEqual(row.get_symbol(), char)
+            self.assertIsNone(selection_label.get_symbol())
+            selection_label.text_input.set_text(char)
+            self.assertEqual(selection_label.get_symbol(), char)
 
         # unfocus them to trigger some final logic
         self.set_focus(None)
         correct_case = system_mapping.correct_case(char)
-        self.assertEqual(row.get_symbol(), correct_case)
+        self.assertEqual(selection_label.get_symbol(), correct_case)
         self.assertFalse(custom_mapping.changed)
 
-        self.set_focus(row.text_input)
+        self.set_focus(selection_label.text_input)
         self.set_focus(None)
 
-        return row
+        return selection_label
 
     def test_clears_unreleased_on_focus_change(self):
         ev_1 = Key(EV_KEY, 41, 1)
 
         # focus
-        self.set_focus(self.get_rows()[0].key_recording_toggle)
+        self.set_focus(self.get_selection_labels()[0].key_recording_toggle)
         send_event_to_reader(new_event(*ev_1.keys[0]))
         reader.read()
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
@@ -704,7 +704,7 @@ class TestIntegration(unittest.TestCase):
 
         # focus different row
         self.user_interface.editor.add_empty()
-        key_recording_toggle = self.get_rows()[1].key_recording_toggle
+        key_recording_toggle = self.get_selection_labels()[1].key_recording_toggle
         self.set_focus(key_recording_toggle)
 
         self.assertEqual(reader.get_unreleased_keys(), None)
@@ -734,14 +734,14 @@ class TestIntegration(unittest.TestCase):
         # one empty row added automatically again
         time.sleep(0.1)
         gtk_iteration()
-        self.assertEqual(len(self.get_rows()), num_rows_target)
+        self.assertEqual(len(self.get_selection_labels()), num_rows_target)
 
         self.assertEqual(custom_mapping.get_symbol(ev_1), "Foo_BAR")
         self.assertEqual(custom_mapping.get_symbol(ev_2), "k(b).k(c)")
 
         """edit first row"""
 
-        row = self.get_rows()[0]
+        row = self.get_selection_labels()[0]
         self.set_focus(row.text_input)
         row.text_input.set_text("c")
         self.set_focus(None)
@@ -761,7 +761,7 @@ class TestIntegration(unittest.TestCase):
         self.change_empty_row(ev_2, "d", expect_success=False)
         self.assertEqual(custom_mapping.get_symbol(ev_2), "k(b).k(c)")
         # and the number of rows shouldn't change
-        self.assertEqual(len(self.get_rows()), num_rows_target)
+        self.assertEqual(len(self.get_selection_labels()), num_rows_target)
 
     def test_hat0x(self):
         # it should be possible to add all of them
@@ -871,7 +871,7 @@ class TestIntegration(unittest.TestCase):
         # no empty row added because one is unfinished
         time.sleep(0.2)
         gtk_iteration()
-        self.assertEqual(len(self.get_rows()), 3)
+        self.assertEqual(len(self.get_selection_labels()), 3)
 
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 11, 1)), "b")
 
@@ -908,7 +908,7 @@ class TestIntegration(unittest.TestCase):
             self.assertIsNone(row.get_symbol())
             if code is not None:
                 self.assertIsNone(custom_mapping.get_symbol(Key(EV_KEY, code, 1)))
-            self.assertEqual(len(self.get_rows()), num_rows_after)
+            self.assertEqual(len(self.get_selection_labels()), num_rows_after)
 
         remove(row_1, 10, "a", 2)
         remove(row_2, 11, "b", 1)
@@ -1151,13 +1151,13 @@ class TestIntegration(unittest.TestCase):
         )
 
     def test_copy_preset(self):
-        mapping_list = self.user_interface.get("mapping_list")
+        selection_labels = self.user_interface.get("selection_labels")
         self.change_empty_row(Key(EV_KEY, 81, 1), "a")
         time.sleep(0.1)
         gtk_iteration()
         self.user_interface.save_preset()
         # 2 rows: the changed row and an empty row
-        self.assertEqual(len(mapping_list.get_children()), 2)
+        self.assertEqual(len(selection_labels.get_children()), 2)
 
         # should be cleared when creating a new preset
         custom_mapping.set("a.b", 3)
@@ -1166,7 +1166,7 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.on_create_preset_clicked()
 
         # the preset should be empty, only one empty row present
-        self.assertEqual(len(mapping_list.get_children()), 1)
+        self.assertEqual(len(selection_labels.get_children()), 1)
         self.assertIsNone(custom_mapping.get("a.b"), 3)
 
         # add one new row again and a setting
@@ -1174,21 +1174,21 @@ class TestIntegration(unittest.TestCase):
         time.sleep(0.1)
         gtk_iteration()
         self.user_interface.save_preset()
-        self.assertEqual(len(mapping_list.get_children()), 2)
+        self.assertEqual(len(selection_labels.get_children()), 2)
         custom_mapping.set(["foo", "bar"], 2)
 
         # this time it should be copied
         self.user_interface.on_copy_preset_clicked()
         self.assertEqual(self.user_interface.preset_name, "new preset 2 copy")
-        self.assertEqual(len(mapping_list.get_children()), 2)
-        self.assertEqual(mapping_list.get_children()[0].get_symbol(), "b")
+        self.assertEqual(len(selection_labels.get_children()), 2)
+        self.assertEqual(selection_labels.get_children()[0].get_symbol(), "b")
         self.assertEqual(custom_mapping.get(["foo", "bar"]), 2)
 
         # make another copy
         self.user_interface.on_copy_preset_clicked()
         self.assertEqual(self.user_interface.preset_name, "new preset 2 copy 2")
-        self.assertEqual(len(mapping_list.get_children()), 2)
-        self.assertEqual(mapping_list.get_children()[0].get_symbol(), "b")
+        self.assertEqual(len(selection_labels.get_children()), 2)
+        self.assertEqual(selection_labels.get_children()[0].get_symbol(), "b")
         self.assertEqual(len(custom_mapping), 1)
         self.assertEqual(custom_mapping.get("foo.bar"), 2)
 
@@ -1631,45 +1631,10 @@ class TestIntegration(unittest.TestCase):
             [tuple(entry) for entry in self.user_interface.device_store],
         )
 
-    def test_screw_up_rows(self):
-        # add a few rows
-        """mapping_list = self.user_interface.get("mapping_list")
-        mapping_list.forall(mapping_list.remove)
-        for i in range(5):
-            broken = Row(
-                user_interface=self.user_interface, delete_callback=lambda: None
-            )
-            broken.set_key(Key(1, i, 1))
-            broken.text_input.set_text("a")
-            mapping_list.insert(broken, -1)"""
-        window = self.user_interface.get("window")
-        editor = self.user_interface.editor
-        mapping_list = self.user_interface.get("")
-        editor.add_empty()
-        window.set_focus(editor.)
-
-        # now remove all rows from the mapping. they are still displayed though,
-        # which is a mismatch that should be detected by the ui automatically.
-        custom_mapping.empty()
-        custom_mapping.change(Key(EV_KEY, 10, 1), "foo")
-
-        # the ui has 5 rows, the custom_mapping 1. mismatch
-        num_rows_before = len(mapping_list.get_children())
-        self.assertEqual(len(custom_mapping), 1)
-        self.assertEqual(num_rows_before, 5)
-
-        # it returns true to keep the glib timeout going.
-        # it will also reload the mapping to avoid more confusion
-        self.assertTrue(self.user_interface.editor.check_add_row())
-        rows = mapping_list.get_children()
-        self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0].get_symbol(), "foo")
-        self.assertEqual(rows[1].get_symbol(), None)
-
     def test_shared_presets(self):
         # devices with the same name (but different key because the key is
         # unique) share the same presets
-        mapping_list = self.user_interface.get("mapping_list")
+        selection_labels = self.user_interface.get("selection_labels")
 
         # 1. create a preset
         self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device 2"))
@@ -1684,13 +1649,13 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.on_select_device(FakeDeviceDropdown("Bar Device"))
         self.assertEqual(self.user_interface.preset_name, "new preset")
         self.assertNotIn("asdf.json", os.listdir(get_preset_path("Bar Device")))
-        self.assertIsNone(mapping_list.get_children()[0].get_symbol(), None)
+        self.assertIsNone(selection_labels.get_children()[0].get_symbol(), None)
 
         # 3. switch to the device with the same name
         self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device"))
         # the newest preset is asdf, it should be automatically selected
         self.assertEqual(self.user_interface.preset_name, "asdf")
-        self.assertEqual(mapping_list.get_children()[0].get_symbol(), "qux")
+        self.assertEqual(selection_labels.get_children()[0].get_symbol(), "qux")
 
 
 if __name__ == "__main__":
