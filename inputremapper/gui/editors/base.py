@@ -93,7 +93,6 @@ class EditableMapping:
         toggle.connect("focus-out-event", self._reset)
         toggle.connect("focus-out-event", lambda *_: toggle.set_active(False))
         toggle.connect("focus-in-event", self.on_recording_toggle_focus)
-        # the click event to activate recording should not be recorded.
         # Don't leave the input when using arrow keys or tab. wait for the
         # window to consume the keycode from the reader. I.e. a tab input should
         # be recorded, instead of causing the recording to stop.
@@ -162,7 +161,7 @@ class EditableMapping:
 
     def _is_waiting_for_input(self):
         """Check if the user is interacting with the ToggleButton for key recording."""
-        return self.get_recording_toggle().is_focus()
+        return self.get_recording_toggle().get_active()
 
     def consume_newest_keycode(self, key):
         """To capture events from keyboards, mice and gamepads.

@@ -94,12 +94,20 @@ class Editor(EditableMapping):
 
     def _setup_recording_toggle(self):
         """Prepare the toggle button for recording key inputs."""
-        self.get("key_recording_toggle").connect(
-            "focus-out-event", self.on_key_recording_button_unfocus
+        toggle = self.get("key_recording_toggle")
+        toggle.connect(
+            "focus-out-event",
+            self.show_change_key,
         )
-        self.get("key_recording_toggle").connect(
+        toggle.connect(
             "focus-in-event",
-            self.on_key_recording_button_focus,
+            self.show_press_key,
+        )
+        toggle.connect(
+            "clicked",
+            lambda _: (
+                self.show_press_key() if toggle.get_active() else self.show_change_key()
+            ),
         )
 
     def _setup_source_view(self):
@@ -166,11 +174,11 @@ class Editor(EditableMapping):
 
         return True
 
-    def on_key_recording_button_focus(self, *_):
+    def show_press_key(self, *_):
         """Show user friendly instructions."""
         self.get("key_recording_toggle").set_label("Press key")
 
-    def on_key_recording_button_unfocus(self, *_):
+    def show_change_key(self, *_):
         """Show user friendly instructions."""
         self.get("key_recording_toggle").set_label("Change key")
 
@@ -230,7 +238,10 @@ class Editor(EditableMapping):
         self.get("code_editor").get_buffer().set_text(symbol or "")
         # move cursor location to the beginning, like any code editor does
         Gtk.TextView.do_move_cursor(
-            self.get("code_editor"), Gtk.MovementStep.BUFFER_ENDS, -1, False
+            self.get("code_editor"),
+            Gtk.MovementStep.BUFFER_ENDS,
+            -1,
+            False,
         )
 
     def get_text_input(self):
