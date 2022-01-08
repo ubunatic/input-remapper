@@ -383,7 +383,7 @@ class UserInterface:
         # because the device is in grab mode by the daemon and
         # therefore the original keycode inaccessible
         logger.info("Cannot change keycodes while injecting")
-        self.show_status(CTX_ERROR, 'Use "Restore Defaults" to stop before editing')
+        self.show_status(CTX_ERROR, 'Use "Stop Injection" to stop before editing')
 
     def consume_newest_keycode(self):
         """To capture events from keyboards, mice and gamepads."""

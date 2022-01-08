@@ -52,7 +52,7 @@ from inputremapper.paths import CONFIG_PATH, get_preset_path, get_config_path
 from inputremapper.config import config, WHEEL, MOUSE, BUTTONS
 from inputremapper.gui.reader import reader
 from inputremapper.injection.injector import RUNNING, FAILED, UNKNOWN
-from inputremapper.gui.editors.basic_editor import Row
+from inputremapper.gui.editors.editor import Editor
 from inputremapper.gui.user_interface import UserInterface
 from inputremapper.key import Key
 from inputremapper.daemon import Daemon
@@ -703,7 +703,7 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
 
         # focus different row
-        self.user_interface.active_editor.add_empty()
+        self.user_interface.editor.add_empty()
         key_recording_toggle = self.get_rows()[1].key_recording_toggle
         self.set_focus(key_recording_toggle)
 
@@ -1393,7 +1393,7 @@ class TestIntegration(unittest.TestCase):
         )
         self.user_interface.can_modify_mapping()
         text = self.get_status_text()
-        self.assertNotIn("Restore Defaults", text)
+        self.assertNotIn("Stop Injection", text)
 
         custom_mapping.change(Key(EV_KEY, KEY_A, 1), "b")
         custom_mapping.save(get_preset_path(group_name, preset_name))
@@ -1413,7 +1413,7 @@ class TestIntegration(unittest.TestCase):
         # the mapping cannot be changed anymore
         self.user_interface.can_modify_mapping()
         text = self.get_status_text()
-        self.assertIn("Restore Defaults", text)
+        self.assertIn("Stop Injection", text)
 
     def test_start_injecting(self):
         keycode_from = 9
@@ -1633,7 +1633,7 @@ class TestIntegration(unittest.TestCase):
 
     def test_screw_up_rows(self):
         # add a few rows
-        mapping_list = self.user_interface.get("mapping_list")
+        """mapping_list = self.user_interface.get("mapping_list")
         mapping_list.forall(mapping_list.remove)
         for i in range(5):
             broken = Row(
@@ -1641,7 +1641,12 @@ class TestIntegration(unittest.TestCase):
             )
             broken.set_key(Key(1, i, 1))
             broken.text_input.set_text("a")
-            mapping_list.insert(broken, -1)
+            mapping_list.insert(broken, -1)"""
+        window = self.user_interface.get("window")
+        editor = self.user_interface.editor
+        mapping_list = self.user_interface.get("")
+        editor.add_empty()
+        window.set_focus(editor.)
 
         # now remove all rows from the mapping. they are still displayed though,
         # which is a mismatch that should be detected by the ui automatically.
@@ -1655,7 +1660,7 @@ class TestIntegration(unittest.TestCase):
 
         # it returns true to keep the glib timeout going.
         # it will also reload the mapping to avoid more confusion
-        self.assertTrue(self.user_interface.active_editor.check_add_row())
+        self.assertTrue(self.user_interface.editor.check_add_row())
         rows = mapping_list.get_children()
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0].get_symbol(), "foo")

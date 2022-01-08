@@ -214,12 +214,12 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="apply_system_layout">
-                    <property name="label" translatable="yes">Restore Defaults</property>
+                    <property name="label" translatable="yes">Stop Injection</property>
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
                     <property name="tooltip-text" translatable="yes">Shortcut: ctrl + del
-To give your keys back their original mapping.</property>
+Gives your keys back their original function</property>
                     <property name="halign">end</property>
                     <property name="image">gtk-redo-icon</property>
                     <property name="always-show-image">True</property>
@@ -309,7 +309,7 @@ To give your keys back their original mapping.</property>
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
                             <property name="receives-default">True</property>
-                            <property name="tooltip-text" translatable="yes">Don't hold down any keys while the injection starts.</property>
+                            <property name="tooltip-text" translatable="yes">Start injecting. Don't hold down any keys while the injection starts</property>
                             <property name="image">check-icon</property>
                             <property name="relief">none</property>
                             <property name="always-show-image">True</property>
@@ -328,6 +328,7 @@ To give your keys back their original mapping.</property>
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
                             <property name="receives-default">True</property>
+                            <property name="tooltip-text" translatable="yes">Duplicate this preset</property>
                             <property name="image">copy-icon</property>
                             <property name="relief">none</property>
                             <property name="always-show-image">True</property>
@@ -346,6 +347,7 @@ To give your keys back their original mapping.</property>
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
                             <property name="receives-default">True</property>
+                            <property name="tooltip-text" translatable="yes">Create a new preset</property>
                             <property name="image">new-icon</property>
                             <property name="relief">none</property>
                             <property name="always-show-image">True</property>
@@ -365,6 +367,7 @@ To give your keys back their original mapping.</property>
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
                             <property name="receives-default">True</property>
+                            <property name="tooltip-text" translatable="yes">Delete this preset</property>
                             <property name="image">delete-icon</property>
                             <property name="relief">none</property>
                             <property name="always-show-image">True</property>
@@ -493,11 +496,11 @@ To give your keys back their original mapping.</property>
                       <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
+                        <property name="tooltip-text" translatable="yes">To automatically apply the preset after your login or when it connects.</property>
                         <child>
                           <object class="GtkLabel">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="tooltip-text" translatable="yes">To automatically apply the preset after your login or when it connects.</property>
                             <property name="label" translatable="yes">Autoload</property>
                             <property name="xalign">0</property>
                           </object>
@@ -858,6 +861,7 @@ To give your keys back their original mapping.</property>
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>
+                                <property name="tooltip-text" translatable="yes">Record a button of your device that should be remapped</property>
                                 <property name="image">image1</property>
                                 <property name="relief">none</property>
                                 <property name="always-show-image">True</property>
@@ -886,6 +890,7 @@ To give your keys back their original mapping.</property>
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>
+                                <property name="tooltip-text" translatable="yes">Delete this entry</property>
                                 <property name="image">icon-delete-row</property>
                                 <property name="relief">none</property>
                                 <property name="always-show-image">True</property>
