@@ -51,7 +51,7 @@ from inputremapper.groups import (
     TOUCHPAD,
     MOUSE,
 )
-from inputremapper.gui.editors.editor import Editor
+from inputremapper.gui.editor.editor import Editor
 from inputremapper.key import Key
 from inputremapper.gui.reader import reader
 from inputremapper.gui.helper import is_helper_running

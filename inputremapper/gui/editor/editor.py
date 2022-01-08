@@ -26,7 +26,7 @@ import re
 
 from gi.repository import Gtk, GLib, GtkSource, Gdk
 
-from inputremapper.gui.editors.autocompletion import Autocompletion
+from inputremapper.gui.editor.autocompletion import Autocompletion
 from inputremapper.system_mapping import system_mapping
 from inputremapper.gui.custom_mapping import custom_mapping
 from inputremapper.key import Key

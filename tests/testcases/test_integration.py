@@ -52,7 +52,6 @@ from inputremapper.paths import CONFIG_PATH, get_preset_path, get_config_path
 from inputremapper.config import config, WHEEL, MOUSE, BUTTONS
 from inputremapper.gui.reader import reader
 from inputremapper.injection.injector import RUNNING, FAILED, UNKNOWN
-from inputremapper.gui.editors.editor import Editor
 from inputremapper.gui.user_interface import UserInterface
 from inputremapper.key import Key
 from inputremapper.daemon import Daemon
