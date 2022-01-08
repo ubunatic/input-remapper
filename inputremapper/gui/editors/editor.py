@@ -97,18 +97,28 @@ class Editor(EditableMapping):
         toggle = self.get("key_recording_toggle")
         toggle.connect(
             "focus-out-event",
-            self.show_change_key,
+            self._show_change_key,
         )
         toggle.connect(
             "focus-in-event",
-            self.show_press_key,
+            self._show_press_key,
         )
         toggle.connect(
             "clicked",
             lambda _: (
-                self.show_press_key() if toggle.get_active() else self.show_change_key()
+                self._show_press_key()
+                if toggle.get_active()
+                else self._show_change_key()
             ),
         )
+
+    def _show_press_key(self, *_):
+        """Show user friendly instructions."""
+        self.get("key_recording_toggle").set_label("Press key")
+
+    def _show_change_key(self, *_):
+        """Show user friendly instructions."""
+        self.get("key_recording_toggle").set_label("Change key")
 
     def _setup_source_view(self):
         """Prepare the code editor."""
@@ -173,14 +183,6 @@ class Editor(EditableMapping):
             self.add_empty()
 
         return True
-
-    def show_press_key(self, *_):
-        """Show user friendly instructions."""
-        self.get("key_recording_toggle").set_label("Press key")
-
-    def show_change_key(self, *_):
-        """Show user friendly instructions."""
-        self.get("key_recording_toggle").set_label("Change key")
 
     def on_mapping_selected(self, _=None, list_box_row=None):
         """One of the buttons in the left "key" column was clicked.
