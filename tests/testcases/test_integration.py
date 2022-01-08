@@ -659,7 +659,6 @@ class TestIntegration(unittest.TestCase):
             self.assertFalse(self.editor._input_has_arrived)
 
             if expect_success:
-                print("### budmtschdumdum go go into ma ha")
                 self.assertEqual(self.editor.get_key(), key)
                 # the previously new entry, which has been edited now, is still the
                 # selected one
@@ -1704,11 +1703,9 @@ class TestIntegration(unittest.TestCase):
         self.assertIn("asdf.json", os.listdir(get_preset_path("Foo Device")))
 
         # 2. switch to the different device, there should be no preset named asdf
-        print("\nselect device")
         self.user_interface.on_select_device(FakeDeviceDropdown("Bar Device"))
         self.assertEqual(self.user_interface.preset_name, "new preset")
         self.assertNotIn("asdf.json", os.listdir(get_preset_path("Bar Device")))
-        print("assert")
         self.assertEqual(self.editor.get_symbol_input_text(), "")
 
         # 3. switch to the device with the same name as the first one

@@ -144,7 +144,7 @@ class Editor:
         delete_button.connect("clicked", self._on_delete_button_clicked)
 
     def clear(self):
-        """Clear all inputs, reset the state.
+        """Clear all inputs, labels, etc. Reset the state.
 
         This is really important to do before loading a different preset.
         Otherwise the inputs will be read and then saved into the next preset.
@@ -158,10 +158,10 @@ class Editor:
         self._reset_keycode_consumption()
 
         selection_label_listbox = self.get("selection_label_listbox")
-
-        if len(selection_label_listbox.get_children()) == 0:
-            # TODO test_shared_presets fails if this is not there. why?
-            self.add_empty()
+        # TODO test that deleting the last preset clears the selection_label_listbox.
+        #  since the preset name doesnt change when doing so it is a bit special
+        selection_label_listbox.forall(selection_label_listbox.remove)
+        self.add_empty()
 
         selection_label_listbox.select_row(selection_label_listbox.get_children()[0])
         # TODO test that after deleting the last preset it selects the empty row
@@ -320,6 +320,7 @@ class Editor:
         self.set_symbol_input_text("")
 
         selection_label_listbox = self.get("selection_label_listbox")
+
         selection_label_listbox.forall(selection_label_listbox.remove)
 
         for key, output in custom_mapping:
