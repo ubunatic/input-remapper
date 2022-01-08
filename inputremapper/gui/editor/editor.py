@@ -92,6 +92,18 @@ class SelectionLabel(Gtk.ListBoxRow):
         return self.__str__()
 
 
+def ensure_everything_saved(func):
+    """Make sure the editor has written its changes to custom_mapping and save."""
+
+    def wrapped(self, *args, **kwargs):
+        if self.user_interface.preset_name:
+            self.gather_changes_and_save()
+
+        return func(self, *args, **kwargs)
+
+    return wrapped
+
+
 SET_KEY_FIRST = "Set the key first"
 
 
@@ -126,7 +138,7 @@ class Editor:
         toggle.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
 
         text_input = self.get_text_input()
-        text_input.connect("focus-out-event", self.save_changes_of_current_mapping)
+        text_input.connect("focus-out-event", self.gather_changes_and_save)
 
         delete_button = self.get_delete_button()
         delete_button.connect("clicked", self._on_delete_button_clicked)
@@ -191,7 +203,7 @@ class Editor:
 
         autocompletion = Autocompletion(source_view)
         autocompletion.set_relative_to(self.get("code_editor_container"))
-        autocompletion.connect("suggestion-inserted", self.save_changes_of_current_mapping)
+        autocompletion.connect("suggestion-inserted", self.gather_changes_and_save)
 
     def show_line_numbers_if_multiline(self, *_):
         """Show line numbers if a macro is being edited."""
@@ -250,12 +262,13 @@ class Editor:
             # don't overwrite user input
             self.set_symbol_input_text("")
 
+    @ensure_everything_saved
     def on_mapping_selected(self, _=None, selection_label=None):
         """One of the buttons in the left "key" column was clicked.
 
         Load the information from that mapping entry into the editor.
         """
-        self.save_changes_of_current_mapping()
+        reader.clear()
 
         self.active_selection_label = selection_label
 
@@ -283,6 +296,7 @@ class Editor:
         mapping_selection.show_all()
         selection_labels.insert(mapping_selection, -1)
 
+    @ensure_everything_saved
     def load_custom_mapping(self):
         """Display the entries in custom_mapping."""
         self.set_symbol_input_text("")
@@ -343,6 +357,11 @@ class Editor:
         """
         buffer = self.get("code_editor").get_buffer()
         symbol = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+
+        if symbol == SET_KEY_FIRST:
+            # not configured yet
+            return ""
+
         return symbol
 
     def set_key(self, key):
@@ -389,8 +408,8 @@ class Editor:
         confirm_delete.hide()
         return response
 
-    def save_changes_of_current_mapping(self, *_):
-        """Save the preset and correct the input casing."""
+    def gather_changes_and_save(self, *_):
+        """Look into the ui if new changes should be written, and save the preset."""
         # correct case
         symbol = self.get_symbol_input_text()
 
@@ -424,7 +443,6 @@ class Editor:
             # TODO wtf? _switch_focus_if_complete uses self.get_key, but
                _set_key is called after it
         """
-        print("consume_newest_keycode")
         self._switch_focus_if_complete()
 
         if key is None:

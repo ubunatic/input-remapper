@@ -94,11 +94,11 @@ ICON_PRIORITIES = [GRAPHICS_TABLET, TOUCHPAD, GAMEPAD, MOUSE, KEYBOARD, UNKNOWN]
 def with_group(func):
     """Decorate a function to only execute if a device is selected."""
     # this should only happen if no device was found at all
-    def wrapped(self, *args):
+    def wrapped(self, *args, **kwargs):
         if self.group is None:
             return True  # work with timeout_add
 
-        return func(self, *args)
+        return func(self, *args, **kwargs)
 
     return wrapped
 
@@ -106,11 +106,11 @@ def with_group(func):
 def with_preset_name(func):
     """Decorate a function to only execute if a preset is selected."""
     # this should only happen if no device was found at all
-    def wrapped(window, *args):
-        if window.preset_name is None or window.group is None:
+    def wrapped(self, *args, **kwargs):
+        if self.preset_name is None or self.group is None:
             return True  # work with timeout_add
 
-        return func(window, *args)
+        return func(self, *args, **kwargs)
 
     return wrapped
 
@@ -119,6 +119,18 @@ def on_close_about(about, _):
     """Hide the about dialog without destroying it."""
     about.hide()
     return True
+
+
+def ensure_everything_saved(func):
+    """Make sure the editor has written its changes to custom_mapping and save."""
+
+    def wrapped(self, *args, **kwargs):
+        if self.preset_name:
+            self.editor.gather_changes_and_save()
+
+        return func(self, *args, **kwargs)
+
+    return wrapped
 
 
 class UserInterface:
@@ -309,10 +321,10 @@ class UserInterface:
     def on_close(self, *_):
         self.__del__()
 
+    @ensure_everything_saved
     def __del__(self, *_):
         """Safely close the application."""
         logger.debug("Closing window")
-        self.editor.save_changes_of_current_mapping()
         self.window.hide()
         for timeout in self.timeouts:
             GLib.source_remove(timeout)
@@ -320,6 +332,7 @@ class UserInterface:
         reader.terminate()
         Gtk.main_quit()
 
+    @ensure_everything_saved
     def select_newest_preset(self):
         """Find and select the newest preset (and its device)."""
         device, preset = find_newest_preset()
@@ -329,6 +342,7 @@ class UserInterface:
         if preset is not None:
             self.get("preset_selection").set_active_id(preset)
 
+    @ensure_everything_saved
     def populate_devices(self):
         """Make the devices selectable."""
         device_selection = self.get("device_selection")
@@ -348,6 +362,7 @@ class UserInterface:
         self.select_newest_preset()
 
     @with_group
+    @ensure_everything_saved
     def populate_presets(self):
         """Show the available presets for the selected device.
 
@@ -464,14 +479,13 @@ class UserInterface:
             msg = f"Syntax error at {position}, hover for info"
             self.show_status(CTX_MAPPING, msg, error)
 
+    @ensure_everything_saved
     def on_rename_button_clicked(self, _):
         """Rename the preset based on the contents of the name input."""
         new_name = self.get("preset_name_input").get_text()
 
         if new_name in ["", self.preset_name]:
             return
-
-        self.save_preset()
 
         new_name = rename_preset(self.group.name, self.preset_name, new_name)
 
@@ -561,9 +575,10 @@ class UserInterface:
         # tell the service to refresh its config
         self.dbus.set_config_dir(get_config_path())
 
+    @ensure_everything_saved
     def on_select_device(self, dropdown):
         """List all presets, create one if none exist yet."""
-        self.editor.save_changes_of_current_mapping()
+        self.editor.gather_changes_and_save()
 
         if self.group and dropdown.get_active_id() == self.group.key:
             return
@@ -636,9 +651,10 @@ class UserInterface:
         """Create a new preset and select it."""
         self.create_preset()
 
+    @ensure_everything_saved
     def create_preset(self, copy=False):
         """Create a new preset and select it."""
-        self.editor.save_changes_of_current_mapping()
+        self.editor.gather_changes_and_save()
         name = self.group.name
         preset = self.preset_name
 
@@ -663,18 +679,15 @@ class UserInterface:
             self.show_status(CTX_ERROR, "Permission denied!", error)
             logger.error(error)
 
+    @ensure_everything_saved
     def on_select_preset(self, dropdown):
         """Show the mappings of the preset."""
         # beware in tests that this function won't be called at all if the
         # active_id stays the same
         # TODO TEST using the scroll wheel to select a preset caused this not to save,
         #  because the focus would not leave the editor and therefore custom_mapping
-        #  would not change. now that self.editor.save_changes_of_current_mapping is
+        #  would not change. now that self.editor.gather_changes_and_save is
         #  used it makes sure changes are in custom_mapping
-        if self.preset_name is not None:
-            # save the previous preset
-            self.editor.save_changes_of_current_mapping()
-
         if dropdown.get_active_id() == self.preset_name:
             return
 

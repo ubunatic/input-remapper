@@ -422,7 +422,8 @@ class TestIntegration(unittest.TestCase):
         self.assertFalse(config.is_autoloaded("Foo Device", "new preset"))
         self.assertFalse(config.is_autoloaded("Bar Device", "new preset"))
         self.assertListEqual(
-            list(config.iterate_autoload_presets()), [("Foo Device 2", "new preset")]
+            list(config.iterate_autoload_presets()),
+            [("Foo Device 2", "new preset")],
         )
 
     def test_select_device(self):
@@ -510,10 +511,9 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(self.toggle.get_label(), "Press Key")
 
-        print("# consume_newest_keycode")
         self.editor.consume_newest_keycode(Key(EV_KEY, 30, 1))
-        print("# assert")
-        self.assertEqual(len(custom_mapping), 0)  # not released yet
+        # no symbol configured yet, so the custom_mapping remains empty
+        self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(selection_label.get_key(), (EV_KEY, 30, 1))
         # this is KEY_A in linux/input-event-codes.h,
         # but KEY_ is removed from the text for display purposes
@@ -671,7 +671,7 @@ class TestIntegration(unittest.TestCase):
 
         if not expect_success:
             self.assertIsNone(selection_label.get_key())
-            self.assertEqual(self.editor.get_symbol_input_text(), SET_KEY_FIRST)
+            self.assertEqual(self.editor.get_symbol_input_text(), "")
             self.assertFalse(self.editor._input_has_arrived)
             # it won't switch the focus to the symbol input
             self.assertTrue(self.toggle.get_active())
@@ -706,12 +706,12 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
 
         # unfocus
-        # doesn't call reader.clear
-        # because otherwise the super key cannot be mapped
+        # doesn't call reader.clear. Otherwise the super key cannot be mapped,
+        # because the start menu that opens up would unfocus the user interface
         self.set_focus(None)
         self.assertEqual(reader.get_unreleased_keys(), ev_1)
 
-        # focus different selection_label
+        # focus different selection_label. It resets the reader
         self.editor.add_empty()
         self.selection_labels.select_row(self.selection_labels.get_children()[-1])
         self.toggle.set_active(True)
@@ -754,17 +754,14 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(self.editor.get_key(), ev_1)
         self.set_focus(self.editor.get_text_input())
         self.editor.set_symbol_input_text("c")
-        print("##### unfocus")
         self.set_focus(None)
 
         # after unfocusing, it stores the mapping. So loading it again will retain
         # the mapping that was used
         preset_name = self.user_interface.preset_name
         preset_path = self.user_interface.group.get_preset_path(preset_name)
-        print("##### loading")
         custom_mapping.load(preset_path)
 
-        print("##### assert")
         self.assertEqual(custom_mapping.get_symbol(ev_1), "c")
         self.assertEqual(custom_mapping.get_symbol(ev_2), "k(b).k(c)")
 
@@ -907,7 +904,7 @@ class TestIntegration(unittest.TestCase):
 
             with patch.object(
                 self.editor,
-                "show_confirm_delete",
+                "_show_confirm_delete",
                 lambda: Gtk.ResponseType.ACCEPT,
             ):
                 self.editor._on_delete_button_clicked()
@@ -1140,7 +1137,8 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(self.user_interface.group.name, "Foo Device")
         self.assertEqual(self.user_interface.preset_name, "new preset")
         # change it to check if the gui loads presets correctly later
-        custom_mapping.change(key_10, "a")
+        self.editor.set_key(key_10)
+        self.editor.set_symbol_input_text("a")
 
         # create another one
         self.user_interface.on_create_preset_clicked()
@@ -1151,7 +1149,8 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(len(custom_mapping), 0)
         # this should not be loaded when "new preset" is selected, because it belongs
         # to "new preset 2":
-        custom_mapping.change(key_11, "a")
+        self.editor.set_key(key_11)
+        self.editor.set_symbol_input_text("a")
 
         # select the first one again
         self.user_interface.on_select_preset(FakePresetDropdown("new preset"))
@@ -1166,14 +1165,23 @@ class TestIntegration(unittest.TestCase):
             sorted(["new preset.json", "new preset 2.json"]),
         )
 
-        # now try to change the name
+        """now try to change the name"""
+
         self.user_interface.get("preset_name_input").set_text("abc 123")
         gtk_iteration()
         self.assertEqual(self.user_interface.preset_name, "new preset")
         self.assertFalse(os.path.exists(f"{foo_device_path}/abc 123.json"))
-        custom_mapping.change(Key(EV_KEY, 10, 1), "1", None)
-        self.user_interface.save_preset()
+
+        # putting new information into the editor does not lead to some weird
+        # problems. when doing the rename everything will be saved and then moved
+        # to the new path
+        self.editor.set_key(Key(EV_KEY, 10, 1))
+        self.editor.set_symbol_input_text("1")
+
+        self.assertEqual(self.user_interface.preset_name, "new preset")
         self.user_interface.on_rename_button_clicked(None)
+        self.assertEqual(self.user_interface.preset_name, "abc 123")
+
         gtk_iteration()
         self.assertEqual(self.user_interface.preset_name, "abc 123")
         self.assertTrue(os.path.exists(f"{foo_device_path}/abc 123.json"))
@@ -1596,7 +1604,8 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(len(write_history), len_before)
 
     def test_delete_preset(self):
-        custom_mapping.change(Key(EV_KEY, 71, 1), "a", None)
+        self.editor.set_key(Key(EV_KEY, 71, 1))
+        self.editor.set_symbol_input_text("a")
         self.user_interface.get("preset_name_input").set_text("asdf")
         self.user_interface.on_rename_button_clicked(None)
         gtk_iteration()
@@ -1606,7 +1615,9 @@ class TestIntegration(unittest.TestCase):
         self.assertTrue(os.path.exists(get_preset_path("Foo Device", "asdf")))
 
         with patch.object(
-            self.user_interface, "show_confirm_delete", lambda: Gtk.ResponseType.CANCEL
+            self.user_interface,
+            "show_confirm_delete",
+            lambda: Gtk.ResponseType.CANCEL,
         ):
             self.user_interface.on_delete_preset_clicked(None)
             self.assertTrue(os.path.exists(get_preset_path("Foo Device", "asdf")))
@@ -1614,7 +1625,9 @@ class TestIntegration(unittest.TestCase):
             self.assertEqual(self.user_interface.group.name, "Foo Device")
 
         with patch.object(
-            self.user_interface, "show_confirm_delete", lambda: Gtk.ResponseType.ACCEPT
+            self.user_interface,
+            "show_confirm_delete",
+            lambda: Gtk.ResponseType.ACCEPT,
         ):
             self.user_interface.on_delete_preset_clicked(None)
             self.assertFalse(os.path.exists(get_preset_path("Foo Device", "asdf")))
@@ -1686,7 +1699,7 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.on_select_device(FakeDeviceDropdown("Bar Device"))
         self.assertEqual(self.user_interface.preset_name, "new preset")
         self.assertNotIn("asdf.json", os.listdir(get_preset_path("Bar Device")))
-        self.assertEqual(self.editor.get_symbol_input_text(), SET_KEY_FIRST)
+        self.assertEqual(self.editor.get_symbol_input_text(), "")
 
         # 3. switch to the device with the same name as the first one
         self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device"))
