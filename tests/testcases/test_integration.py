@@ -531,7 +531,7 @@ class TestIntegration(unittest.TestCase):
         )
 
         self.set_focus(self.editor.get_text_input())
-        self.editor.set_symbol("Shift_L")
+        self.editor.set_symbol_input_text("Shift_L")
         self.set_focus(None)
 
         self.assertEqual(len(custom_mapping), 1)
@@ -619,7 +619,7 @@ class TestIntegration(unittest.TestCase):
         if symbol and not code_first:
             # set the symbol to make the new selection_label complete
             self.assertEqual(self.editor.get_symbol_input_text(), "")
-            self.editor.set_symbol(symbol)
+            self.editor.set_symbol_input_text(symbol)
             self.assertEqual(self.editor.get_symbol_input_text(), symbol)
 
         if self.toggle.get_active():
@@ -687,7 +687,7 @@ class TestIntegration(unittest.TestCase):
         if symbol and code_first:
             # set the symbol to make the new selection_label complete
             self.assertEqual(self.editor.get_symbol_input_text(), "")
-            self.editor.set_symbol(symbol)
+            self.editor.set_symbol_input_text(symbol)
             self.assertEqual(self.editor.get_symbol_input_text(), symbol)
 
         # unfocus them to trigger some final logic
@@ -758,7 +758,7 @@ class TestIntegration(unittest.TestCase):
         self.selection_labels.select_row(self.selection_labels.get_children()[0])
         self.assertEqual(self.editor.get_key(), ev_1)
         self.set_focus(self.editor.get_text_input())
-        self.editor.set_symbol("c")
+        self.editor.set_symbol_input_text("c")
         print("##### unfocus")
         self.set_focus(None)
 

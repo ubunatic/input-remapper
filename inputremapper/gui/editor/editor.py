@@ -84,7 +84,7 @@ class SelectionLabel(Gtk.ListBoxRow):
         """
         self.symbol = symbol
 
-    def get_stored_symbol(self):
+    def get_symbol(self):
         """Get the symbol this entry represents.
 
         If there is nothing in custom_mapping, maybe this remembers what this was
@@ -253,9 +253,9 @@ class Editor:
         if key is None:
             # clicked on an incomplete new mapping entry. Load the unfinished
             # information from the SelectionLabel
-            self.set_symbol(selection_label.get_symbol())
+            self.set_symbol_input_text(selection_label.get_symbol())
         else:
-            self.set_symbol(custom_mapping.get_symbol(key))
+            self.set_symbol_input_text(custom_mapping.get_symbol(key))
 
         self.get("window").set_focus(self.get_text_input())
 
@@ -291,16 +291,6 @@ class Editor:
     def get_recording_toggle(self):
         return self.get("key_recording_toggle")
 
-    def set_symbol(self, symbol):
-        self.get("code_editor").get_buffer().set_text(symbol or "")
-        # move cursor location to the beginning, like any code editor does
-        Gtk.TextView.do_move_cursor(
-            self.get("code_editor"),
-            Gtk.MovementStep.BUFFER_ENDS,
-            -1,
-            False,
-        )
-
     def get_text_input(self):
         return self.get("code_editor")
 
@@ -313,6 +303,16 @@ class Editor:
             return None
 
         return self.active_selection_label.key
+
+    def set_symbol_input_text(self, symbol):
+        self.get("code_editor").get_buffer().set_text(symbol or "")
+        # move cursor location to the beginning, like any code editor does
+        Gtk.TextView.do_move_cursor(
+            self.get("code_editor"),
+            Gtk.MovementStep.BUFFER_ENDS,
+            -1,
+            False,
+        )
 
     def get_symbol_input_text(self):
         """Get the assigned symbol from the text input.
