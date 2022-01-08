@@ -51,13 +51,14 @@ from inputremapper.gui.custom_mapping import custom_mapping
 from inputremapper.paths import CONFIG_PATH, get_preset_path, get_config_path
 from inputremapper.config import config, WHEEL, MOUSE, BUTTONS
 from inputremapper.gui.reader import reader
-from inputremapper.injection.injector import RUNNING, FAILED, UNKNOWN
+from inputremapper.gui.helper import RootHelper
+from inputremapper.gui.utils import gtk_iteration
 from inputremapper.gui.user_interface import UserInterface
+from inputremapper.gui.editor.editor import SET_KEY_FIRST
+from inputremapper.injection.injector import RUNNING, FAILED, UNKNOWN
 from inputremapper.key import Key
 from inputremapper.daemon import Daemon
 from inputremapper.groups import groups
-from inputremapper.gui.helper import RootHelper
-from inputremapper.gui.utils import gtk_iteration
 
 from tests.test import (
     tmp,
@@ -586,7 +587,7 @@ class TestIntegration(unittest.TestCase):
         text = self.get_status_text()
         self.assertNotIn("...", text)
 
-    def add_mapping_via_ui(self, key, symbol, code_first=True, expect_success=True):
+    def add_mapping_via_ui(self, key, symbol, expect_success=True):
         """Modify the one empty mapping that always exists.
 
         Utility function for other tests.
@@ -594,9 +595,6 @@ class TestIntegration(unittest.TestCase):
         Parameters
         ----------
         key : Key or None
-        code_first : boolean
-            If True, the code is entered and then the symbol.
-            If False, the symbol is entered first.
         expect_success : boolean
             If this change on the empty selection_label is going to result in a change
             in the mapping eventually. False if this change is going to
@@ -615,12 +613,6 @@ class TestIntegration(unittest.TestCase):
         self.selection_labels.select_row(selection_label)
         self.assertIsNone(selection_label.get_key())
         self.assertFalse(self.editor.input_has_arrived)
-
-        if symbol and not code_first:
-            # set the symbol to make the new selection_label complete
-            self.assertEqual(self.editor.get_symbol_input_text(), "")
-            self.editor.set_symbol_input_text(symbol)
-            self.assertEqual(self.editor.get_symbol_input_text(), symbol)
 
         if self.toggle.get_active():
             self.assertEqual(self.toggle.get_label(), "Press Key")
@@ -664,6 +656,7 @@ class TestIntegration(unittest.TestCase):
             self.assertFalse(self.editor.input_has_arrived)
 
             if expect_success:
+                print("### budmtschdumdum go go into ma ha")
                 self.assertEqual(self.editor.get_key(), key)
                 # the previously new entry, which has been edited now, is still the
                 # selected one
@@ -684,11 +677,12 @@ class TestIntegration(unittest.TestCase):
             self.assertEqual(custom_mapping.has_unsaved_changes(), changed)
             return selection_label
 
-        if symbol and code_first:
-            # set the symbol to make the new selection_label complete
-            self.assertEqual(self.editor.get_symbol_input_text(), "")
-            self.editor.set_symbol_input_text(symbol)
-            self.assertEqual(self.editor.get_symbol_input_text(), symbol)
+        if key is None:
+            self.assertEqual(self.editor.get_symbol_input_text(), SET_KEY_FIRST)
+
+        # set the symbol to make the new selection_label complete
+        self.editor.set_symbol_input_text(symbol)
+        self.assertEqual(self.editor.get_symbol_input_text(), symbol)
 
         # unfocus them to trigger some final logic
         self.set_focus(None)
@@ -742,7 +736,7 @@ class TestIntegration(unittest.TestCase):
         # add two selection_labels by modifiying the one empty selection_label that
         # exists. Insert lowercase, it should be corrected to uppercase as stored
         # in system_mapping
-        self.add_mapping_via_ui(ev_1, "foo_bar", code_first=False)
+        self.add_mapping_via_ui(ev_1, "foo_bar", record_key_first=False)
         self.add_mapping_via_ui(ev_2, "k(b).k(c)")
 
         # one empty selection_label added automatically again
@@ -902,7 +896,9 @@ class TestIntegration(unittest.TestCase):
                     symbol,
                 )
 
-            self.assertEqual(self.editor.get_symbol_input_text(), symbol)
+            if symbol is not None:
+                self.assertEqual(self.editor.get_symbol_input_text(), symbol)
+
             if code is None:
                 self.assertIsNone(selection_label.get_key())
             else:
@@ -934,7 +930,6 @@ class TestIntegration(unittest.TestCase):
         # selection_labels by modifiying the one empty selection_label that exists
         selection_label_1 = self.add_mapping_via_ui(Key(EV_KEY, 10, 1), "a")
         selection_label_2 = self.add_mapping_via_ui(Key(EV_KEY, 11, 1), "b")
-        selection_label_3 = self.add_mapping_via_ui(None, "c")
 
         # no empty selection_label added because one is unfinished
         time.sleep(0.2)
@@ -945,10 +940,11 @@ class TestIntegration(unittest.TestCase):
 
         remove(selection_label_1, 10, "a", 2)
         remove(selection_label_2, 11, "b", 1)
+
         # there is no empty selection_label at the moment, so after removing that one,
         # which is the only selection_label, one empty selection_label will be there.
         # So the number of selection_labels won't change.
-        remove(selection_label_3, None, "c", 1)
+        remove(self.selection_labels.get_children()[-1], None, None, 1)
 
     def test_problematic_combination(self):
         combination = Key((EV_KEY, KEY_LEFTSHIFT, 1), (EV_KEY, 82, 1))
