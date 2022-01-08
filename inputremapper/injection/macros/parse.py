@@ -236,8 +236,10 @@ def _parse_recurse(code, context, macro_instance=None, depth=0):
     call = call_match[1] if call_match else None
     if call is not None:
         if macro_instance is None:
+            # start a new chain
             macro_instance = Macro(code, context)
         else:
+            # chain this call to the existing instance
             assert isinstance(macro_instance, Macro)
 
         function = FUNCTIONS.get(call)

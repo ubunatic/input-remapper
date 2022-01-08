@@ -59,13 +59,8 @@ from inputremapper.injection.injector import RUNNING, FAILED, NO_GRAB
 from inputremapper.daemon import Daemon
 from inputremapper.config import config
 from inputremapper.injection.macros.parse import is_this_a_macro, parse
-from inputremapper.gui.utils import CTX_ERROR, CTX_MAPPING, CTX_APPLY, CTX_WARNING
-
-
-def gtk_iteration():
-    """Iterate while events are pending."""
-    while Gtk.events_pending():
-        Gtk.main_iteration()
+from inputremapper.gui.utils import CTX_ERROR, CTX_MAPPING, CTX_APPLY, CTX_WARNING,\
+    gtk_iteration
 
 
 # TODO add to .deb and AUR dependencies
@@ -372,6 +367,7 @@ class UserInterface:
 
         for preset in presets:
             preset_selection.append(preset, preset)
+
         # and select the newest one (on the top). triggers on_select_preset
         preset_selection.set_active(0)
 
@@ -660,7 +656,9 @@ class UserInterface:
         #  because the focus would not leave the editor and therefore custom_mapping
         #  would not change. now that self.editor.save_changes is used it makes sure
         #  changes are in custom_mapping
-        self.editor.save_changes()
+        if self.preset_name is not None:
+            # save the previous preset
+            self.editor.save_changes()
 
         if dropdown.get_active_id() == self.preset_name:
             return
@@ -712,6 +710,7 @@ class UserInterface:
             return
 
         try:
+            assert self.preset_name is not None
             path = self.group.get_preset_path(self.preset_name)
             custom_mapping.save(path)
 

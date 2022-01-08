@@ -19,6 +19,9 @@
 # along with input-remapper.  If not, see <https://www.gnu.org/licenses/>.
 
 
+from gi.repository import Gtk
+
+
 # status ctx ids
 CTX_SAVE = 0
 CTX_APPLY = 1
@@ -43,3 +46,9 @@ class HandlerDisabled:
 
     def __exit__(self, *_):
         self.widget.handler_unblock_by_func(self.handler)
+
+
+def gtk_iteration():
+    """Iterate while events are pending."""
+    while Gtk.events_pending():
+        Gtk.main_iteration()

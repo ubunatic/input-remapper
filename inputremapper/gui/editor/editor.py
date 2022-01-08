@@ -32,7 +32,7 @@ from inputremapper.gui.custom_mapping import custom_mapping
 from inputremapper.key import Key
 from inputremapper.logger import logger
 from inputremapper.gui.reader import reader
-from inputremapper.gui.utils import CTX_KEYCODE, CTX_WARNING
+from inputremapper.gui.utils import CTX_KEYCODE, CTX_WARNING, gtk_iteration
 
 # TODO test
 
@@ -80,6 +80,9 @@ class SelectionLabel(Gtk.ListBoxRow):
 
     def set_label(self, label):
         return self.label.set_label(label)
+
+    def get_label(self):
+        return self.label.get_label()
 
     def __str__(self):
         return f"SelectionLabel({str(self.key)})"
