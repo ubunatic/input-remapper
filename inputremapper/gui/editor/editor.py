@@ -371,40 +371,37 @@ class Editor:
         self._switch_focus_if_complete()
 
         if key is None:
+            print(1)
             return
 
         if not self._is_waiting_for_input():
+            print(2)
             return
 
-        if key is not None and not isinstance(key, Key):
+        if not isinstance(key, Key):
             raise TypeError("Expected new_key to be a Key object")
 
         # keycode is already set by some other row
-        if key is not None:
-            existing = custom_mapping.get_symbol(key)
-            if existing is not None:
-                existing = re.sub(r"\s", "", existing)
-                msg = f'"{key.beautify()}" already mapped to "{existing}"'
-                logger.info("%s %s", key, msg)
-                self.user_interface.show_status(CTX_KEYCODE, msg)
-                return True
+        existing = custom_mapping.get_symbol(key)
+        if existing is not None:
+            existing = re.sub(r"\s", "", existing)
+            msg = f'"{key.beautify()}" already mapped to "{existing}"'
+            logger.info("%s %s", key, msg)
+            self.user_interface.show_status(CTX_KEYCODE, msg)
+            return True
 
-            if key.is_problematic():
-                self.user_interface.show_status(
-                    CTX_WARNING,
-                    "ctrl, alt and shift may not combine properly",
-                    "Your system might reinterpret combinations "
-                    + "with those after they are injected, and by doing so "
-                    + "break them.",
-                )
+        if key.is_problematic():
+            self.user_interface.show_status(
+                CTX_WARNING,
+                "ctrl, alt and shift may not combine properly",
+                "Your system might reinterpret combinations "
+                + "with those after they are injected, and by doing so "
+                + "break them.",
+            )
 
         # the newest_keycode is populated since the ui regularly polls it
         # in order to display it in the status bar.
         previous_key = self.get_key()
-
-        # no input
-        if key is None:
-            return
 
         # it might end up being a key combination, wait for more
         self.input_has_arrived = True
@@ -412,6 +409,7 @@ class Editor:
         # keycode didn't change, do nothing
         if key == previous_key:
             logger.debug("%s didn't change", previous_key)
+            print(3)
             return
 
         self.set_key(key)
@@ -420,6 +418,7 @@ class Editor:
 
         # the symbol is empty and therefore the mapping is not complete
         if not symbol:
+            print(4)
             return
 
         # else, the keycode has changed, the symbol is set, all good
