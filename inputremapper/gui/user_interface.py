@@ -245,8 +245,8 @@ class UserInterface:
 
         This has nothing to do with the keycode reader.
         """
-        focused = self.window.get_focus()
-        if isinstance(focused, Gtk.ToggleButton):
+        if self.editor.is_waiting_for_input():
+            # don't perform shortcuts while keys are being recorded
             return
 
         gdk_keycode = event.get_keyval()[1]
@@ -647,6 +647,11 @@ class UserInterface:
             path = self.group.get_preset_path(new_preset)
             custom_mapping.save(path)
             self.get("preset_selection").append(new_preset, new_preset)
+            # triggers on_select_preset
+            # for whatever reason I have to use set_active_id twice for this
+            # to work in tests all of the sudden. The first set_active_id will provide
+            # the wrong active id to on_select_preset.
+            self.get("preset_selection").set_active_id(new_preset)
             self.get("preset_selection").set_active_id(new_preset)
         except PermissionError as error:
             error = str(error)

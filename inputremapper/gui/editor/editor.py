@@ -403,7 +403,7 @@ class Editor:
         if custom_mapping.has_unsaved_changes():
             self.user_interface.save_preset()
 
-    def _is_waiting_for_input(self):
+    def is_waiting_for_input(self):
         """Check if the user is interacting with the ToggleButton for key recording."""
         return self.get_recording_toggle().get_active()
 
@@ -422,7 +422,7 @@ class Editor:
         if key is None:
             return
 
-        if not self._is_waiting_for_input():
+        if not self.is_waiting_for_input():
             return
 
         if not isinstance(key, Key):
@@ -479,7 +479,7 @@ class Editor:
         4. user releases keys. no keys are pressed, just like in step 2, but this time
         the focus needs to switch.
         """
-        if not self._is_waiting_for_input():
+        if not self.is_waiting_for_input():
             self._reset()
             return
 

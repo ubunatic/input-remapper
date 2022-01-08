@@ -711,6 +711,7 @@ class TestIntegration(unittest.TestCase):
 
         # focus different selection_label
         self.editor.add_empty()
+        self.selection_labels.select_row(self.selection_labels.get_children()[-1])
         self.toggle.set_active(True)
 
         self.assertEqual(reader.get_unreleased_keys(), None)
@@ -1013,6 +1014,10 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(len(custom_mapping), 1)
         self.assertEqual(self.user_interface.preset_name, "asdf")
 
+        print()
+        print()
+        print()
+        print()
         self.user_interface.on_create_preset_clicked()
         self.assertEqual(self.user_interface.preset_name, "new preset")
         self.assertIsNone(custom_mapping.get_symbol(Key(EV_KEY, 14, 1)))
@@ -1193,8 +1198,9 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.on_create_preset_clicked()
 
         # the preset should be empty, only one empty selection_label present
+        print(selection_labels.get_children())
         self.assertEqual(len(selection_labels.get_children()), 1)
-        self.assertIsNone(custom_mapping.get("a.b"), 3)
+        self.assertIsNone(custom_mapping.get("a.b"))
 
         # add one new selection_label again and a setting
         self.add_mapping_via_ui(Key(EV_KEY, 81, 1), "b")
