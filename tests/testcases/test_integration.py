@@ -544,7 +544,7 @@ class TestIntegration(unittest.TestCase):
         )
 
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 30, 1)), "Shift_L")
-        self.assertEqual(self.editor.get_symbol(), "Shift_L")
+        self.assertEqual(self.editor.get_symbol_input_text(), "Shift_L")
         self.assertEqual(selection_label.get_key(), (EV_KEY, 30, 1))
 
     def sleep(self, num_events):
@@ -618,9 +618,9 @@ class TestIntegration(unittest.TestCase):
 
         if symbol and not code_first:
             # set the symbol to make the new selection_label complete
-            self.assertEqual(self.editor.get_symbol(), "")
+            self.assertEqual(self.editor.get_symbol_input_text(), "")
             self.editor.set_symbol(symbol)
-            self.assertEqual(self.editor.get_symbol(), symbol)
+            self.assertEqual(self.editor.get_symbol_input_text(), symbol)
 
         if self.toggle.get_active():
             self.assertEqual(self.toggle.get_label(), "Press Key")
@@ -677,7 +677,7 @@ class TestIntegration(unittest.TestCase):
 
         if not expect_success:
             self.assertIsNone(selection_label.get_key())
-            self.assertEqual(self.editor.get_symbol(), "")
+            self.assertEqual(self.editor.get_symbol_input_text(), "")
             self.assertFalse(self.editor.input_has_arrived)
             # it won't switch the focus to the symbol input
             self.assertTrue(self.toggle.get_active())
@@ -686,14 +686,14 @@ class TestIntegration(unittest.TestCase):
 
         if symbol and code_first:
             # set the symbol to make the new selection_label complete
-            self.assertEqual(self.editor.get_symbol(), "")
+            self.assertEqual(self.editor.get_symbol_input_text(), "")
             self.editor.set_symbol(symbol)
-            self.assertEqual(self.editor.get_symbol(), symbol)
+            self.assertEqual(self.editor.get_symbol_input_text(), symbol)
 
         # unfocus them to trigger some final logic
         self.set_focus(None)
         correct_case = system_mapping.correct_case(symbol)
-        self.assertEqual(self.editor.get_symbol(), correct_case)
+        self.assertEqual(self.editor.get_symbol_input_text(), correct_case)
         self.assertFalse(custom_mapping.has_unsaved_changes())
 
         self.set_focus(self.editor.get_text_input())
@@ -880,8 +880,58 @@ class TestIntegration(unittest.TestCase):
 
     def test_remove_selection_label(self):
         """Comprehensive test for selection_labels 2."""
-        # sleeps are added to be able to visually follow and debug the test.
-        # add two selection_labels by modifiying the one empty selection_label that exists
+
+        def remove(selection_label, code, symbol, num_selection_labels_after):
+            """Remove a selection_label by clicking the delete button.
+
+            Parameters
+            ----------
+            selection_label : SelectionLabel
+            code : int or None
+                keycode of the mapping that is associated with this selection_label
+            symbol : string
+                ouptut of the mapping that is associated with this selection_label
+            num_selection_labels_after : int
+                after deleting, how many selection_labels are expected to still be there
+            """
+            self.selection_labels.select_row(selection_label)
+
+            if code is not None and symbol is not None:
+                self.assertEqual(
+                    custom_mapping.get_symbol(Key(EV_KEY, code, 1)),
+                    symbol,
+                )
+
+            self.assertEqual(self.editor.get_symbol_input_text(), symbol)
+            if code is None:
+                self.assertIsNone(selection_label.get_key())
+            else:
+                self.assertEqual(selection_label.get_key(), Key(EV_KEY, code, 1))
+
+            with patch.object(
+                self.editor,
+                "show_confirm_delete",
+                lambda: Gtk.ResponseType.ACCEPT,
+            ):
+                self.editor._on_delete_button_clicked()
+
+            time.sleep(0.2)
+            gtk_iteration()
+
+            # if a reference to the selection_label is held somewhere and it is
+            # accidentally used again, make sure to not provide any outdated
+            # information that is supposed to be deleted
+            self.assertIsNone(selection_label.get_key())
+            if code is not None:
+                self.assertIsNone(custom_mapping.get_symbol(Key(EV_KEY, code, 1)))
+
+            self.assertEqual(
+                len(self.get_selection_labels()),
+                num_selection_labels_after,
+            )
+
+        # sleeps are added to be able to visually follow and debug the test. Add two
+        # selection_labels by modifiying the one empty selection_label that exists
         selection_label_1 = self.add_mapping_via_ui(Key(EV_KEY, 10, 1), "a")
         selection_label_2 = self.add_mapping_via_ui(Key(EV_KEY, 11, 1), "b")
         selection_label_3 = self.add_mapping_via_ui(None, "c")
@@ -893,51 +943,11 @@ class TestIntegration(unittest.TestCase):
 
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 11, 1)), "b")
 
-        def remove(selection_label, code, symbol, num_selection_labels_after):
-            """Remove a selection_label by clicking the delete button.
-
-            Parameters
-            ----------
-            selection_label : selection_label
-            code : int or None
-                keycode of the mapping that is displayed by this selection_label
-            symbol : string or None
-                ouptut of the mapping that is displayed by this selection_label
-            num_selection_labels_after : int
-                after deleting, how many selection_labels are expected to still be there
-            """
-            if code is not None and symbol is not None:
-                self.assertEqual(
-                    custom_mapping.get_symbol(Key(EV_KEY, code, 1)),
-                    symbol,
-                )
-
-            self.assertEqual(self.editor.get_symbol(), symbol)
-            if code is None:
-                self.assertIsNone(selection_label.get_key())
-            else:
-                self.assertEqual(selection_label.get_key(), Key(EV_KEY, code, 1))
-
-            selection_label._on_delete_button_clicked()
-            time.sleep(0.2)
-            gtk_iteration()
-
-            # if a reference to the selection_label is held somewhere and it is
-            # accidentally used again, make sure to not provide any outdated
-            # information that is supposed to be deleted
-            self.assertIsNone(selection_label.get_key())
-            self.assertEqual(self.editor.get_symbol(), "")
-            if code is not None:
-                self.assertIsNone(custom_mapping.get_symbol(Key(EV_KEY, code, 1)))
-            self.assertEqual(
-                len(self.get_selection_labels()), num_selection_labels_after
-            )
-
         remove(selection_label_1, 10, "a", 2)
         remove(selection_label_2, 11, "b", 1)
         # there is no empty selection_label at the moment, so after removing that one,
-        # which is the only selection_label, one empty selection_label will be there. So the number
-        # of selection_labels won't change.
+        # which is the only selection_label, one empty selection_label will be there.
+        # So the number of selection_labels won't change.
         remove(selection_label_3, None, "c", 1)
 
     def test_problematic_combination(self):
@@ -1204,14 +1214,14 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.on_copy_preset_clicked()
         self.assertEqual(self.user_interface.preset_name, "new preset 2 copy")
         self.assertEqual(len(selection_labels.get_children()), 2)
-        self.assertEqual(self.editor.get_symbol(), "b")
+        self.assertEqual(self.editor.get_symbol_input_text(), "b")
         self.assertEqual(custom_mapping.get(["foo", "bar"]), 2)
 
         # make another copy
         self.user_interface.on_copy_preset_clicked()
         self.assertEqual(self.user_interface.preset_name, "new preset 2 copy 2")
         self.assertEqual(len(selection_labels.get_children()), 2)
-        self.assertEqual(self.editor.get_symbol(), "b")
+        self.assertEqual(self.editor.get_symbol_input_text(), "b")
         self.assertEqual(len(custom_mapping), 1)
         self.assertEqual(custom_mapping.get("foo.bar"), 2)
 
@@ -1671,13 +1681,13 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.on_select_device(FakeDeviceDropdown("Bar Device"))
         self.assertEqual(self.user_interface.preset_name, "new preset")
         self.assertNotIn("asdf.json", os.listdir(get_preset_path("Bar Device")))
-        self.assertEqual(self.editor.get_symbol(), "")
+        self.assertEqual(self.editor.get_symbol_input_text(), "")
 
         # 3. switch to the device with the same name
         self.user_interface.on_select_device(FakeDeviceDropdown("Foo Device"))
         # the newest preset is asdf, it should be automatically selected
         self.assertEqual(self.user_interface.preset_name, "asdf")
-        self.assertEqual(self.editor.get_symbol(), "qux")
+        self.assertEqual(self.editor.get_symbol_input_text(), "qux")
 
 
 if __name__ == "__main__":

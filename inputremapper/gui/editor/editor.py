@@ -48,6 +48,7 @@ class SelectionLabel(Gtk.ListBoxRow):
     def __init__(self):
         super().__init__()
         self.key = None
+        self.symbol = ""
 
         label = Gtk.Label()
 
@@ -74,6 +75,27 @@ class SelectionLabel(Gtk.ListBoxRow):
             self.label.set_label(key.beautify())
         else:
             self.label.set_label("new entry")
+
+    def remember_symbol(self, symbol):
+        """Remember the symbol.
+
+        If this SelectionLabel is not yet stored in custom_mapping because the mapping
+        is not complete, this information needs to be kept somewhere.
+        """
+        self.symbol = symbol
+
+    def get_stored_symbol(self):
+        """Get the symbol this entry represents.
+
+        If there is nothing in custom_mapping, maybe this remembers what this was
+        supposed to map to. This is important if the entry was not finished yet
+        and therefore not stored.
+        """
+        if self.key:
+            return custom_mapping.get_symbol(self.key)
+
+        # this mapping was not complete yet, recall the symbol
+        return self.symbol
 
     def get_key(self):
         return self.key
@@ -185,7 +207,7 @@ class Editor:
     def line_numbers_if_multiline(self, *_):
         """Show line numbers if a macro is being edited."""
         code_editor = self.get("code_editor")
-        symbol = self.get_symbol() or ""
+        symbol = self.get_symbol_input_text() or ""
 
         if "\n" in symbol:
             code_editor.set_show_line_numbers(True)
@@ -217,6 +239,9 @@ class Editor:
 
         Load the information from that mapping entry into the editor.
         """
+        if self.active_selection_label is not None:
+            self.active_selection_label.remember_symbol(self.get_symbol_input_text())
+
         self.active_selection_label = selection_label
 
         if selection_label is None:
@@ -226,7 +251,9 @@ class Editor:
         self.set_key(key)
 
         if key is None:
-            self.set_symbol("")
+            # clicked on an incomplete new mapping entry. Load the unfinished
+            # information from the SelectionLabel
+            self.set_symbol(selection_label.get_symbol())
         else:
             self.set_symbol(custom_mapping.get_symbol(key))
 
@@ -287,11 +314,14 @@ class Editor:
 
         return self.active_selection_label.key
 
-    def get_symbol(self):
-        """Get the assigned symbol from the middle column.
+    def get_symbol_input_text(self):
+        """Get the assigned symbol from the text input.
 
-        If there is no symbol, this returns None. This is important for
-        some other logic down the road in custom_mapping or something.
+        This might not be stored in custom_mapping yet, and might therefore also not
+        be part of the preset json file yet.
+
+        If there is no symbol, this returns None. This is important for some other
+        logic down the road in custom_mapping or something.
         """
         buffer = self.get("code_editor").get_buffer()
         symbol = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
@@ -314,14 +344,19 @@ class Editor:
     def _on_delete_button_clicked(self, *_):
         """Destroy the row and remove it from the config."""
         accept = Gtk.ResponseType.ACCEPT
-        if len(self.get_symbol()) > 0 and self.show_confirm_delete() != accept:
+        if (
+            len(self.get_symbol_input_text()) > 0
+            and self.show_confirm_delete() != accept
+        ):
             return
 
         key = self.get_key()
         if key is not None:
             custom_mapping.clear(key)
 
-        self.set_symbol("")
+        # make sure there is no outdated information lying around in memory
+        self.set_key(None)
+
         self.load_custom_mapping()
 
     def show_confirm_delete(self):
@@ -338,8 +373,13 @@ class Editor:
 
     def save_changes(self, *_):
         """Save the preset and correct the input casing."""
+        if self.active_selection_label:
+            # if this entry cannot be saved yet, remember it to avoid having
+            # to type in the mapping again.
+            self.active_selection_label.remember_symbol(self.get_symbol_input_text())
+
         # correct case
-        symbol = self.get_symbol()
+        symbol = self.get_symbol_input_text()
 
         if not symbol:
             return
@@ -414,7 +454,7 @@ class Editor:
 
         self.set_key(key)
 
-        symbol = self.get_symbol()
+        symbol = self.get_symbol_input_text()
 
         # the symbol is empty and therefore the mapping is not complete
         if not symbol:
