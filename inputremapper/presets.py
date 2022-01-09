@@ -85,12 +85,10 @@ def get_presets(group_name):
 def get_any_preset():
     """Return the first found tuple of (device, preset)."""
     group_names = groups.list_group_names()
-    print("WAS ZUM FICK 3", group_names)
     if len(group_names) == 0:
         return None, None
     any_device = list(group_names)[0]
     any_preset = (get_presets(any_device) or [None])[0]
-    print("WAS ZUM FICK 4", any_device, any_preset)
     return any_device, any_preset
 
 
@@ -107,18 +105,14 @@ def find_newest_preset(group_name=None):
     """
     # sort the oldest files to the front in order to use pop to get the newest
     if group_name is None:
-        print("glob", os.path.join(get_preset_path(), "*/*.json"))
         paths = sorted(
             glob.glob(os.path.join(get_preset_path(), "*/*.json")), key=os.path.getmtime
         )
     else:
-        print("glob", os.path.join(get_preset_path(group_name), "*.json"))
         paths = sorted(
             glob.glob(os.path.join(get_preset_path(group_name), "*.json")),
             key=os.path.getmtime,
         )
-
-    print("WAS ZUM FICK 1", paths)
 
     if len(paths) == 0:
         logger.debug("No presets found")
@@ -135,8 +129,6 @@ def find_newest_preset(group_name=None):
         if group_name in group_names:
             newest_path = path
             break
-
-    print("WAS ZUM FICK 2", newest_path)
 
     if newest_path is None:
         return get_any_preset()

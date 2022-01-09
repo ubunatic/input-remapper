@@ -461,15 +461,10 @@ class _Groups:
 
     def set_groups(self, new_groups):
         """Overwrite all groups."""
-        print('###### set_groups ######')
-        import traceback
-        traceback.print_stack()
-        print(new_groups)
         self._groups = new_groups
 
     def list_group_names(self):
         """Return a list of all 'name' properties of the groups."""
-        print("WAS ZUM FICK 5", self._groups)
         return [
             group.name
             for group in self._groups
