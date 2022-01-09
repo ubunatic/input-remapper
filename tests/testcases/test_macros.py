@@ -179,7 +179,7 @@ class TestMacros(MacroTestBase):
         self.assertEqual(_type_check("1", [int, None], "foo", 1), 1)
         self.assertEqual(_type_check(1.2, [str], "foo", 2), "1.2")
 
-        self.assertRaises(TypeError, lambda: _type_check("1.2", [int], "foo", 3), 1.2)
+        self.assertRaises(TypeError, lambda: _type_check("1.2", [int], "foo", 3))
         self.assertRaises(TypeError, lambda: _type_check("a", [None], "foo", 0))
         self.assertRaises(TypeError, lambda: _type_check("a", [int], "foo", 1))
         self.assertRaises(TypeError, lambda: _type_check("a", [int, float], "foo", 2))

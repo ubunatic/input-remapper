@@ -178,19 +178,14 @@ class Editor:
             self.set_key(None)
 
         self.set_symbol_input_text("")
-        # TODO test that after deleting the last preset it shows the help text again:
         self.disable_symbol_input()
         self._reset_keycode_consumption()
 
         selection_label_listbox = self.get("selection_label_listbox")
-        # TODO test that deleting the last preset clears the selection_label_listbox.
-        #  since the preset name doesnt change when doing so it is a bit special
         selection_label_listbox.forall(selection_label_listbox.remove)
         self.add_empty()
 
         selection_label_listbox.select_row(selection_label_listbox.get_children()[0])
-        # TODO test that after deleting the last preset it selects the empty row
-        #  by default. active_selection_label should be set correctly afterwards
 
     def _setup_recording_toggle(self):
         """Prepare the toggle button for recording key inputs."""

@@ -330,13 +330,23 @@ class TestGui(unittest.TestCase):
     def test_gui_clean(self):
         # check that the test is correctly set up so that the user interface is clean
         selection_labels = self.selection_label_listbox.get_children()
-        self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(len(selection_labels), 1)
+        self.assertEqual(self.editor.active_selection_label, selection_labels[0])
+        self.assertEqual(
+            self.selection_label_listbox.get_selected_row(),
+            selection_labels[0],
+        )
+        self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(selection_labels[0].get_label(), "new entry")
         self.assertEqual(self.editor.get_symbol_input_text(), "")
         preset_selection = self.user_interface.get("preset_selection")
         self.assertEqual(preset_selection.get_active_id(), "new preset")
         self.assertEqual(len(custom_mapping), 0)
+        self.assertEqual(self.editor.get_recording_toggle().get_label(), "Change Key")
+        # shows the help text since no key is currently set
+        buffer = self.editor.get_text_input().get_buffer()
+        symbol = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+        self.assertEqual(symbol, SET_KEY_FIRST)
 
     def test_ctrl_q(self):
         closed = False
@@ -721,7 +731,9 @@ class TestGui(unittest.TestCase):
             return selection_label
 
         if key is None:
-            self.assertEqual(self.editor.get_symbol_input_text(), SET_KEY_FIRST)
+            # TODO no coverage, remove
+            raise Exception("wtf?")
+            self.assertEqual(self.editor.get_symbol_input_text(), "")
 
         # set the symbol to make the new selection_label complete
         self.editor.set_symbol_input_text(symbol)

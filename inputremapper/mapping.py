@@ -102,20 +102,17 @@ class Mapping(ConfigBase):
             raise TypeError(f"Expected {new_key} to be a Key object")
 
         if symbol is None or symbol.strip() == "":
-            # TODO test .strip
             raise ValueError("Expected `symbol` not to be empty")
 
         symbol = symbol.strip()
 
         if previous_key is None and self._mapping.get(new_key):
             # the key didn't change
-            # TODO test
             previous_key = new_key
 
         key_changed = new_key != previous_key
         if not key_changed and symbol == self._mapping.get(new_key):
             # nothing was changed, no need to act
-            # TODO test
             return
 
         self.clear(new_key)  # this also clears all equivalent keys
@@ -222,7 +219,7 @@ class Mapping(ConfigBase):
         """Create a copy of the mapping."""
         mapping = Mapping()
         mapping._mapping = copy.deepcopy(self._mapping)
-        mapping.set_has_unsaved_changes(self)._changed
+        mapping.set_has_unsaved_changes(self._changed)
         return mapping
 
     def save(self, path):

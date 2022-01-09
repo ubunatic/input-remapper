@@ -22,6 +22,7 @@
 import os
 import unittest
 import json
+from unittest.mock import patch
 
 from evdev.ecodes import EV_KEY, EV_ABS, KEY_A
 
@@ -261,6 +262,26 @@ class TestMapping(unittest.TestCase):
         self.assertEqual(len(self.mapping), 2)
 
         self.assertEqual(self.mapping.num_saved_keys, 0)
+
+    def test_rejects_empty(self):
+        key = Key(EV_KEY, 1, 111)
+        self.assertEqual(len(self.mapping), 0)
+        self.assertRaises(ValueError, lambda: self.mapping.change(key, " \n "))
+        self.assertEqual(len(self.mapping), 0)
+
+    def test_avoids_redundant_changes(self):
+        # to avoid logs that don't add any value
+        def clear(*_):
+            # should not be called
+            raise AssertionError
+
+        key = Key(EV_KEY, 987, 1)
+        symbol = "foo"
+
+        self.mapping.change(key, symbol)
+        with patch.object(self.mapping, "clear", clear):
+            self.mapping.change(key, symbol)
+            self.mapping.change(key, symbol, previous_key=key)
 
     def test_combinations(self):
         ev_1 = Key(EV_KEY, 1, 111)
