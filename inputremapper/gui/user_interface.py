@@ -160,7 +160,6 @@ class UserInterface:
         builder.connect_signals(self)
         self.builder = builder
 
-        # TODO read from config which one to show on start
         self.editor = Editor(self)
 
         # set up the device selection
@@ -494,8 +493,6 @@ class UserInterface:
         is_autoloaded = config.is_autoloaded(self.group.key, self.preset_name)
         if is_autoloaded:
             config.set_autoload_preset(self.group.key, new_name)
-            # TODO always save_config in set_autoload_preset?
-            config.save_config()
 
         self.get("preset_name_input").set_text("")
         self.populate_presets()
@@ -571,7 +568,6 @@ class UserInterface:
         key = self.group.key
         preset = self.preset_name
         config.set_autoload_preset(key, preset if active else None)
-        config.save_config()
         # tell the service to refresh its config
         self.dbus.set_config_dir(get_config_path())
 
@@ -741,7 +737,6 @@ class UserInterface:
 
         try:
             assert self.preset_name is not None
-            print('shitduhurensohn', self.preset_name)
             path = self.group.get_preset_path(self.preset_name)
             custom_mapping.save(path)
 

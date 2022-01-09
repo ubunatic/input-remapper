@@ -138,10 +138,35 @@ class Editor:
         toggle.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
 
         text_input = self.get_text_input()
-        text_input.connect("focus-out-event", self.gather_changes_and_save)
+        text_input.connect("focus-out-event", self.on_text_input_unfocus)
 
         delete_button = self.get_delete_button()
         delete_button.connect("clicked", self._on_delete_button_clicked)
+
+    @ensure_everything_saved
+    def on_text_input_unfocus(self, *_):
+        """When unfocusing the text it saves.
+
+        Input Remapper doesn't save the editor on change, because that would cause
+        an incredible amount of logs for every single input. The custom_mapping would
+        need to be changed, which causes two logs, then it has to be saved
+        to disk which is another two log messages. So every time a single character
+        is typed it writes 4 lines.
+
+        Instead, it will save the preset when it is really needed, i.e. when a button
+        that requires a saved preset is pressed. For this there exists the
+        @ensure_everything_saved decorator.
+
+        To avoid maybe forgetting to add this decorator somewhere, it will also save
+        when unfocusing the text input.
+
+        If the scroll wheel is used to interact with gtk widgets it won't unfocus,
+        so this focus-out handler is not the solution to everything as well.
+
+        One could debounce saving on text-change to avoid those logs, but that just
+        sounds like a huge source of race conditions and is also hard to test.
+        """
+        pass
 
     def clear(self):
         """Clear all inputs, labels, etc. Reset the state.
