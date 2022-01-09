@@ -44,7 +44,7 @@ from importlib.machinery import SourceFileLoader
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GLib, Gdk
+from gi.repository import Gtk, GLib, Gdk, GtkSource
 
 from inputremapper.system_mapping import system_mapping, XMODMAP_FILENAME
 from inputremapper.gui.custom_mapping import custom_mapping
@@ -1789,6 +1789,34 @@ class TestGui(unittest.TestCase):
         self.editor.set_symbol_input_text("foo")
         self.editor.enable_symbol_input()
         self.assertEqual(self.get_unfiltered_symbol_input_text(), "foo")
+
+    def test_autocompletion(self):
+        self.add_mapping_via_ui(Key(1, 99, 1), "")
+        source_view = self.editor.get_text_input()
+        self.set_focus(source_view)
+        Gtk.TextView.do_insert_at_cursor(source_view, "BTN_")
+
+        time.sleep(0.11)
+        gtk_iteration()
+
+        autocompletion = self.editor.autocompletion
+
+        # the autocompletion should be open now
+        self.assertTrue(autocompletion.visible)
+
+        def press_key(keyval):
+            # Gdk.KEY_Down, Gdk.KEY_Up, Gdk.KEY_Return
+            event = Gdk.EventKey()
+            event.keyval = keyval
+            autocompletion.navigate(None, event)
+
+        press_key(Gdk.KEY_Down)
+        press_key(Gdk.KEY_Return)
+
+        # the first entry should have been selected
+        modified_symbol = self.editor.get_symbol_input_text().strip()
+        self.assertNotEqual(modified_symbol, "BTN_")
+        self.assertGreater(len(modified_symbol), 4)
 
 
 if __name__ == "__main__":

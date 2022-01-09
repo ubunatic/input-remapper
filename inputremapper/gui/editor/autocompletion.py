@@ -22,9 +22,6 @@
 """Autocompletion for the editor."""
 
 
-# TODO test
-
-
 import re
 
 from gi.repository import Gdk, Gtk, GLib, GObject, GtkSource
@@ -128,93 +125,26 @@ def propose_function_names(text_iter):
     ]
 
 
-def propose_function_parameters(text_iter):
-    """Find parameter names that match the function at the cursor."""
-    left_text = _get_left_text(text_iter)
-
-    if left_text.endswith("="):
-        # this is not the time to propose more parameters, the pervious one
-        # is not completely configured.
-        return []
-
-    # find the current function that is being constructed
-    #   "qux().foo(bar=key(), blub, 5,"
-    # should result in
-    #   "foo"
-    function_name = ""
-    brackets = 0
-    i = 0
-    comma_found = False
-    for i in range(len(left_text) - 1, 0, -1):
-        char = left_text[i]
-
-        if char == "=" and not comma_found:
-            # one parameter is not fully configured yet, don't suggest more parameters
-            return []
-
-        if char == ",":
-            comma_found = True
-
-        if char == "(" and brackets == 0:
-            # the name of the function for which the parameters are being
-            # autocompleted is found
-            remaining = left_text[0:i]
-            match = re.match(rf"(?:{FUNCTION_CHAIN}|{PARAMETER}|^)(\w+)$", remaining)
-
-            if match is None:
-                return []
-
-            function_name = match[1]
-            break
-
-        if char == ")":
-            brackets += 1
-
-        if char == "(":
-            brackets -= 1
-
-    if function_name == "":
-        return []
-
-    # get all parameter names that are already in use
-    used_parameters = re.findall(r"(\w+)=", left_text[i:])
-
-    # usually something like add_key or add_if_eq
-    add_call = FUNCTIONS.get(function_name)
-
-    if add_call is None:
-        logger.debug("Unknown function %s", function_name)
-        return []
-
-    # look up possible parameters
-    parameters = get_macro_argument_names(add_call)
-    return [
-        (f"{name}=", f"{name}=") for name in parameters if name not in used_parameters
-    ]
-
-
 debounces = {}
 
 
-def debounce(timeout):
+def debounce(func):
     """Debounce a function call to improve performance."""
+    def clear_debounce(self, *args):
+        debounces[func.__name__] = None
+        return func(self, *args)
 
-    def decorator(func):
-        def clear_debounce(self, *args):
-            debounces[func.__name__] = None
-            return func(self, *args)
+    def wrapped(self, *args):
+        if debounces.get(func.__name__) is not None:
+            GLib.source_remove(debounces[func.__name__])
 
-        def wrapped(self, *args):
-            if debounces.get(func.__name__) is not None:
-                GLib.source_remove(debounces[func.__name__])
+        timeout = self.debounce_timeout
 
-            debounces[func.__name__] = GLib.timeout_add(
-                timeout, lambda: clear_debounce(self, *args)
-            )
+        debounces[func.__name__] = GLib.timeout_add(
+            timeout, lambda: clear_debounce(self, *args)
+        )
 
-        return wrapped
-
-    return decorator
+    return wrapped
 
 
 class SuggestionLabel(Gtk.Label):
@@ -253,6 +183,8 @@ class Autocompletion(Gtk.Popover):
             constrain_to=Gtk.PopoverConstraint.NONE,
         )
 
+        self.debounce_timeout = 100
+
         self.text_input = text_input
 
         self.scrolled_window = Gtk.ScrolledWindow(
@@ -284,7 +216,7 @@ class Autocompletion(Gtk.Popover):
         # the popover is hidden due to focus-out-event
         text_input.connect("focus-out-event", self.on_text_input_unfocus)
 
-        text_input.get_buffer().connect("changed", debounce(100)(self.update))
+        text_input.get_buffer().connect("changed", self.update)
 
         self.set_position(Gtk.PositionType.BOTTOM)
 
@@ -393,6 +325,7 @@ class Autocompletion(Gtk.Popover):
         self.visible = False
         super().popdown()
 
+    @debounce
     def update(self, *_):
         """Find new autocompletion suggestions and display them. Hide if none."""
         if not self.text_input.is_focus():
@@ -420,8 +353,6 @@ class Autocompletion(Gtk.Popover):
         text_iter = self._get_text_iter_at_cursor()
         suggested_names = propose_function_names(text_iter)
         suggested_names += propose_symbols(text_iter)
-        # TODO backup code of propose_function_parameters somewhere
-        # suggested_names += propose_function_parameters(text_iter)
 
         if len(suggested_names) == 0:
             self.popdown()

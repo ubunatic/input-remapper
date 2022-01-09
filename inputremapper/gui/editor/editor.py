@@ -111,6 +111,8 @@ class Editor:
     def __init__(self, user_interface):
         self.user_interface = user_interface
 
+        self.autocompletion = None
+
         self._setup_source_view()
         self._setup_recording_toggle()
 
@@ -239,6 +241,7 @@ class Editor:
         autocompletion = Autocompletion(source_view)
         autocompletion.set_relative_to(self.get("code_editor_container"))
         autocompletion.connect("suggestion-inserted", self.gather_changes_and_save)
+        self.autocompletion = autocompletion
 
     def show_line_numbers_if_multiline(self, *_):
         """Show line numbers if a macro is being edited."""
