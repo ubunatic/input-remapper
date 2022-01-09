@@ -44,7 +44,7 @@ from importlib.machinery import SourceFileLoader
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, GLib, Gdk
 
 from inputremapper.system_mapping import system_mapping, XMODMAP_FILENAME
 from inputremapper.gui.custom_mapping import custom_mapping
@@ -236,7 +236,36 @@ class TestGroupsFromHelper(unittest.TestCase):
         self.assertEqual(self.user_interface.group.name, "Foo Device")
 
 
-class TestIntegration(unittest.TestCase):
+class PatchedConfirmDelete:
+    def __init__(self, user_interface, response=Gtk.ResponseType.ACCEPT):
+        self.response = response
+        self.user_interface = user_interface
+        self.patch = None
+
+    def _confirm_delete_run_patch(self):
+        """A patch for the deletion confirmation that briefly shows the dialog."""
+        confirm_delete = self.user_interface.confirm_delete
+        # the emitted signal causes the dialog to close
+        GLib.timeout_add(
+            100,
+            lambda: confirm_delete.emit("response", self.response),
+        )
+        Gtk.MessageDialog.run(confirm_delete)  # don't recursively call the patch
+        return self.response
+
+    def __enter__(self):
+        self.patch = patch.object(
+            self.user_interface.get("confirm-delete"),
+            "run",
+            self._confirm_delete_run_patch,
+        )
+        self.patch.__enter__()
+
+    def __exit__(self, *args, **kwargs):
+        self.patch.__exit__(*args, **kwargs)
+
+
+class TestGui(unittest.TestCase):
     """For tests that use the window.
 
     Try to modify the configuration only by calling functions of the window.
@@ -264,6 +293,7 @@ class TestIntegration(unittest.TestCase):
         self.selection_label_listbox = self.user_interface.get(
             "selection_label_listbox"
         )
+        self.window = self.user_interface.get("window")
 
         self.grab_fails = False
 
@@ -273,7 +303,7 @@ class TestIntegration(unittest.TestCase):
 
         evdev.InputDevice.grab = grab
 
-        config.save_config()
+        config._save_config()
 
     def tearDown(self):
         clean_up_integration(self)
@@ -296,6 +326,17 @@ class TestIntegration(unittest.TestCase):
     def test_can_start(self):
         self.assertIsNotNone(self.user_interface)
         self.assertTrue(self.user_interface.window.get_visible())
+
+    def test_gui_clean(self):
+        # check that the test is correctly set up so that the user interface is clean
+        selection_labels = self.selection_label_listbox.get_children()
+        self.assertEqual(len(custom_mapping), 0)
+        self.assertEqual(len(selection_labels), 1)
+        self.assertEqual(selection_labels[0].get_label(), "new entry")
+        self.assertEqual(self.editor.get_symbol_input_text(), "")
+        preset_selection = self.user_interface.get("preset_selection")
+        self.assertEqual(preset_selection.get_active_id(), "new preset")
+        self.assertEqual(len(custom_mapping), 0)
 
     def test_ctrl_q(self):
         closed = False
@@ -909,11 +950,7 @@ class TestIntegration(unittest.TestCase):
             else:
                 self.assertEqual(selection_label.get_key(), Key(EV_KEY, code, 1))
 
-            with patch.object(
-                self.editor,
-                "_show_confirm_delete",
-                lambda: Gtk.ResponseType.ACCEPT,
-            ):
+            with PatchedConfirmDelete(self.user_interface):
                 self.editor._on_delete_button_clicked()
 
             time.sleep(0.2)
@@ -1004,11 +1041,7 @@ class TestIntegration(unittest.TestCase):
             status = self.get_status_text()
             self.assertIn("Permission denied", status)
 
-        with patch.object(
-            self.user_interface,
-            "show_confirm_delete",
-            lambda: Gtk.ResponseType.ACCEPT,
-        ):
+        with PatchedConfirmDelete(self.user_interface):
             self.user_interface.on_delete_preset_clicked(None)
             self.assertFalse(os.path.exists(preset_path))
 
@@ -1022,18 +1055,21 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(len(custom_mapping), 1)
         self.assertEqual(self.user_interface.preset_name, "asdf")
 
-        print()
-        print()
-        print()
-        print()
         self.user_interface.on_create_preset_clicked()
         self.assertEqual(self.user_interface.preset_name, "new preset")
-        self.assertIsNone(custom_mapping.get_symbol(Key(EV_KEY, 14, 1)))
+        self.assertEqual(len(self.selection_label_listbox.get_children()), 1)
+        self.assertEqual(len(custom_mapping), 0)
         self.user_interface.save_preset()
+
+        # symbol and code in the gui won't be carried over after selecting a preset
+        self.editor.set_key(Key(EV_KEY, 15, 1))
+        self.editor.set_symbol_input_text("b")
 
         # selecting the first preset again loads the saved mapping
         self.user_interface.on_select_preset(FakePresetDropdown("asdf"))
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 14, 1)), "a")
+        self.assertEqual(len(custom_mapping), 1)
+        self.assertEqual(len(self.selection_label_listbox.get_children()), 2)
         config.set_autoload_preset("Foo Device", "new preset")
 
         # renaming a preset to an existing name appends a number
@@ -1044,6 +1080,8 @@ class TestIntegration(unittest.TestCase):
         # and that added number is correctly used in the autoload
         # configuration as well
         self.assertTrue(config.is_autoloaded("Foo Device", "asdf 2"))
+        self.assertEqual(len(custom_mapping), 1)
+        self.assertEqual(len(self.selection_label_listbox.get_children()), 2)
 
         self.assertEqual(self.user_interface.get("preset_name_input").get_text(), "")
 
@@ -1621,25 +1659,17 @@ class TestIntegration(unittest.TestCase):
         self.user_interface.save_preset()
         self.assertTrue(os.path.exists(get_preset_path("Foo Device", "asdf")))
 
-        with patch.object(
-            self.user_interface,
-            "show_confirm_delete",
-            lambda: Gtk.ResponseType.CANCEL,
-        ):
+        with PatchedConfirmDelete(self.user_interface, Gtk.ResponseType.CANCEL):
             self.user_interface.on_delete_preset_clicked(None)
             self.assertTrue(os.path.exists(get_preset_path("Foo Device", "asdf")))
             self.assertEqual(self.user_interface.preset_name, "asdf")
             self.assertEqual(self.user_interface.group.name, "Foo Device")
 
-        with patch.object(
-            self.user_interface,
-            "show_confirm_delete",
-            lambda: Gtk.ResponseType.ACCEPT,
-        ):
-            self.user_interface.on_delete_preset_clicked(None)
-            self.assertFalse(os.path.exists(get_preset_path("Foo Device", "asdf")))
-            self.assertEqual(self.user_interface.preset_name, "new preset")
-            self.assertEqual(self.user_interface.group.name, "Foo Device")
+            with PatchedConfirmDelete(self.user_interface):
+                self.user_interface.on_delete_preset_clicked(None)
+                self.assertFalse(os.path.exists(get_preset_path("Foo Device", "asdf")))
+                self.assertEqual(self.user_interface.preset_name, "new preset")
+                self.assertEqual(self.user_interface.group.name, "Foo Device")
 
     def test_populate_devices(self):
         preset_selection = self.user_interface.get("preset_selection")
@@ -1713,6 +1743,24 @@ class TestIntegration(unittest.TestCase):
         # the newest preset is asdf, it should be automatically selected
         self.assertEqual(self.user_interface.preset_name, "asdf")
         self.assertEqual(self.editor.get_symbol_input_text(), "qux")
+
+    def test_delete_last_preset(self):
+        with PatchedConfirmDelete(self.user_interface):
+            # add some rows
+            for code in range(3):
+                self.add_mapping_via_ui(Key(1, code, 1), "qux")
+
+            self.user_interface.on_delete_preset_clicked()
+            # the ui should be clear now
+            self.test_gui_clean()
+            device_path = f"{CONFIG_PATH}/presets/{self.user_interface.group.key}"
+            self.assertTrue(os.path.exists(f"{device_path}/new preset.json"))
+
+            self.user_interface.on_delete_preset_clicked()
+            # deleting an empty preset als doesn't do weird stuff
+            self.test_gui_clean()
+            device_path = f"{CONFIG_PATH}/presets/{self.user_interface.group.key}"
+            self.assertTrue(os.path.exists(f"{device_path}/new preset.json"))
 
 
 if __name__ == "__main__":

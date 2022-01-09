@@ -339,7 +339,7 @@ class Daemon:
 
         if not isinstance(preset, str):
             # maybe another dict or something, who knows. Broken config
-            logger.error('Expected a string for autoload, but got %s', preset)
+            logger.error("Expected a string for autoload, but got %s", preset)
             return
 
         logger.info('Autoloading for "%s"', group.key)

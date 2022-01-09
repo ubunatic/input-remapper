@@ -498,7 +498,7 @@ class UserInterface:
         self.populate_presets()
 
     @if_preset_selected
-    def on_delete_preset_clicked(self, _):
+    def on_delete_preset_clicked(self, *_):
         """Delete a preset from the file system."""
         accept = Gtk.ResponseType.ACCEPT
         if len(custom_mapping) > 0 and self.show_confirm_delete() != accept:

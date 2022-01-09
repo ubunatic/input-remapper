@@ -591,7 +591,7 @@ def quick_cleanup(log=True):
 
     config.path = os.path.join(get_config_path(), "config.json")
     config.clear_config()
-    config.save_config()
+    config._save_config()
 
     system_mapping.populate()
 
@@ -657,7 +657,7 @@ def main():
     # so provide both options.
     if len(modules) > 0:
         # for example
-        # `tests/test.py test_integration.TestIntegration.test_can_start`
+        # `tests/test.py test_integration.TestGui.test_can_start`
         # or `tests/test.py test_integration test_daemon`
         testsuite = unittest.defaultTestLoader.loadTestsFromNames(
             [f"testcases.{module}" for module in modules]
