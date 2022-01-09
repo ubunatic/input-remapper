@@ -988,6 +988,8 @@ class TestModifyCapabilities(unittest.TestCase):
     def test_construct_capabilities(self):
         self.mapping.change(Key(EV_KEY, 60, 1), self.macro.code)
 
+        print("alökdjf", groups._groups)
+        print("alökdjf2", [hurensohn.name for hurensohn in groups._groups])
         self.injector = Injector(groups.find(name="foo"), self.mapping)
         self.injector.context = Context(self.mapping)
 

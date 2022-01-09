@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     def stop():
         global user_interface
-        del user_interface
+        user_interface.on_close()
 
     atexit.register(stop)
 

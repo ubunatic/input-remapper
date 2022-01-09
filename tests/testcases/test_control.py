@@ -156,7 +156,6 @@ class TestControl(unittest.TestCase):
         )
         self.assertEqual(stop_counter, 3)
         config.set_autoload_preset(groups_[1].key, presets[2])
-        config.save_config()
         communicate(
             options("autoload", None, None, groups_[1].key, False, False, False), daemon
         )
@@ -214,10 +213,9 @@ class TestControl(unittest.TestCase):
         config.load_config()
         config.set_autoload_preset(device_names[0], presets[0])
         config.set_autoload_preset(device_names[1], presets[1])
-        config.save_config()
 
         communicate(
-            options("autoload", config_dir, None, None, False, False, False), daemon
+            options("autoload", config_dir, None, None, False, False, False), daemon,
         )
 
         self.assertEqual(len(start_history), 2)
@@ -238,13 +236,13 @@ class TestControl(unittest.TestCase):
         daemon.stop_all = lambda *args: stop_all_history.append(args)
 
         communicate(
-            options("start", None, preset, group.paths[0], False, False, False), daemon
+            options("start", None, preset, group.paths[0], False, False, False), daemon,
         )
         self.assertEqual(len(start_history), 1)
         self.assertEqual(start_history[0], (group.key, preset))
 
         communicate(
-            options("stop", None, None, group.paths[1], False, False, False), daemon
+            options("stop", None, None, group.paths[1], False, False, False), daemon,
         )
         self.assertEqual(len(stop_history), 1)
         # provided any of the groups paths as --device argument, figures out

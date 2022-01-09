@@ -627,6 +627,8 @@ def quick_cleanup(log=True):
 
     assert macro_variables.is_alive(1)
 
+    groups.refresh()
+
 
 def cleanup():
     """Reset the applications state.
