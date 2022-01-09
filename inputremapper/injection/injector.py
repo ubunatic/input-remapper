@@ -96,7 +96,6 @@ class Injector(multiprocessing.Process):
             the device group
         mapping : Mapping
         """
-        assert group is not None
         self.group = group
         self._state = UNKNOWN
 

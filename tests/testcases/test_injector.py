@@ -988,9 +988,7 @@ class TestModifyCapabilities(unittest.TestCase):
     def test_construct_capabilities(self):
         self.mapping.change(Key(EV_KEY, 60, 1), self.macro.code)
 
-        print("alökdjf", groups._groups)
-        print("alökdjf2", [hurensohn.name for hurensohn in groups._groups])
-        self.injector = Injector(groups.find(name="foo"), self.mapping)
+        self.injector = Injector(None, self.mapping)
         self.injector.context = Context(self.mapping)
 
         capabilities = self.injector._construct_capabilities(gamepad=False)
@@ -1011,7 +1009,7 @@ class TestModifyCapabilities(unittest.TestCase):
 
         # I don't know what ABS_VOLUME is, for now I would like to just always
         # remove it until somebody complains, since its presence broke stuff
-        self.injector = Injector(groups.find(name="foo"), self.mapping)
+        self.injector = Injector(None, self.mapping)
         self.fake_device._capabilities = {
             EV_ABS: [ABS_VOLUME, (ABS_X, evdev.AbsInfo(0, 0, 500, 0, 0, 0))],
             EV_KEY: [1, 2, 3],
@@ -1034,7 +1032,7 @@ class TestModifyCapabilities(unittest.TestCase):
         config.set("gamepad.joystick.left_purpose", MOUSE)
         self.mapping.set("gamepad.joystick.right_purpose", WHEEL)
 
-        self.injector = Injector(groups.find(name="foo"), self.mapping)
+        self.injector = Injector(None, self.mapping)
         self.injector.context = Context(self.mapping)
         self.assertTrue(self.injector.context.maps_joystick())
         self.assertTrue(self.injector.context.joystick_as_mouse())
@@ -1056,7 +1054,7 @@ class TestModifyCapabilities(unittest.TestCase):
         config.set("gamepad.joystick.left_purpose", NONE)
         self.mapping.set("gamepad.joystick.right_purpose", NONE)
 
-        self.injector = Injector(groups.find(name="foo"), self.mapping)
+        self.injector = Injector(None, self.mapping)
         self.injector.context = Context(self.mapping)
         self.assertFalse(self.injector.context.maps_joystick())
         self.assertFalse(self.injector.context.joystick_as_mouse())
@@ -1073,7 +1071,7 @@ class TestModifyCapabilities(unittest.TestCase):
         config.set("gamepad.joystick.left_purpose", BUTTONS)
         self.mapping.set("gamepad.joystick.right_purpose", BUTTONS)
 
-        self.injector = Injector(groups.find(name="foo"), self.mapping)
+        self.injector = Injector(None, self.mapping)
         self.injector.context = Context(self.mapping)
         self.assertTrue(self.injector.context.maps_joystick())
         self.assertFalse(self.injector.context.joystick_as_mouse())
@@ -1092,7 +1090,7 @@ class TestModifyCapabilities(unittest.TestCase):
         config.set("gamepad.joystick.left_purpose", BUTTONS)
         self.mapping.set("gamepad.joystick.right_purpose", BUTTONS)
 
-        self.injector = Injector(groups.find(name="foo"), self.mapping)
+        self.injector = Injector(None, self.mapping)
         self.injector.context = Context(self.mapping)
 
         capabilities = self.injector._construct_capabilities(gamepad=False)

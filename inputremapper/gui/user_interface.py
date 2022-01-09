@@ -317,11 +317,8 @@ class UserInterface:
         """Get a widget from the window"""
         return self.builder.get_object(name)
 
-    def on_close(self, *_):
-        self.__del__()
-
     @ensure_everything_saved
-    def __del__(self, *_):
+    def on_close(self, *_):
         """Safely close the application."""
         logger.debug("Closing window")
         self.window.hide()
