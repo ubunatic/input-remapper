@@ -130,6 +130,7 @@ debounces = {}
 
 def debounce(func):
     """Debounce a function call to improve performance."""
+
     def clear_debounce(self, *args):
         debounces[func.__name__] = None
         return func(self, *args)
@@ -263,7 +264,11 @@ class Autocompletion(Gtk.Popover):
 
         if selected_row is None:
             # select the first row
-            new_selected_row = self.list_box.get_row_at_index(0)
+            if event.keyval == Gdk.KEY_Down:
+                new_selected_row = self.list_box.get_row_at_index(0)
+
+            if event.keyval == Gdk.KEY_Up:
+                new_selected_row = self.list_box.get_row_at_index(num_rows - 1)
         else:
             # select the next row
             selected_index = selected_row.get_index()

@@ -147,9 +147,6 @@ class FakePresetDropdown(Gtk.ComboBoxText):
 
 
 def clean_up_integration(test):
-    if hasattr(test, "original_on_close"):
-        test.user_interface.on_close = test.original_on_close
-
     test.user_interface.on_restore_defaults_clicked(None)
     gtk_iteration()
     test.user_interface.on_close()
@@ -172,16 +169,15 @@ class GtkKeyEvent:
 
 
 class TestGroupsFromHelper(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.injector = None
-        cls.grab = evdev.InputDevice.grab
+    def setUp(self):
+        self.injector = None
+        self.grab = evdev.InputDevice.grab
 
         # don't try to connect, return an object instance of it instead
-        cls.original_connect = Daemon.connect
+        self.original_connect = Daemon.connect
         Daemon.connect = Daemon
 
-        cls.original_os_system = os.system
+        self.original_os_system = os.system
 
         def os_system(cmd):
             # instead of running pkexec, fork instead. This will make
@@ -192,42 +188,32 @@ class TestGroupsFromHelper(unittest.TestCase):
                 multiprocessing.Process(target=RootHelper).start()
                 # the gui an empty dict, because it doesn't know any devices
                 # without the help of the privileged helper
-                groups.set_groups({})
+                groups.set_groups([])
+                assert len(groups) == 0
                 return 0
 
-            return cls.original_os_system(cmd)
+            return self.original_os_system(cmd)
 
         os.system = os_system
 
-    def setUp(self):
         self.user_interface = launch()
-        # verify that the ui doesn't have knowledge of any device yet
-        self.assertIsNone(self.user_interface.group)
-        self.assertEqual(len(groups), 0)
 
     def tearDown(self):
         clean_up_integration(self)
-
-    @classmethod
-    def tearDownClass(cls):
-        os.system = cls.original_os_system
-        Daemon.connect = cls.original_connect
+        os.system = self.original_os_system
+        Daemon.connect = self.original_connect
 
     def test_knows_devices(self):
-        patch_target = "inputremapper.gui.user_interface.UserInterface.on_select_preset"
-        with patch(patch_target) as on_select_preset_patch:
-            # verify that it is working as expected
-            gtk_iteration()
-            self.assertIsNone(self.user_interface.group)
-            self.assertIsNone(self.user_interface.preset_name)
-            self.assertEqual(len(groups), 0)
-            on_select_preset_patch.assert_not_called()
+        # verify that it is working as expected. The gui doesn't have knowledge
+        # of groups until the root-helper provides them
+        gtk_iteration()
+        self.assertEqual(len(groups), 0)
 
         # perform some iterations so that the gui ends up running
         # consume_newest_keycode, which will make it receive devices.
         # Restore patch, otherwise gtk complains when disabling handlers
         for _ in range(10):
-            time.sleep(0.01)
+            time.sleep(0.02)
             gtk_iteration()
 
         self.assertIsNotNone(groups.find(key="Foo Device 2"))
@@ -265,16 +251,12 @@ class PatchedConfirmDelete:
         self.patch.__exit__(*args, **kwargs)
 
 
-class TestGui(unittest.TestCase):
-    """For tests that use the window.
-
-    Try to modify the configuration only by calling functions of the window.
-    """
-
+class GuiTestBase:
     @classmethod
     def setUpClass(cls):
         cls.injector = None
         cls.grab = evdev.InputDevice.grab
+        cls.original_start_processes = UserInterface.start_processes
 
         def start_processes(self):
             """Avoid running pkexec which requires user input, and fork in
@@ -289,7 +271,6 @@ class TestGui(unittest.TestCase):
         self.user_interface = launch()
         self.editor = self.user_interface.editor
         self.toggle = self.editor.get_recording_toggle()
-        self.original_on_close = self.user_interface.on_close
         self.selection_label_listbox = self.user_interface.get(
             "selection_label_listbox"
         )
@@ -307,6 +288,10 @@ class TestGui(unittest.TestCase):
 
     def tearDown(self):
         clean_up_integration(self)
+
+    @classmethod
+    def tearDownClass(cls):
+        UserInterface.start_processes = cls.original_start_processes
 
     def set_focus(self, widget):
         self.user_interface.window.set_focus(widget)
@@ -326,6 +311,128 @@ class TestGui(unittest.TestCase):
     def get_unfiltered_symbol_input_text(self):
         buffer = self.editor.get_text_input().get_buffer()
         return buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+
+    def add_mapping_via_ui(self, key, symbol, expect_success=True):
+        """Modify the one empty mapping that always exists.
+
+        Utility function for other tests.
+
+        Parameters
+        ----------
+        key : Key or None
+        expect_success : boolean
+            If the key can be stored in the selection label. False if this change
+            is going to cause a duplicate.
+        """
+        self.assertIsNone(reader.get_unreleased_keys())
+
+        changed = custom_mapping.has_unsaved_changes()
+
+        # wait for the window to create a new empty selection_label if needed
+        time.sleep(0.1)
+        gtk_iteration()
+
+        # the empty selection_label is expected to be the last one
+        selection_label = self.get_selection_labels()[-1]
+        self.selection_label_listbox.select_row(selection_label)
+        self.assertIsNone(selection_label.get_key())
+        self.assertFalse(self.editor._input_has_arrived)
+
+        if self.toggle.get_active():
+            self.assertEqual(self.toggle.get_label(), "Press Key")
+        else:
+            self.assertEqual(self.toggle.get_label(), "Change Key")
+
+        # the recording toggle connects to focus events
+        self.set_focus(self.toggle)
+        self.toggle.set_active(True)
+        gtk_iteration()
+        gtk_iteration()
+        self.assertIsNone(selection_label.get_key())
+        self.assertEqual(self.toggle.get_label(), "Press Key")
+
+        if key:
+            # modifies the keycode in the selection_label not by writing into the input,
+            # but by sending an event. press down all the keys of a combination
+            for sub_key in key:
+                send_event_to_reader(new_event(*sub_key))
+                # this will be consumed all at once, since no gtk_iteration
+                # is done
+
+            # make the window consume the keycode
+            self.sleep(len(key))
+
+            # holding down
+            self.assertIsNotNone(reader.get_unreleased_keys())
+            self.assertGreater(len(reader.get_unreleased_keys()), 0)
+            self.assertTrue(self.editor._input_has_arrived)
+            self.assertTrue(self.toggle.get_active())
+
+            # release all the keys
+            for sub_key in key:
+                send_event_to_reader(new_event(*sub_key[:2], 0))
+
+            # wait for the window to consume the keycode
+            self.sleep(len(key))
+
+            # released
+            self.assertIsNone(reader.get_unreleased_keys())
+            self.assertFalse(self.editor._input_has_arrived)
+
+            if expect_success:
+                self.assertEqual(self.editor.get_key(), key)
+                # the previously new entry, which has been edited now, is still the
+                # selected one
+                self.assertEqual(self.editor.active_selection_label, selection_label)
+                self.assertEqual(
+                    self.editor.active_selection_label.get_label(),
+                    key.beautify(),
+                )
+                self.assertFalse(self.toggle.get_active())
+                self.assertEqual(len(reader._unreleased), 0)
+
+        if not expect_success:
+            self.assertIsNone(selection_label.get_key())
+            self.assertEqual(self.editor.get_symbol_input_text(), "")
+            self.assertFalse(self.editor._input_has_arrived)
+            # it won't switch the focus to the symbol input
+            self.assertTrue(self.toggle.get_active())
+            self.assertEqual(custom_mapping.has_unsaved_changes(), changed)
+            return selection_label
+
+        if key is None:
+            self.assertEqual(self.get_unfiltered_symbol_input_text(), SET_KEY_FIRST)
+            self.assertEqual(self.editor.get_symbol_input_text(), "")
+
+        # set the symbol to make the new selection_label complete
+        self.editor.set_symbol_input_text(symbol)
+        self.assertEqual(self.editor.get_symbol_input_text(), symbol)
+
+        # unfocus them to trigger some final logic
+        self.set_focus(None)
+        correct_case = system_mapping.correct_case(symbol)
+        self.assertEqual(self.editor.get_symbol_input_text(), correct_case)
+        self.assertFalse(custom_mapping.has_unsaved_changes())
+
+        self.set_focus(self.editor.get_text_input())
+        self.set_focus(None)
+
+        return selection_label
+
+    def sleep(self, num_events):
+        for _ in range(num_events * 2):
+            time.sleep(EVENT_READ_TIMEOUT)
+            gtk_iteration()
+
+        time.sleep(1 / 30)  # one window iteration
+        gtk_iteration()
+
+
+class TestGui(GuiTestBase, unittest.TestCase):
+    """For tests that use the window.
+
+    Try to modify the configuration only by calling functions of the window.
+    """
 
     def test_can_start(self):
         self.assertIsNotNone(self.user_interface)
@@ -356,41 +463,40 @@ class TestGui(unittest.TestCase):
             nonlocal closed
             closed = True
 
-        self.user_interface.on_close = on_close
+        with patch.object(self.user_interface, "on_close", on_close):
+            self.user_interface.on_key_press(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
+            )
+            self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
+            self.user_interface.on_key_release(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
+            )
+            self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
+            self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
+            self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+            self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+            self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
+            self.assertFalse(closed)
 
-        self.user_interface.on_key_press(
-            self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
-        )
-        self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
-        self.user_interface.on_key_release(
-            self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
-        )
-        self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
-        self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
-        self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
-        self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
-        self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
-        self.assertFalse(closed)
+            # while keys are being recorded no shortcut should work
+            self.toggle.set_active(True)
+            self.user_interface.on_key_press(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
+            )
+            self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+            self.assertFalse(closed)
 
-        # while keys are being recorded no shortcut should work
-        self.toggle.set_active(True)
-        self.user_interface.on_key_press(
-            self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
-        )
-        self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
-        self.assertFalse(closed)
+            self.toggle.set_active(False)
+            self.user_interface.on_key_press(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
+            )
+            self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+            self.assertTrue(closed)
 
-        self.toggle.set_active(False)
-        self.user_interface.on_key_press(
-            self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
-        )
-        self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
-        self.assertTrue(closed)
-
-        self.user_interface.on_key_release(
-            self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
-        )
-        self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+            self.user_interface.on_key_release(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
+            )
+            self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
 
     def test_ctrl_r(self):
         with patch.object(reader, "refresh_groups") as reader_get_devices_patch:
@@ -603,14 +709,6 @@ class TestGui(unittest.TestCase):
         self.assertEqual(self.editor.get_symbol_input_text(), "Shift_L")
         self.assertEqual(selection_label.get_key(), (EV_KEY, 30, 1))
 
-    def sleep(self, num_events):
-        for _ in range(num_events * 2):
-            time.sleep(EVENT_READ_TIMEOUT)
-            gtk_iteration()
-
-        time.sleep(1 / 30)  # one window iteration
-        gtk_iteration()
-
     def test_editor_not_focused(self):
         # focus anything that is not the selection_label,
         # no keycode should be inserted into it
@@ -641,113 +739,6 @@ class TestGui(unittest.TestCase):
         self.user_interface.show_status(0, "b")
         text = self.get_status_text()
         self.assertNotIn("...", text)
-
-    def add_mapping_via_ui(self, key, symbol, expect_success=True):
-        """Modify the one empty mapping that always exists.
-
-        Utility function for other tests.
-
-        Parameters
-        ----------
-        key : Key or None
-        expect_success : boolean
-            If the key can be stored in the selection label. False if this change
-            is going to cause a duplicate.
-        """
-        self.assertIsNone(reader.get_unreleased_keys())
-
-        changed = custom_mapping.has_unsaved_changes()
-
-        # wait for the window to create a new empty selection_label if needed
-        time.sleep(0.1)
-        gtk_iteration()
-
-        # the empty selection_label is expected to be the last one
-        selection_label = self.get_selection_labels()[-1]
-        self.selection_label_listbox.select_row(selection_label)
-        self.assertIsNone(selection_label.get_key())
-        self.assertFalse(self.editor._input_has_arrived)
-
-        if self.toggle.get_active():
-            self.assertEqual(self.toggle.get_label(), "Press Key")
-        else:
-            self.assertEqual(self.toggle.get_label(), "Change Key")
-
-        # the recording toggle connects to focus events
-        self.set_focus(self.toggle)
-        self.toggle.set_active(True)
-        gtk_iteration()
-        gtk_iteration()
-        self.assertIsNone(selection_label.get_key())
-        self.assertEqual(self.toggle.get_label(), "Press Key")
-
-        if key:
-            # modifies the keycode in the selection_label not by writing into the input,
-            # but by sending an event. press down all the keys of a combination
-            for sub_key in key:
-                send_event_to_reader(new_event(*sub_key))
-                # this will be consumed all at once, since no gtk_iteration
-                # is done
-
-            # make the window consume the keycode
-            self.sleep(len(key))
-
-            # holding down
-            self.assertIsNotNone(reader.get_unreleased_keys())
-            self.assertGreater(len(reader.get_unreleased_keys()), 0)
-            self.assertTrue(self.editor._input_has_arrived)
-            self.assertTrue(self.toggle.get_active())
-
-            # release all the keys
-            for sub_key in key:
-                send_event_to_reader(new_event(*sub_key[:2], 0))
-
-            # wait for the window to consume the keycode
-            self.sleep(len(key))
-
-            # released
-            self.assertIsNone(reader.get_unreleased_keys())
-            self.assertFalse(self.editor._input_has_arrived)
-
-            if expect_success:
-                self.assertEqual(self.editor.get_key(), key)
-                # the previously new entry, which has been edited now, is still the
-                # selected one
-                self.assertEqual(self.editor.active_selection_label, selection_label)
-                self.assertEqual(
-                    self.editor.active_selection_label.get_label(),
-                    key.beautify(),
-                )
-                self.assertFalse(self.toggle.get_active())
-                self.assertEqual(len(reader._unreleased), 0)
-
-        if not expect_success:
-            self.assertIsNone(selection_label.get_key())
-            self.assertEqual(self.editor.get_symbol_input_text(), "")
-            self.assertFalse(self.editor._input_has_arrived)
-            # it won't switch the focus to the symbol input
-            self.assertTrue(self.toggle.get_active())
-            self.assertEqual(custom_mapping.has_unsaved_changes(), changed)
-            return selection_label
-
-        if key is None:
-            self.assertEqual(self.get_unfiltered_symbol_input_text(), SET_KEY_FIRST)
-            self.assertEqual(self.editor.get_symbol_input_text(), "")
-
-        # set the symbol to make the new selection_label complete
-        self.editor.set_symbol_input_text(symbol)
-        self.assertEqual(self.editor.get_symbol_input_text(), symbol)
-
-        # unfocus them to trigger some final logic
-        self.set_focus(None)
-        correct_case = system_mapping.correct_case(symbol)
-        self.assertEqual(self.editor.get_symbol_input_text(), correct_case)
-        self.assertFalse(custom_mapping.has_unsaved_changes())
-
-        self.set_focus(self.editor.get_text_input())
-        self.set_focus(None)
-
-        return selection_label
 
     def test_clears_unreleased_on_focus_change(self):
         ev_1 = Key(EV_KEY, 41, 1)
@@ -1215,7 +1206,6 @@ class TestGui(unittest.TestCase):
         gtk_iteration()
         self.assertEqual(self.user_interface.preset_name, "new preset")
 
-        print(custom_mapping._mapping)
         self.assertEqual(len(custom_mapping), 1)
         self.assertEqual(custom_mapping.get_symbol(key_10), "a")
 
@@ -1790,33 +1780,138 @@ class TestGui(unittest.TestCase):
         self.editor.enable_symbol_input()
         self.assertEqual(self.get_unfiltered_symbol_input_text(), "foo")
 
-    def test_autocompletion(self):
+
+class TestAutocompletion(GuiTestBase, unittest.TestCase):
+    def press_key(self, keyval):
+        event = Gdk.EventKey()
+        event.keyval = keyval
+        self.editor.autocompletion.navigate(None, event)
+
+    def test_autocomplete_key(self):
         self.add_mapping_via_ui(Key(1, 99, 1), "")
         source_view = self.editor.get_text_input()
         self.set_focus(source_view)
-        Gtk.TextView.do_insert_at_cursor(source_view, "BTN_")
+
+        complete_key_name = "Test_Foo_Bar"
+
+        system_mapping.clear()
+        system_mapping._set(complete_key_name, 1)
+
+        incomplete = "BTN_0 + foo"
+        Gtk.TextView.do_insert_at_cursor(source_view, incomplete)
 
         time.sleep(0.11)
         gtk_iteration()
 
         autocompletion = self.editor.autocompletion
-
-        # the autocompletion should be open now
         self.assertTrue(autocompletion.visible)
 
-        def press_key(keyval):
-            # Gdk.KEY_Down, Gdk.KEY_Up, Gdk.KEY_Return
-            event = Gdk.EventKey()
-            event.keyval = keyval
-            autocompletion.navigate(None, event)
+        self.press_key(Gdk.KEY_Down)
+        self.press_key(Gdk.KEY_Return)
 
-        press_key(Gdk.KEY_Down)
-        press_key(Gdk.KEY_Return)
-
-        # the first entry should have been selected
+        # the first suggestion should have been selected
         modified_symbol = self.editor.get_symbol_input_text().strip()
-        self.assertNotEqual(modified_symbol, "BTN_")
-        self.assertGreater(len(modified_symbol), 4)
+        self.assertEqual(modified_symbol, f"BTN_0 + {complete_key_name}")
+
+    def test_autocomplete_function(self):
+        self.add_mapping_via_ui(Key(1, 99, 1), "")
+        source_view = self.editor.get_text_input()
+        self.set_focus(source_view)
+
+        incomplete = "key(KEY_A).epea"
+        Gtk.TextView.do_insert_at_cursor(source_view, incomplete)
+
+        time.sleep(0.11)
+        gtk_iteration()
+
+        autocompletion = self.editor.autocompletion
+        self.assertTrue(autocompletion.visible)
+
+        self.press_key(Gdk.KEY_Down)
+        self.press_key(Gdk.KEY_Return)
+
+        # the first suggestion should have been selected
+        modified_symbol = self.editor.get_symbol_input_text().strip()
+        self.assertEqual(modified_symbol, "key(KEY_A).repeat")
+
+    def test_close_autocompletion(self):
+        self.add_mapping_via_ui(Key(1, 99, 1), "")
+        source_view = self.editor.get_text_input()
+        self.set_focus(source_view)
+
+        Gtk.TextView.do_insert_at_cursor(source_view, "KEY_")
+
+        time.sleep(0.11)
+        gtk_iteration()
+
+        autocompletion = self.editor.autocompletion
+        self.assertTrue(autocompletion.visible)
+
+        self.press_key(Gdk.KEY_Down)
+        self.press_key(Gdk.KEY_Escape)
+
+        self.assertFalse(autocompletion.visible)
+
+        symbol = self.editor.get_symbol_input_text().strip()
+        self.assertEqual(symbol, "KEY_")
+
+    def test_writing_still_works(self):
+        self.add_mapping_via_ui(Key(1, 99, 1), "")
+        source_view = self.editor.get_text_input()
+        self.set_focus(source_view)
+
+        Gtk.TextView.do_insert_at_cursor(source_view, "KEY_")
+
+        autocompletion = self.editor.autocompletion
+
+        time.sleep(0.11)
+        gtk_iteration()
+        self.assertTrue(autocompletion.visible)
+
+        # writing still works while an entry is selected
+        self.press_key(Gdk.KEY_Down)
+
+        Gtk.TextView.do_insert_at_cursor(source_view, "A")
+
+        time.sleep(0.11)
+        gtk_iteration()
+        self.assertTrue(autocompletion.visible)
+
+        Gtk.TextView.do_insert_at_cursor(source_view, "1234foobar")
+
+        time.sleep(0.11)
+        gtk_iteration()
+        # no key matches this completion, so it closes again
+        self.assertFalse(autocompletion.visible)
+
+    def test_cycling(self):
+        self.add_mapping_via_ui(Key(1, 99, 1), "")
+        source_view = self.editor.get_text_input()
+        self.set_focus(source_view)
+
+        Gtk.TextView.do_insert_at_cursor(source_view, "KEY_")
+
+        autocompletion = self.editor.autocompletion
+
+        time.sleep(0.11)
+        gtk_iteration()
+        self.assertTrue(autocompletion.visible)
+
+        self.assertEqual(
+            autocompletion.scrolled_window.get_vadjustment().get_value(), 0
+        )
+
+        # cycle to the end of the list because there is no element higher than index 0
+        self.press_key(Gdk.KEY_Up)
+        self.assertGreater(
+            autocompletion.scrolled_window.get_vadjustment().get_value(), 0
+        )
+
+        # go back to the start, because it can't go down further
+        self.press_key(Gdk.KEY_Down)
+        self.assertEqual(
+            autocompletion.scrolled_window.get_vadjustment().get_value(), 0
+        )
 
 
 if __name__ == "__main__":

@@ -331,10 +331,9 @@ class UserInterface:
     @ensure_everything_saved
     def select_newest_preset(self):
         """Find and select the newest preset (and its device)."""
-        device, preset = find_newest_preset()
-        group = groups.find(name=device)
-        if device is not None:
-            self.get("device_selection").set_active_id(group.key)
+        group_name, preset = find_newest_preset()
+        if group_name is not None:
+            self.get("device_selection").set_active_id(group_name)
         if preset is not None:
             self.get("preset_selection").set_active_id(preset)
 
@@ -408,7 +407,7 @@ class UserInterface:
         # they have already been read.
         key = reader.read()
 
-        if reader.are_new_devices_available():
+        if reader.are_new_groups_available():
             self.populate_devices()
 
         self.editor.consume_newest_keycode(key)
