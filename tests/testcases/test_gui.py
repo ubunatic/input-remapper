@@ -323,6 +323,10 @@ class TestGui(unittest.TestCase):
         status_bar = self.user_interface.get("status_bar")
         return status_bar.get_message_area().get_children()[0].get_label()
 
+    def get_unfiltered_symbol_input_text(self):
+        buffer = self.editor.get_text_input().get_buffer()
+        return buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+
     def test_can_start(self):
         self.assertIsNotNone(self.user_interface)
         self.assertTrue(self.user_interface.window.get_visible())
@@ -343,10 +347,7 @@ class TestGui(unittest.TestCase):
         self.assertEqual(preset_selection.get_active_id(), "new preset")
         self.assertEqual(len(custom_mapping), 0)
         self.assertEqual(self.editor.get_recording_toggle().get_label(), "Change Key")
-        # shows the help text since no key is currently set
-        buffer = self.editor.get_text_input().get_buffer()
-        symbol = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
-        self.assertEqual(symbol, SET_KEY_FIRST)
+        self.assertEqual(self.get_unfiltered_symbol_input_text(), SET_KEY_FIRST)
 
     def test_ctrl_q(self):
         closed = False
@@ -547,7 +548,6 @@ class TestGui(unittest.TestCase):
             "Button A + Button B + Button C",
         )
 
-    # TODO move all editor tests into TestEditor
     def test_editor_simple(self):
         self.assertEqual(self.toggle.get_label(), "Change Key")
 
@@ -731,8 +731,7 @@ class TestGui(unittest.TestCase):
             return selection_label
 
         if key is None:
-            # TODO no coverage, remove
-            raise Exception("wtf?")
+            self.assertEqual(self.get_unfiltered_symbol_input_text(), SET_KEY_FIRST)
             self.assertEqual(self.editor.get_symbol_input_text(), "")
 
         # set the symbol to make the new selection_label complete
@@ -1077,7 +1076,8 @@ class TestGui(unittest.TestCase):
         self.editor.set_key(Key(EV_KEY, 15, 1))
         self.editor.set_symbol_input_text("b")
 
-        # selecting the first preset again loads the saved mapping
+        # selecting the first preset again loads the saved mapping, and saves
+        # the current changes in the gui
         self.user_interface.on_select_preset(FakePresetDropdown("asdf"))
         self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 14, 1)), "a")
         self.assertEqual(len(custom_mapping), 1)
@@ -1092,6 +1092,7 @@ class TestGui(unittest.TestCase):
         # and that added number is correctly used in the autoload
         # configuration as well
         self.assertTrue(config.is_autoloaded("Foo Device", "asdf 2"))
+        self.assertEqual(custom_mapping.get_symbol(Key(EV_KEY, 15, 1)), "b")
         self.assertEqual(len(custom_mapping), 1)
         self.assertEqual(len(self.selection_label_listbox.get_children()), 2)
 
@@ -1773,6 +1774,21 @@ class TestGui(unittest.TestCase):
             self.test_gui_clean()
             device_path = f"{CONFIG_PATH}/presets/{self.user_interface.group.key}"
             self.assertTrue(os.path.exists(f"{device_path}/new preset.json"))
+
+    def test_enable_disable_symbol_input(self):
+        self.editor.disable_symbol_input()
+        self.assertEqual(self.get_unfiltered_symbol_input_text(), SET_KEY_FIRST)
+        self.assertFalse(self.editor.get_text_input().get_sensitive())
+
+        self.editor.enable_symbol_input()
+        self.assertEqual(self.get_unfiltered_symbol_input_text(), "")
+        self.assertTrue(self.editor.get_text_input().get_sensitive())
+
+        # it wouldn't clear user input, if for whatever reason (a bug?) there is user
+        # input in there when enable_symbol_input is called.
+        self.editor.set_symbol_input_text("foo")
+        self.editor.enable_symbol_input()
+        self.assertEqual(self.get_unfiltered_symbol_input_text(), "foo")
 
 
 if __name__ == "__main__":

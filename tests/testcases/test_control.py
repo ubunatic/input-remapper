@@ -100,7 +100,6 @@ class TestControl(unittest.TestCase):
 
         config.set_autoload_preset(groups_[0].key, presets[0])
         config.set_autoload_preset(groups_[1].key, presets[1])
-        config.save_config()
 
         communicate(options("autoload", None, None, None, False, False, False), daemon)
         self.assertEqual(len(start_history), 2)

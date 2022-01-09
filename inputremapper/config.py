@@ -207,7 +207,7 @@ class GlobalConfig(ConfigBase):
             logger.info('Not injecting for "%s" automatically anmore', group_key)
             self.remove(["autoload", group_key])
 
-        self._save_config()  # TODO test
+        self._save_config()
 
     def iterate_autoload_presets(self):
         """Get tuples of (device, preset)."""

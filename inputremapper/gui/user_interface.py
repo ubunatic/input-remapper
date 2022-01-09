@@ -582,7 +582,7 @@ class UserInterface:
         if group_key is None:
             return
 
-        self.editor.clear()  # TODO test
+        self.editor.clear()
 
         logger.debug('Selecting device "%s"', group_key)
 
@@ -680,10 +680,6 @@ class UserInterface:
         """Show the mappings of the preset."""
         # beware in tests that this function won't be called at all if the
         # active_id stays the same
-        # TODO TEST using the scroll wheel to select a preset caused this not to save,
-        #  because the focus would not leave the editor and therefore custom_mapping
-        #  would not change. now that self.editor.gather_changes_and_save is
-        #  used it makes sure changes are in custom_mapping
         if dropdown.get_active_id() == self.preset_name:
             return
 

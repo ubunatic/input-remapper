@@ -34,8 +34,6 @@ from inputremapper.logger import logger
 from inputremapper.gui.reader import reader
 from inputremapper.gui.utils import CTX_KEYCODE, CTX_WARNING
 
-# TODO test
-
 
 class SelectionLabel(Gtk.ListBoxRow):
     """One label per mapping in the preset.
@@ -298,7 +296,6 @@ class Editor:
         buffer = text_input.get_buffer()
         symbol = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
         if symbol == SET_KEY_FIRST:
-            # TODO test that SET_KEY_FIRST is overwritten
             # don't overwrite user input
             self.set_symbol_input_text("")
 
@@ -478,9 +475,6 @@ class Editor:
         Parameters
         ----------
         key : Key or None
-            If None will unfocus the input widget
-            # TODO wtf? _switch_focus_if_complete uses self.get_key, but
-               _set_key is called after it
         """
         self._switch_focus_if_complete()
 
