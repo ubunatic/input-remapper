@@ -45,6 +45,7 @@ def _get_left_text(iter):
     buffer = iter.get_buffer()
     result = buffer.get_text(buffer.get_start_iter(), iter, True)
     result = remove_comments(result)
+    result = result.replace("\n", " ")
     return result.lower()
 
 
@@ -84,6 +85,7 @@ def get_incomplete_parameter(iter):
     #  foo
     #  bar + foo
     match = re.match(rf"(?:{PARAMETER}|^)(\w+)$", left_text)
+    print("get_incomplete_parameter", left_text, match)
 
     if match is None:
         return None
