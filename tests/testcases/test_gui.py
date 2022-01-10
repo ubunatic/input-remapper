@@ -1797,6 +1797,7 @@ class TestAutocompletion(GuiTestBase, unittest.TestCase):
         system_mapping.clear()
         system_mapping._set(complete_key_name, 1)
 
+        # it can autocomplete a key inbetween other things
         incomplete = "qux_1 +  + qux_2"
         Gtk.TextView.do_insert_at_cursor(source_view, incomplete)
         Gtk.TextView.do_move_cursor(
