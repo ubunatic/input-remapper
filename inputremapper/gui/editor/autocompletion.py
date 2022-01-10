@@ -31,7 +31,6 @@ from inputremapper.injection.macros.parse import (
     FUNCTIONS,
     get_macro_argument_names,
     remove_comments,
-    remove_whitespaces,
 )
 from inputremapper.logger import logger
 
@@ -46,7 +45,6 @@ def _get_left_text(iter):
     buffer = iter.get_buffer()
     result = buffer.get_text(buffer.get_start_iter(), iter, True)
     result = remove_comments(result)
-    result = remove_whitespaces(result, '"')
     return result.lower()
 
 

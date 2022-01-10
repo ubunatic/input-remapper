@@ -1813,6 +1813,15 @@ class TestAutocompletion(GuiTestBase, unittest.TestCase):
         modified_symbol = self.editor.get_symbol_input_text().strip()
         self.assertEqual(modified_symbol, f"BTN_0 + {complete_key_name}")
 
+        # try again, but a whitespace completes the word and so no autocompletion
+        # should be shown
+        Gtk.TextView.do_insert_at_cursor(source_view, " + foo ")
+
+        time.sleep(0.11)
+        gtk_iteration()
+
+        self.assertFalse(autocompletion.visible)
+
     def test_autocomplete_function(self):
         self.add_mapping_via_ui(Key(1, 99, 1), "")
         source_view = self.editor.get_text_input()
