@@ -1797,8 +1797,15 @@ class TestAutocompletion(GuiTestBase, unittest.TestCase):
         system_mapping.clear()
         system_mapping._set(complete_key_name, 1)
 
-        incomplete = "BTN_0 + foo"
+        incomplete = "qux_1 +  + qux_2"
         Gtk.TextView.do_insert_at_cursor(source_view, incomplete)
+        Gtk.TextView.do_move_cursor(
+            source_view,
+            Gtk.MovementStep.VISUAL_POSITIONS,
+            -8,
+            False,
+        )
+        Gtk.TextView.do_insert_at_cursor(source_view, "foo")
 
         time.sleep(0.11)
         gtk_iteration()
@@ -1811,7 +1818,7 @@ class TestAutocompletion(GuiTestBase, unittest.TestCase):
 
         # the first suggestion should have been selected
         modified_symbol = self.editor.get_symbol_input_text().strip()
-        self.assertEqual(modified_symbol, f"BTN_0 + {complete_key_name}")
+        self.assertEqual(modified_symbol, f"qux_1 + {complete_key_name} + qux_2")
 
         # try again, but a whitespace completes the word and so no autocompletion
         # should be shown
