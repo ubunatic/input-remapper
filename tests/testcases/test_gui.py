@@ -1816,7 +1816,7 @@ class TestAutocompletion(GuiTestBase, unittest.TestCase):
         system_mapping._set(complete_key_name, 1)
 
         # it can autocomplete a key inbetween other things
-        incomplete = "qux_1 +  + qux_2"
+        incomplete = "qux_1\n +  + qux_2"
         Gtk.TextView.do_insert_at_cursor(source_view, incomplete)
         Gtk.TextView.do_move_cursor(
             source_view,
@@ -1837,7 +1837,7 @@ class TestAutocompletion(GuiTestBase, unittest.TestCase):
 
         # the first suggestion should have been selected
         modified_symbol = self.editor.get_symbol_input_text().strip()
-        self.assertEqual(modified_symbol, f"qux_1 + {complete_key_name} + qux_2")
+        self.assertEqual(modified_symbol, f"qux_1\n + {complete_key_name} + qux_2")
 
         # try again, but a whitespace completes the word and so no autocompletion
         # should be shown
@@ -1853,7 +1853,7 @@ class TestAutocompletion(GuiTestBase, unittest.TestCase):
         source_view = self.editor.get_text_input()
         self.set_focus(source_view)
 
-        incomplete = "key(KEY_A).epea"
+        incomplete = "key(KEY_A).\nepea"
         Gtk.TextView.do_insert_at_cursor(source_view, incomplete)
 
         time.sleep(0.11)
@@ -1867,7 +1867,7 @@ class TestAutocompletion(GuiTestBase, unittest.TestCase):
 
         # the first suggestion should have been selected
         modified_symbol = self.editor.get_symbol_input_text().strip()
-        self.assertEqual(modified_symbol, "key(KEY_A).repeat")
+        self.assertEqual(modified_symbol, "key(KEY_A).\nrepeat")
 
     def test_close_autocompletion(self):
         self.add_mapping_via_ui(Key(1, 99, 1), "")
