@@ -467,15 +467,27 @@ class TestGui(GuiTestBase, unittest.TestCase):
             self.user_interface.on_key_press(
                 self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
             )
-            self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
+            self.user_interface.on_key_press(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_a)
+            )
             self.user_interface.on_key_release(
                 self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
             )
-            self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_a))
-            self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
-            self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
-            self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
-            self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_b))
+            self.user_interface.on_key_release(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_a)
+            )
+            self.user_interface.on_key_press(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_b)
+            )
+            self.user_interface.on_key_press(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_q)
+            )
+            self.user_interface.on_key_release(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_q)
+            )
+            self.user_interface.on_key_release(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_b)
+            )
             self.assertFalse(closed)
 
             # while keys are being recorded no shortcut should work
@@ -483,20 +495,26 @@ class TestGui(GuiTestBase, unittest.TestCase):
             self.user_interface.on_key_press(
                 self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
             )
-            self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+            self.user_interface.on_key_press(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_q)
+            )
             self.assertFalse(closed)
 
             self.toggle.set_active(False)
             self.user_interface.on_key_press(
                 self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
             )
-            self.user_interface.on_key_press(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+            self.user_interface.on_key_press(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_q)
+            )
             self.assertTrue(closed)
 
             self.user_interface.on_key_release(
                 self.user_interface, GtkKeyEvent(Gdk.KEY_Control_L)
             )
-            self.user_interface.on_key_release(self.user_interface, GtkKeyEvent(Gdk.KEY_q))
+            self.user_interface.on_key_release(
+                self.user_interface, GtkKeyEvent(Gdk.KEY_q)
+            )
 
     def test_ctrl_r(self):
         with patch.object(reader, "refresh_groups") as reader_get_devices_patch:
