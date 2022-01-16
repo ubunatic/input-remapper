@@ -318,7 +318,9 @@ class KeycodeMapper(Consumer):
     def macro_write(self, target_uinput):
         def f(ev_type, code, value):
             """Handler for macros."""
-            logger.processing(f"Macro sending %s to %s", (ev_type, code, value), target_uinput)
+            logger.processing(
+                f"Macro sending %s to %s", (ev_type, code, value), target_uinput
+            )
             global_uinputs.write((ev_type, code, value), target_uinput)
 
         return f
@@ -528,7 +530,9 @@ class KeycodeMapper(Consumer):
                     return
 
                 try:
-                    logger.processing_key(key, "maps to (%s, %s)", target_code, target_uinput)
+                    logger.processing_key(
+                        key, "maps to (%s, %s)", target_code, target_uinput
+                    )
                     global_uinputs.write((EV_KEY, target_code, 1), target_uinput)
                     return
                 except inputremapper.exceptions.Error:

@@ -91,21 +91,26 @@ class SystemMapping:
         logger.debug("Gathering available keycodes")
         self.clear()
         xmodmap_dict = {}
-        try:
-            xmodmap = subprocess.check_output(
-                ["xmodmap", "-pke"], stderr=subprocess.STDOUT
-            ).decode()
-            xmodmap = xmodmap
-            self._xmodmap = re.findall(r"(\d+) = (.+)\n", xmodmap + "\n")
-            xmodmap_dict = self._find_legit_mappings()
-            if len(xmodmap_dict) == 0:
-                logger.info("`xmodmap -pke` did not yield any symbol")
-        except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            # might be within a tty
-            logger.info("Optional `xmodmap` command not found. This is not critical.")
-            logger.debug('Call to `xmodmap -pke` failed with "%s"', e)
 
         if not is_service():
+            # xmodmap is only available from within the login session.
+            # The service that runs via systemd can't use this.
+            try:
+                xmodmap = subprocess.check_output(
+                    ["xmodmap", "-pke"], stderr=subprocess.STDOUT
+                ).decode()
+                xmodmap = xmodmap
+                self._xmodmap = re.findall(r"(\d+) = (.+)\n", xmodmap + "\n")
+                xmodmap_dict = self._find_legit_mappings()
+                if len(xmodmap_dict) == 0:
+                    logger.info("`xmodmap -pke` did not yield any symbol")
+            except FileNotFoundError:
+                logger.info(
+                    "Optional `xmodmap` command not found. This is not critical."
+                )
+            except subprocess.CalledProcessError as e:
+                logger.error('Call to `xmodmap -pke` failed with "%s"', e)
+
             # Clients usually take care of that, don't let the service do funny things.
             # Write this stuff into the input-remapper config directory, because
             # the systemd service won't know the user sessions xmodmap.
@@ -115,8 +120,8 @@ class SystemMapping:
                 logger.debug('Writing "%s"', path)
                 json.dump(xmodmap_dict, file, indent=4)
 
-        for name, code in xmodmap_dict.items():
-            self._set(name, code)
+            for name, code in xmodmap_dict.items():
+                self._set(name, code)
 
         for name, ecode in evdev.ecodes.ecodes.items():
             if name.startswith("KEY") or name.startswith("BTN"):
@@ -135,6 +140,7 @@ class SystemMapping:
         len_before = len(self._mapping)
         for name, code in mapping.items():
             self._set(name, code)
+
         logger.debug(
             "Updated keycodes with %d new ones", len(self._mapping) - len_before
         )

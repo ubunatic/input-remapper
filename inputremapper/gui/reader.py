@@ -242,7 +242,9 @@ class Reader:
 
             # clear wheel events from unreleased after some time
             if self._debounce_remove[type_code] == 0:
-                logger.processing_key(self._unreleased[type_code], "Considered as released")
+                logger.processing_key(
+                    self._unreleased[type_code], "Considered as released"
+                )
                 self._release(type_code)
             else:
                 self._debounce_remove[type_code] -= 1

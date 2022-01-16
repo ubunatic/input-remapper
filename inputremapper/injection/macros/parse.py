@@ -334,7 +334,7 @@ def handle_plus_syntax(macro):
     output += "h()"
     output += depth * ")"
 
-    logger.debug('Transformed "%s" to "%s"', macro, output)
+    logger.processing('Transformed "%s" to "%s"', macro, output)
     return output
 
 
