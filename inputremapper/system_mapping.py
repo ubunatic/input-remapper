@@ -100,9 +100,10 @@ class SystemMapping:
             xmodmap_dict = self._find_legit_mappings()
             if len(xmodmap_dict) == 0:
                 logger.info("`xmodmap -pke` did not yield any symbol")
-        except (subprocess.CalledProcessError, FileNotFoundError):
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
             # might be within a tty
             logger.info("Optional `xmodmap` command not found. This is not critical.")
+            logger.debug('Call to `xmodmap -pke` failed with "%s"', e)
 
         if not is_service():
             # Clients usually take care of that, don't let the service do funny things.

@@ -37,22 +37,22 @@ except ImportError:
     COMMIT_HASH = ""
 
 
-SPAM = 5
+PROCESSING = 5
 
 start = time.time()
 
-previous_key_spam = None
+previous_key_processing_log = None
 
 
 def spam(self, message, *args, **kwargs):
     """Log a more-verbose message than debug."""
     # pylint: disable=protected-access
-    if self.isEnabledFor(SPAM):
+    if self.isEnabledFor(PROCESSING):
         # https://stackoverflow.com/a/13638084
-        self._log(SPAM, message, args, **kwargs)
+        self._log(PROCESSING, message, args, **kwargs)
 
 
-def key_spam(self, key, msg, *args):
+def processing_key(self, key, msg, *args):
     """Log a spam message custom tailored to keycode_mapper.
 
     Parameters
@@ -62,10 +62,10 @@ def key_spam(self, key, msg, *args):
         (type, code, value) tuples
     """
     # pylint: disable=protected-access
-    if not self.isEnabledFor(SPAM):
+    if not self.isEnabledFor(PROCESSING):
         return
 
-    global previous_key_spam
+    global previous_key_processing_log
 
     msg = msg % args
     str_key = str(key)
@@ -75,18 +75,18 @@ def key_spam(self, key, msg, *args):
         spacing = ""
     msg = f"{str_key}{spacing} {msg}"
 
-    if msg == previous_key_spam:
+    if msg == previous_key_processing_log:
         # avoid some super spam from EV_ABS events
         return
 
-    previous_key_spam = msg
+    previous_key_processing_log = msg
 
-    self._log(SPAM, msg, args=None)
+    self._log(PROCESSING, msg, args=None)
 
 
-logging.addLevelName(SPAM, "SPAM")
-logging.Logger.spam = spam
-logging.Logger.key_spam = key_spam
+logging.addLevelName(PROCESSING, "PROCESSING")
+logging.Logger.processing = spam
+logging.Logger.processing_key = processing_key
 
 LOG_PATH = (
     "/var/log/input-remapper"
@@ -94,11 +94,11 @@ LOG_PATH = (
     else f"{HOME}/.log/input-remapper"
 )
 
-logger = logging.getLogger()
+logger = logging.getLogger("input-remapper")
 
 
 def is_debug():
-    """True, if the logger is currently in DEBUG or SPAM mode."""
+    """True, if the logger is currently in DEBUG or PROCESSING mode."""
     return logger.level <= logging.DEBUG
 
 
@@ -120,7 +120,7 @@ class Formatter(logging.Formatter):
                 logging.ERROR: 31,
                 logging.FATAL: 31,
                 logging.DEBUG: 36,
-                SPAM: 34,
+                PROCESSING: 34,
                 logging.INFO: 32,
             }.get(record.levelno, 0)
 
@@ -187,7 +187,7 @@ def update_verbosity(debug):
     # pylint really doesn't like what I'm doing with rich.traceback here
     # pylint: disable=broad-except,import-error,import-outside-toplevel
     if debug:
-        logger.setLevel(SPAM)
+        logger.setLevel(PROCESSING)
 
         try:
             from rich.traceback import install
