@@ -90,11 +90,11 @@ class SystemMapping:
         """Get a mapping of all available names to their keycodes."""
         logger.debug("Gathering available keycodes")
         self.clear()
-        xmodmap_dict = {}
 
         if not is_service():
             # xmodmap is only available from within the login session.
             # The service that runs via systemd can't use this.
+            xmodmap_dict = {}
             try:
                 xmodmap = subprocess.check_output(
                     ["xmodmap", "-pke"], stderr=subprocess.STDOUT
