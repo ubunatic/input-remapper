@@ -96,6 +96,9 @@ class ConsumerControl:
                 # won't appear, no need to forward or map them.
                 continue
 
+            if event.type == evdev.ecodes.EV_MSC:
+                continue
+
             handled = False
             for consumer in self._consumers:
                 # copy so that the consumer doesn't screw this up for
