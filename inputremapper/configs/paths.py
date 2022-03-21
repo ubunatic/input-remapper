@@ -34,8 +34,16 @@ def chown(path):
     try:
         shutil.chown(path, user=USER, group=USER)
     except LookupError:
-        # the users group was unknown in one case for whatever reason
+        # the users group was unknown some cases for whatever reason.
+        # There is probably a group called "users" though
         shutil.chown(path, user=USER)
+    except PermissionError:
+        # let's skip it and hope for the best
+        logger.warning(
+            "Failed to hand %s over to %s due to permission problems",
+            path,
+            USER,
+        )
 
 
 def touch(path, log=True):
