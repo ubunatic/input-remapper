@@ -573,7 +573,7 @@ class TestInjector(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.injector.get_state(), RUNNING)
 
     def test_any_funky_event_as_button(self):
-        # as long as should_map_as_btn says it should be a button,
+        # as long as can_map_as_btn says it should be a button,
         # it will be.
         EV_TYPE = 4531
         CODE_1 = 754
@@ -634,7 +634,7 @@ class TestInjector(unittest.IsolatedAsyncioTestCase):
 
         """yes"""
 
-        with mock.patch("inputremapper.utils.should_map_as_btn", lambda *_: True):
+        with mock.patch("inputremapper.utils.can_map_as_btn", lambda *_: True):
             history = do_stuff()
             self.assertEqual(history.count((EV_KEY, code_w, 1)), 1)
             self.assertEqual(history.count((EV_KEY, code_d, 1)), 1)

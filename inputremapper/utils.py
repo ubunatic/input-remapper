@@ -36,6 +36,8 @@ from evdev.ecodes import (
     EV_REL,
     REL_WHEEL,
     REL_HWHEEL,
+    REL_WHEEL_HI_RES,
+    REL_HWHEEL_HI_RES,
 )
 
 from inputremapper.logger import logger
@@ -129,7 +131,12 @@ def is_key_up(action):
 
 def is_wheel(event):
     """Check if this is a wheel event."""
-    return event.type == EV_REL and event.code in [REL_WHEEL, REL_HWHEEL]
+    return event.type == EV_REL and event.code in [
+        REL_WHEEL,
+        REL_HWHEEL,
+        REL_HWHEEL_HI_RES,
+        REL_WHEEL_HI_RES,
+    ]
 
 
 def will_report_key_up(event):
@@ -137,7 +144,7 @@ def will_report_key_up(event):
     return not is_wheel(event)
 
 
-def should_map_as_btn(event, preset, gamepad):
+def can_map_as_btn(event, preset, gamepad):
     """Does this event describe a button that is or can be mapped.
 
     If a new kind of event should be mappable to buttons, this is the place

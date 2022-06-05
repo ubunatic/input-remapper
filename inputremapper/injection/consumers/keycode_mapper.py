@@ -233,7 +233,7 @@ class KeycodeMapper(Consumer):
         return len(self.context.key_to_code) > 0 or len(self.context.macros) > 0
 
     def is_handled(self, event):
-        return utils.should_map_as_btn(event, self.context.preset, self._gamepad)
+        return utils.can_map_as_btn(event, self.context.preset, self._gamepad)
 
     async def run(self):
         """Provide a debouncer to inject wheel releases."""

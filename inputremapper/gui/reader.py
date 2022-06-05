@@ -140,7 +140,7 @@ class Reader:
                 continue
 
             gamepad = GAMEPAD in self.group.types
-            if not utils.should_map_as_btn(event, active_preset, gamepad):
+            if not utils.can_map_as_btn(event, active_preset, gamepad):
                 continue
 
             if event.value == 0:

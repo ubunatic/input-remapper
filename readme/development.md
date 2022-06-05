@@ -199,7 +199,7 @@ readme/capabilities.md
 **It won't offer mapping a button**
 
 If `sudo evtest` shows an event for the button, try to
-modify `should_map_as_btn`. If not, the button cannot be mapped.
+modify `can_map_as_btn`. If not, the button cannot be mapped.
 
 ## How it works
 
