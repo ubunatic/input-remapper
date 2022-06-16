@@ -244,6 +244,18 @@ def _otherwise_to_else():
             file.write("\n")
 
 
+def _remove_logs():
+    """We will try to rely on journalctl for this in the future."""
+    try:
+        remove(f"{HOME}/.log/input-remapper")
+        remove("/var/log/input-remapper")
+        remove("/var/log/input-remapper-control")
+    except Exception as error:
+        logger.debug("Failed to remove deprecated logfiles: %s", str(error))
+        # this migration is not important. Continue
+        pass
+
+
 def migrate():
     """Migrate config files to the current release."""
     v = config_version()
@@ -263,6 +275,8 @@ def migrate():
 
     if v < pkg_resources.parse_version("1.4.1"):
         _otherwise_to_else()
+
+    _remove_logs()
 
     # add new migrations here
 
