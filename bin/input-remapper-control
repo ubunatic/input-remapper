@@ -223,8 +223,6 @@ def main(options):
     if options.debug:
         update_verbosity(True)
 
-    add_filehandler('/var/log/input-remapper-control')
-
     if options.version:
         log_info()
         return
