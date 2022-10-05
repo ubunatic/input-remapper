@@ -433,8 +433,11 @@ class Controller:
                 self.data_manager.delete_mapping()
                 self.save()
 
+            self.message_broker.send(DoStackSwitch(2))
+
         if not self.data_manager.active_mapping:
             return
+
         self.message_broker.send(
             UserConfirmRequest(_("Are you sure you want to delete \nthis mapping?"), f)
         )

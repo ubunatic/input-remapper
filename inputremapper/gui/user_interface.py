@@ -31,7 +31,7 @@ from inputremapper.gui.autocompletion import Autocompletion
 from inputremapper.gui.components import (
     DeviceGroupSelection,
     PresetSelection,
-    MappingListBox,
+    MappingSelection,
     TargetSelection,
     Output,
     PresetSelectionTitle,
@@ -144,7 +144,7 @@ class UserInterface:
         controller = self.controller
         DeviceGroupSelection(message_broker, controller, self.get("device_selection"))
         PresetSelection(message_broker, controller, self.get("preset_selection"))
-        MappingListBox(message_broker, controller, self.get("selection_label_listbox"))
+        MappingSelection(message_broker, controller, self.get("mapping_selection"))
         TargetSelection(message_broker, controller, self.get("target-selector"))
         Output(message_broker, controller, self.get("output"))
 
@@ -325,7 +325,7 @@ class UserInterface:
             return
         if mapping.event_combination == EventCombination.empty_combination():
             label.set_opacity(0.4)
-            label.set_label(_("no input configured"))
+            label.set_label(_("No input recorded yet"))
             return
 
         label.set_opacity(1)

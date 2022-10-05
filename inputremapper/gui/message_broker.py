@@ -54,7 +54,11 @@ class MessageType(Enum):
     group = "group"
     preset = "preset"
     mapping = "mapping"
+
+    # an event in a combination (for example via the advanced combination editor)
+    # was selected
     selected_event = "selected_event"
+
     combination_recorded = "combination_recorded"
     recording_started = "recording_started"
     recording_finished = "recording_finished"

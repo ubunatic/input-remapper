@@ -129,7 +129,7 @@ class DeviceGroupEntry(Gtk.ToggleButton):
     def _on_gtk_select_device(self, *_, **__):
         logger.debug('Selecting device "%s"', self.group_key)
         self._controller.load_group(self.group_key)
-        self.message_broker.send(DoStackSwitch(Stack.presets_page))
+        self.message_broker.send(DoStackSwitch(Stack.device_page))
 
     def show_active(self, active):
         """Show the active state without triggering anything."""
@@ -190,8 +190,9 @@ class Stack:
     """Wraps the Stack, which contains the main menu pages."""
 
     devices_page = 0
-    presets_page = 1
-    editor_page = 2
+    device_page = 1
+    preset_page = 2
+    mapping_page = 3
 
     def __init__(
         self,
@@ -280,7 +281,7 @@ class Output:
     def _disable(self):
         self._gui.set_sensitive(False)
         self._gui.set_opacity(0.5)
-        self._gui.set_tooltip_text(_("Add a mapping and record some input first"))
+        self._gui.set_tooltip_text(_("Record the input first"))
 
 
 class PresetEntry(Gtk.ToggleButton):
@@ -329,7 +330,7 @@ class PresetEntry(Gtk.ToggleButton):
     def _on_gtk_select_preset(self, *_, **__):
         logger.debug('Selecting preset "%s"', self.preset_name)
         self._controller.load_preset(self.preset_name)
-        self.message_broker.send(DoStackSwitch(Stack.editor_page))
+        self.message_broker.send(DoStackSwitch(Stack.preset_page))
 
     def show_active(self, active):
         """Show the active state without triggering anything."""
@@ -403,7 +404,7 @@ class EditorTitle:
 class PresetSelection:
     """A wrapper for the container with our presets.
 
-    Selectes the active_preset.
+    Selects the active_preset.
     """
 
     def __init__(
@@ -434,13 +435,6 @@ class PresetSelection:
     def _on_preset_changed(self, data: PresetData):
         self.show_active_preset(data.name)
 
-    def set_active_preset(self, preset_name: str):
-        """Change the currently selected preset."""
-        # TODO might only be needed in tests
-        for child in self._gui.get_children():
-            preset_entry: PresetEntry = child.get_children()[0]
-            preset_entry.set_active(preset_entry.preset_name == preset_name)
-
     def show_active_preset(self, preset_name: str):
         """Highlight the button of the given preset."""
         for child in self._gui.get_children():
@@ -448,7 +442,127 @@ class PresetSelection:
             preset_entry.show_active(preset_entry.preset_name == preset_name)
 
 
-class MappingListBox:
+class MappingSelection:
+    """A wrapper for the container with mappings for a preset."""
+
+    def __init__(
+        self,
+        message_broker: MessageBroker,
+        controller: Controller,
+        flowbox: Gtk.FlowBox,
+    ):
+        self._message_broker = message_broker
+        self._controller = controller
+        self._gui = flowbox
+        self._connect_message_listener()
+
+    def _connect_message_listener(self):
+        self._message_broker.subscribe(MessageType.preset, self._on_preset_changed)
+
+    def _on_preset_changed(self, data: GroupData):
+        self._gui.foreach(lambda preset: self._gui.remove(preset))
+        for name, combination in data.mappings:
+            preset_entry = MappingEntry(
+                self._message_broker,
+                self._controller,
+                combination,
+                name,
+            )
+            self._gui.insert(preset_entry, -1)
+
+
+# TODO lots of similarities with the other two Entry classes?
+class MappingEntry(Gtk.ToggleButton):
+    """A mapping of a preset that can be selected in the GUI."""
+
+    __gtype_name__ = "MappingEntry"
+
+    def __init__(
+        self,
+        message_broker: MessageBroker,
+        controller: Controller,
+        combination: EventCombination,
+        name: str,
+    ):
+        super().__init__()
+
+        self._message_broker = message_broker
+        self._name = name
+        self._controller = controller
+        self.combination = combination
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+
+        label = Gtk.Label()
+
+        # wrap very long names properly
+        label.set_line_wrap(True)
+        label.set_line_wrap_mode(2)
+        # this affeects how many device entries fit next to each other
+        label.set_width_chars(28)
+        label.set_max_width_chars(28)
+
+        label.set_label(self.name)
+        box.add(label)
+
+        box.set_margin_top(18)
+        box.set_margin_bottom(18)
+        box.set_homogeneous(True)
+        box.set_spacing(12)
+
+        # self.set_relief(Gtk.ReliefStyle.NONE)
+
+        self.add(box)
+
+        self.show_all()
+
+        self.connect("toggled", self._on_gtk_select_mapping)
+
+        self._message_broker.subscribe(MessageType.mapping, self._on_mapping_changed)
+        self._message_broker.subscribe(
+            MessageType.combination_update, self._on_combination_update
+        )
+
+    def _on_gtk_select_mapping(self, *_, **__):
+        logger.debug('Selecting mapping "%s"', self.name)
+        self._controller.load_mapping(self.combination)
+        self._message_broker.send(DoStackSwitch(Stack.mapping_page))
+
+    def show_active(self, active):
+        """Show the active state without triggering anything."""
+        with HandlerDisabled(self, self._on_gtk_select_mapping):
+            self.set_active(active)
+
+    def __repr__(self):
+        return f"MappingEntry for {self.combination} as {self.name}"
+
+    @property
+    def name(self) -> str:
+        if (
+            self.combination == EventCombination.empty_combination()
+            or self.combination is None
+        ):
+            return EMPTY_MAPPING_NAME
+        return self._name or self.combination.beautify()
+
+    def _on_mapping_changed(self, mapping: MappingData):
+        if mapping.event_combination != self.combination:
+            self.show_active(False)
+            return
+
+        self._name = mapping.name
+        self.show_active(True)
+
+    def _on_combination_update(self, data: CombinationUpdate):
+        if data.old_combination == self.combination and self.get_active():
+            self.combination = data.new_combination
+
+
+# TODO renaming mappings
+
+
+# TODO remove
+'''class MappingListBox:
     """the listbox showing all available mapping in the active_preset"""
 
     def __init__(
@@ -504,10 +618,10 @@ class MappingListBox:
     def _on_gtk_mapping_selected(self, _, row: Optional[MappingSelectionLabel]):
         if not row:
             return
-        self._controller.load_mapping(row.combination)
+        self._controller.load_mapping(row.combination)'''
 
 
-class MappingSelectionLabel(Gtk.ListBoxRow):
+'''class MappingSelectionLabel(Gtk.ListBoxRow):
     """the ListBoxRow representing a mapping inside the MappingListBox"""
 
     __gtype_name__ = "MappingSelectionLabel"
@@ -630,7 +744,7 @@ class MappingSelectionLabel(Gtk.ListBoxRow):
     def cleanup(self) -> None:
         """clean up message listeners. Execute before removing from gui!"""
         self._message_broker.unsubscribe(self._on_mapping_changed)
-        self._message_broker.unsubscribe(self._on_combination_update)
+        self._message_broker.unsubscribe(self._on_combination_update)'''
 
 
 class CodeEditor:

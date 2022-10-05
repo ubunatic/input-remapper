@@ -103,5 +103,5 @@ class TestUserInterface(unittest.TestCase):
         self.message_broker.send(MappingData())
         gtk_iteration()
         label: Gtk.Label = self.user_interface.get("combination-label")
-        self.assertEqual(label.get_text(), "no input configured")
+        self.assertEqual(label.get_text(), "No input recorded yet")
         self.assertEqual(label.get_opacity(), 0.4)

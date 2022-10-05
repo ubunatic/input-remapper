@@ -258,6 +258,7 @@ Shortcut: ctrl + del</property>
                           <object class="GtkLabel" id="selected_device_name1">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
+                            <property name="tooltip-text" translatable="yes">Your configuration will be saved in presets</property>
                             <property name="label" translatable="yes">Presets</property>
                             <attributes>
                               <attribute name="weight" value="bold"/>
@@ -390,36 +391,22 @@ Shortcut: ctrl + del</property>
                   </packing>
                 </child>
                 <child>
-                  <!-- n-columns=3 n-rows=3 -->
+                  <!-- n-columns=2 n-rows=3 -->
                   <object class="GtkGrid">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">center</property>
+                    <property name="margin-end">106</property>
                     <property name="margin-bottom">18</property>
                     <property name="row-spacing">6</property>
                     <property name="column-spacing">6</property>
                     <child>
                       <object class="GtkBox">
+                        <property name="width-request">400</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="spacing">6</property>
                         <property name="homogeneous">True</property>
-                        <child>
-                          <object class="GtkButton" id="copy_preset">
-                            <property name="label" translatable="yes">Copy</property>
-                            <property name="visible">True</property>
-                            <property name="can-focus">True</property>
-                            <property name="receives-default">True</property>
-                            <property name="tooltip-text" translatable="yes">Duplicate this preset</property>
-                            <property name="image">copy-icon1</property>
-                            <property name="always-show-image">True</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
                         <child>
                           <object class="GtkButton" id="apply_preset">
                             <property name="label" translatable="yes">Apply</property>
@@ -433,7 +420,7 @@ Shortcut: ctrl + del</property>
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">2</property>
+                            <property name="position">0</property>
                           </packing>
                         </child>
                         <child>
@@ -451,7 +438,23 @@ Shortcut: ctrl + del</property>
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">3</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="copy_preset">
+                            <property name="label" translatable="yes">Copy</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="receives-default">True</property>
+                            <property name="tooltip-text" translatable="yes">Duplicate this preset</property>
+                            <property name="image">copy-icon1</property>
+                            <property name="always-show-image">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">2</property>
                           </packing>
                         </child>
                         <child>
@@ -467,7 +470,7 @@ Shortcut: ctrl + del</property>
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">4</property>
+                            <property name="position">3</property>
                           </packing>
                         </child>
                       </object>
@@ -477,24 +480,12 @@ Shortcut: ctrl + del</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="preset_name_input">
-                        <property name="width-request">400</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                      </object>
-                      <packing>
-                        <property name="left-attach">1</property>
-                        <property name="top-attach">1</property>
-                      </packing>
-                    </child>
-                    <child>
                       <object class="GtkLabel">
                         <property name="width-request">100</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Rename</property>
                         <property name="width-chars">13</property>
-                        <property name="xalign">0</property>
                       </object>
                       <packing>
                         <property name="left-attach">0</property>
@@ -506,7 +497,6 @@ Shortcut: ctrl + del</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Autoload</property>
-                        <property name="xalign">0</property>
                       </object>
                       <packing>
                         <property name="left-attach">0</property>
@@ -527,10 +517,20 @@ Shortcut: ctrl + del</property>
                     </child>
                     <child>
                       <object class="GtkBox">
-                        <property name="width-request">100</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="orientation">vertical</property>
+                        <property name="spacing">6</property>
+                        <child>
+                          <object class="GtkEntry" id="preset_name_input">
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
                         <child>
                           <object class="GtkButton" id="rename-button">
                             <property name="visible">True</property>
@@ -538,27 +538,19 @@ Shortcut: ctrl + del</property>
                             <property name="receives-default">True</property>
                             <property name="tooltip-text" translatable="yes">Save the entered name</property>
                             <property name="halign">start</property>
-                            <property name="margin-left">6</property>
                             <property name="image">save-icon</property>
-                            <property name="relief">none</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">0</property>
+                            <property name="position">1</property>
                           </packing>
                         </child>
                       </object>
                       <packing>
-                        <property name="left-attach">2</property>
+                        <property name="left-attach">1</property>
                         <property name="top-attach">1</property>
                       </packing>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
                     </child>
                     <child>
                       <placeholder/>
@@ -599,6 +591,7 @@ Shortcut: ctrl + del</property>
                           <object class="GtkLabel" id="selected_preset_name1">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
+                            <property name="tooltip-text" translatable="yes">A "mapping" is an input that will be transformed to a different output</property>
                             <property name="label" translatable="yes">Mappings</property>
                             <attributes>
                               <attribute name="weight" value="bold"/>
@@ -656,12 +649,17 @@ Shortcut: ctrl + del</property>
                             <property name="can-focus">False</property>
                             <property name="shadow-type">none</property>
                             <child>
-                              <object class="GtkListBox" id="selection_label_listbox">
+                              <object class="GtkFlowBox" id="mapping_selection">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
-                                <style>
-                                  <class name="editor-key-list"/>
-                                </style>
+                                <property name="valign">start</property>
+                                <property name="margin-start">18</property>
+                                <property name="margin-end">18</property>
+                                <property name="homogeneous">True</property>
+                                <property name="column-spacing">18</property>
+                                <property name="row-spacing">18</property>
+                                <property name="max-children-per-line">99</property>
+                                <property name="selection-mode">none</property>
                               </object>
                             </child>
                           </object>
@@ -670,7 +668,7 @@ Shortcut: ctrl + del</property>
                       <packing>
                         <property name="expand">True</property>
                         <property name="fill">True</property>
-                        <property name="position">2</property>
+                        <property name="position">1</property>
                       </packing>
                     </child>
                   </object>
@@ -708,7 +706,7 @@ Shortcut: ctrl + del</property>
                           <object class="GtkLabel" id="combination-label">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">no input configured</property>
+                            <property name="label" translatable="yes">No input recorded yet</property>
                             <property name="wrap">True</property>
                             <attributes>
                               <attribute name="weight" value="bold"/>
@@ -739,23 +737,55 @@ Shortcut: ctrl + del</property>
                       <packing>
                         <property name="expand">False</property>
                         <property name="fill">False</property>
-                        <property name="position">1</property>
+                        <property name="position">0</property>
                       </packing>
                     </child>
                     <child>
-                      <!-- n-columns=3 n-rows=4 -->
+                      <!-- n-columns=2 n-rows=2 -->
                       <object class="GtkGrid">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="halign">center</property>
+                        <property name="margin-end">106</property>
                         <property name="row-spacing">6</property>
                         <property name="column-spacing">6</property>
                         <child>
                           <object class="GtkBox">
+                            <property name="width-request">400</property>
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="spacing">6</property>
                             <property name="homogeneous">True</property>
+                            <child>
+                              <object class="GtkToggleButton" id="key_recording_toggle">
+                                <property name="label" translatable="yes">Record</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="receives-default">True</property>
+                                <property name="tooltip-text" translatable="yes">Record a button of your device that should be remapped</property>
+                                <property name="image">image2</property>
+                                <property name="always-show-image">True</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="edit-combination-btn">
+                                <property name="label" translatable="yes">Advanced</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="receives-default">True</property>
+                                <property name="image">image1</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
                             <child>
                               <object class="GtkButton" id="delete-mapping">
                                 <property name="label" translatable="yes">Delete</property>
@@ -772,36 +802,6 @@ Shortcut: ctrl + del</property>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">True</property>
-                                <property name="position">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkToggleButton" id="key_recording_toggle">
-                                <property name="label" translatable="yes">Record</property>
-                                <property name="visible">True</property>
-                                <property name="can-focus">True</property>
-                                <property name="receives-default">True</property>
-                                <property name="tooltip-text" translatable="yes">Record a button of your device that should be remapped</property>
-                                <property name="image">image2</property>
-                                <property name="always-show-image">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">3</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="edit-combination-btn">
-                                <property name="label" translatable="yes">Advanced</property>
-                                <property name="visible">True</property>
-                                <property name="can-focus">True</property>
-                                <property name="receives-default">True</property>
-                                <property name="image">image1</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
                                 <property name="position">4</property>
                               </packing>
                             </child>
@@ -812,67 +812,14 @@ Shortcut: ctrl + del</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel">
-                            <property name="width-request">100</property>
+                          <object class="GtkBox">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Rename</property>
-                            <property name="width-chars">13</property>
-                            <property name="xalign">0</property>
-                          </object>
-                          <packing>
-                            <property name="left-attach">0</property>
-                            <property name="top-attach">1</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="width-request">0</property>
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Type</property>
-                            <property name="xalign">0</property>
-                          </object>
-                          <packing>
-                            <property name="left-attach">0</property>
-                            <property name="top-attach">2</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="width-request">0</property>
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Target</property>
-                            <property name="xalign">0</property>
-                          </object>
-                          <packing>
-                            <property name="left-attach">0</property>
-                            <property name="top-attach">3</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkComboBox" id="target-selector">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                          </object>
-                          <packing>
-                            <property name="left-attach">1</property>
-                            <property name="top-attach">3</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkButtonBox">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="homogeneous">True</property>
-                            <property name="layout-style">expand</property>
+                            <property name="spacing">6</property>
                             <child>
-                              <object class="GtkToggleButton" id="key_macro_toggle_btn">
-                                <property name="label" translatable="yes">Key or Macro</property>
+                              <object class="GtkEntry" id="preset_name_input1">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
-                                <property name="receives-default">True</property>
                               </object>
                               <packing>
                                 <property name="expand">True</property>
@@ -880,76 +827,57 @@ Shortcut: ctrl + del</property>
                                 <property name="position">0</property>
                               </packing>
                             </child>
-                            <child>
-                              <object class="GtkToggleButton" id="analog_toggle_btn">
-                                <property name="label" translatable="yes">Analog Axis</property>
-                                <property name="visible">True</property>
-                                <property name="can-focus">True</property>
-                                <property name="receives-default">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">True</property>
-                                <property name="fill">True</property>
-                                <property name="pack-type">end</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="left-attach">1</property>
-                            <property name="top-attach">2</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkEntry" id="preset_name_input1">
-                            <property name="width-request">400</property>
-                            <property name="visible">True</property>
-                            <property name="can-focus">True</property>
-                          </object>
-                          <packing>
-                            <property name="left-attach">1</property>
-                            <property name="top-attach">1</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkBox">
-                            <property name="width-request">100</property>
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
                             <child>
                               <object class="GtkButton" id="rename-button1">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>
                                 <property name="tooltip-text" translatable="yes">Save the entered name</property>
+                                <property name="halign">start</property>
                                 <property name="margin-left">6</property>
                                 <property name="image">save-icon1</property>
-                                <property name="relief">none</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">True</property>
-                                <property name="position">0</property>
+                                <property name="position">1</property>
                               </packing>
                             </child>
                           </object>
                           <packing>
-                            <property name="left-attach">2</property>
+                            <property name="left-attach">1</property>
+                            <property name="top-attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="width-request">100</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">Rename</property>
+                            <property name="width-chars">13</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
                             <property name="top-attach">1</property>
                           </packing>
                         </child>
                         <child>
                           <placeholder/>
                         </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkSeparator">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="margin-top">18</property>
+                        <property name="margin-bottom">18</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -963,15 +891,112 @@ Shortcut: ctrl + del</property>
                         <property name="can-focus">False</property>
                         <property name="orientation">vertical</property>
                         <child>
-                          <object class="GtkSeparator">
+                          <object class="GtkLabel" id="combination-label1">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="margin-top">18</property>
+                            <property name="margin-bottom">18</property>
+                            <property name="label" translatable="yes">Output</property>
+                            <property name="wrap">True</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
                           </object>
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">3</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <!-- n-columns=2 n-rows=2 -->
+                          <object class="GtkGrid">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="halign">center</property>
+                            <property name="margin-right">106</property>
+                            <property name="margin-end">106</property>
+                            <property name="row-spacing">6</property>
+                            <property name="column-spacing">6</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="width-request">100</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="label" translatable="yes">Type</property>
+                                <property name="xalign">0.5</property>
+                              </object>
+                              <packing>
+                                <property name="left-attach">0</property>
+                                <property name="top-attach">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="label" translatable="yes">Target</property>
+                                <property name="xalign">0.5</property>
+                              </object>
+                              <packing>
+                                <property name="left-attach">0</property>
+                                <property name="top-attach">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkButtonBox">
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="homogeneous">True</property>
+                                <property name="layout-style">expand</property>
+                                <child>
+                                  <object class="GtkToggleButton" id="key_macro_toggle_btn">
+                                    <property name="label" translatable="yes">Key or Macro</property>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="receives-default">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">True</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkToggleButton" id="analog_toggle_btn">
+                                    <property name="label" translatable="yes">Analog Axis</property>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="receives-default">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">True</property>
+                                    <property name="fill">True</property>
+                                    <property name="pack-type">end</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="left-attach">1</property>
+                                <property name="top-attach">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBox" id="target-selector">
+                                <property name="width-request">400</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                              </object>
+                              <packing>
+                                <property name="left-attach">1</property>
+                                <property name="top-attach">1</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">2</property>
                           </packing>
                         </child>
                         <child>
@@ -982,6 +1007,7 @@ Shortcut: ctrl + del</property>
                               <object class="GtkScrolledWindow" id="code_editor_container">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
+                                <property name="margin-top">6</property>
                                 <child>
                                   <object class="GtkSourceView" id="code_editor">
                                     <property name="visible">True</property>
@@ -1013,11 +1039,14 @@ Shortcut: ctrl + del</property>
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <property name="halign">center</property>
-                                <property name="margin-end">146</property>
+                                <property name="margin-end">106</property>
+                                <property name="margin-top">6</property>
+                                <property name="margin-bottom">18</property>
                                 <property name="row-spacing">6</property>
                                 <property name="column-spacing">6</property>
                                 <child>
                                   <object class="GtkComboBox" id="output-axis-selector">
+                                    <property name="width-request">400</property>
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
                                   </object>
@@ -1029,12 +1058,11 @@ Shortcut: ctrl + del</property>
                                 </child>
                                 <child>
                                   <object class="GtkLabel">
-                                    <property name="width-request">140</property>
+                                    <property name="width-request">100</property>
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
                                     <property name="tooltip-text" translatable="yes">Available output axes are affected by the Target setting.</property>
-                                    <property name="label" translatable="yes">Output Axis:</property>
-                                    <property name="xalign">0</property>
+                                    <property name="label" translatable="yes">Output Axis</property>
                                   </object>
                                   <packing>
                                     <property name="left-attach">0</property>
@@ -1047,6 +1075,7 @@ Shortcut: ctrl + del</property>
                                     <property name="height-request">150</property>
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
+                                    <property name="halign">end</property>
                                     <property name="valign">center</property>
                                     <property name="margin-left">12</property>
                                     <property name="margin-start">12</property>
@@ -1063,8 +1092,7 @@ Shortcut: ctrl + del</property>
                                   <object class="GtkLabel">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
-                                    <property name="label" translatable="yes">Deadzone:</property>
-                                    <property name="xalign">0</property>
+                                    <property name="label" translatable="yes">Deadzone</property>
                                   </object>
                                   <packing>
                                     <property name="left-attach">0</property>
@@ -1073,9 +1101,9 @@ Shortcut: ctrl + del</property>
                                 </child>
                                 <child>
                                   <object class="GtkScale" id="deadzone-scale">
-                                    <property name="width-request">232</property>
                                     <property name="visible">True</property>
                                     <property name="can-focus">True</property>
+                                    <property name="hexpand">True</property>
                                     <property name="adjustment">deadzone-adjustment</property>
                                     <property name="round-digits">2</property>
                                     <property name="digits">2</property>
@@ -1102,8 +1130,7 @@ Shortcut: ctrl + del</property>
                                   <object class="GtkLabel">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
-                                    <property name="label" translatable="yes">Gain:</property>
-                                    <property name="xalign">0</property>
+                                    <property name="label" translatable="yes">Gain</property>
                                   </object>
                                   <packing>
                                     <property name="left-attach">0</property>
@@ -1114,8 +1141,7 @@ Shortcut: ctrl + del</property>
                                   <object class="GtkLabel">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
-                                    <property name="label" translatable="yes">Expo:</property>
-                                    <property name="xalign">0</property>
+                                    <property name="label" translatable="yes">Expo</property>
                                   </object>
                                   <packing>
                                     <property name="left-attach">0</property>
@@ -1150,8 +1176,7 @@ Shortcut: ctrl + del</property>
                                   <object class="GtkLabel">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
-                                    <property name="label" translatable="yes">Input Cutoff:</property>
-                                    <property name="xalign">0</property>
+                                    <property name="label" translatable="yes">Input Cutoff</property>
                                   </object>
                                   <packing>
                                     <property name="left-attach">0</property>
@@ -1160,8 +1185,8 @@ Shortcut: ctrl + del</property>
                                 </child>
                               </object>
                               <packing>
-                                <property name="name">page0</property>
-                                <property name="title" translatable="yes">page0</property>
+                                <property name="name">Analog Axis</property>
+                                <property name="title" translatable="yes">Analog Axis</property>
                                 <property name="position">1</property>
                               </packing>
                             </child>

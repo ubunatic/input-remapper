@@ -53,7 +53,7 @@ class EventActions(enum.Enum):
 # Todo: add slots=True as soon as python 3.10 is in common distros
 @dataclass(frozen=True)
 class InputEvent:
-    """The evnet used by inputremapper
+    """The event used by inputremapper
 
     as a drop in replacement for evdev.InputEvent
     """

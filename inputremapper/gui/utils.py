@@ -73,10 +73,17 @@ class HandlerDisabled:
         self.handler = handler
 
     def __enter__(self):
-        self.widget.handler_block_by_func(self.handler)
+        try:
+            self.widget.handler_block_by_func(self.handler)
+        except TypeError:
+            # if nothing is connected (yet?), we are fine with that
+            pass
 
     def __exit__(self, *_):
-        self.widget.handler_unblock_by_func(self.handler)
+        try:
+            self.widget.handler_unblock_by_func(self.handler)
+        except TypeError:
+            pass
 
 
 def gtk_iteration(iterations=0):
