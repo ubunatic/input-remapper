@@ -252,10 +252,17 @@ class UserInterface:
         self.get("stop_injection_editor_page").connect(
             "clicked", lambda *_: self.controller.stop_injecting()
         )
-        self.get("rename-button").connect("clicked", self.on_gtk_rename_clicked)
+
+        self.get("preset_rename_button").connect("clicked", self.on_gtk_rename_preset_clicked)
         self.get("preset_name_input").connect(
             "key-release-event", self.on_gtk_preset_name_input_return
         )
+
+        self.get("mapping_rename_button").connect("clicked", self.on_gtk_rename_mapping_clicked)
+        self.get("mapping_name_input").connect(
+            "key-release-event", self.on_gtk_mapping_name_input_return
+        )
+
         self.get("create_mapping_button").connect(
             "clicked", lambda *_: self.controller.create_mapping()
         )
@@ -363,11 +370,20 @@ class UserInterface:
         if gdk_keycode == Gdk.KEY_Escape:
             self.about.hide()
 
-    def on_gtk_rename_clicked(self, *_):
+    def on_gtk_rename_preset_clicked(self, *_):
         name = self.get("preset_name_input").get_text()
         self.controller.rename_preset(name)
         self.get("preset_name_input").set_text("")
 
     def on_gtk_preset_name_input_return(self, _, event: Gdk.EventKey):
         if event.keyval == Gdk.KEY_Return:
-            self.on_gtk_rename_clicked()
+            self.on_gtk_rename_preset_clicked()
+
+    def on_gtk_rename_mapping_clicked(self, *_):
+        name = self.get("mapping_name_input").get_text()
+        self.controller.update_mapping(name=name)
+        self.get("mapping_name_input").set_text("")
+
+    def on_gtk_mapping_name_input_return(self, _, event: Gdk.EventKey):
+        if event.keyval == Gdk.KEY_Return:
+            self.on_gtk_rename_mapping_clicked()

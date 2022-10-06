@@ -426,10 +426,15 @@ class DataManager:
         self.send_group()
 
     def update_mapping(self, **kwargs):
-        """update the active mapping with the given keywords and values.
+        """Update the active mapping with the given keywords and values.
 
         Will send "mapping" message to the MessageBroker. In case of a new event_combination
         this will first send a "combination_update" message
+
+        Parameters
+        ----------
+        kwargs
+            A dict with keys matching the UIMapping class
         """
         if not self._active_mapping:
             raise DataManagementError("Cannot modify Mapping: mapping is not set")
@@ -449,6 +454,7 @@ class DataManager:
             self.message_broker.send(
                 CombinationUpdate(combination, self._active_mapping.event_combination)
             )
+
         if "mapping_type" in kwargs:
             # mapping_type must be the last update because it is automatically updated
             # by a validation function

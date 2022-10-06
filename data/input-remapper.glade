@@ -536,7 +536,7 @@ Shortcut: ctrl + del</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkButton" id="rename-button">
+                          <object class="GtkButton" id="preset_rename_button">
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
                             <property name="receives-default">True</property>
@@ -779,7 +779,7 @@ Shortcut: ctrl + del</property>
                             <property name="can-focus">False</property>
                             <property name="spacing">6</property>
                             <child>
-                              <object class="GtkEntry" id="preset_name_input1">
+                              <object class="GtkEntry" id="mapping_name_input">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                               </object>
@@ -790,7 +790,7 @@ Shortcut: ctrl + del</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkButton" id="rename-button1">
+                              <object class="GtkButton" id="mapping_rename_button">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>

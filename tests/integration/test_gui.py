@@ -293,7 +293,7 @@ class GuiTestBase(unittest.TestCase):
         self.create_preset_btn: Gtk.Button = get("create_preset")
         self.start_injector_btn: Gtk.Button = get("apply_preset")
         self.stop_injector_btn: Gtk.Button = get("stop_injection_preset_page")
-        self.rename_btn: Gtk.Button = get("rename-button")
+        self.rename_btn: Gtk.Button = get("preset_rename_button")
         self.rename_input: Gtk.Entry = get("preset_name_input")
         self.create_mapping_btn: Gtk.Button = get("create_mapping_button")
         self.delete_mapping_btn: Gtk.Button = get("delete-mapping")
