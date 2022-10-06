@@ -331,9 +331,7 @@ class UserInterface:
 
     def update_combination_label(self, mapping: MappingData):
         """listens for mapping and updates the combination label"""
-        # TODO remove
-        return
-        label: Gtk.Label = self.get("selected_mapping_name")
+        label: Gtk.Label = self.get("mapping_input_combination")
         if mapping.event_combination.beautify() == label.get_label():
             return
         if mapping.event_combination == EventCombination.empty_combination():

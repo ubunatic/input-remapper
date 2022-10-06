@@ -380,14 +380,12 @@ class Breadcrumbs:
         self._render()
 
     def _on_mapping_changed(self, mapping: MappingData):
-        print("_on_mapping_changed", mapping)
-
         if mapping.name:
             self._mapping_name = mapping.name
         elif mapping.event_combination != EventCombination.empty_combination():
             self._mapping_name = mapping.event_combination.beautify()
         else:
-            self._mapping_name = _("No input recorded yet")
+            self._mapping_name = _("empty mapping")
 
         self._render()
 
@@ -403,7 +401,7 @@ class Breadcrumbs:
         if self.show_mapping:
             label.append(self._mapping_name)
 
-        self._gui.set_label(" - ".join(label))
+        self._gui.set_label("  -  ".join(label))
 
 
 class PresetSelection:
