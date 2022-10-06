@@ -401,7 +401,7 @@ class Breadcrumbs:
         if self.show_mapping:
             label.append(self._mapping_name)
 
-        self._gui.set_label("  -  ".join(label))
+        self._gui.set_label("  /  ".join(label))
 
 
 class PresetSelection:
@@ -506,6 +506,7 @@ class MappingEntry(Gtk.ToggleButton):
         label.set_max_width_chars(28)
 
         label.set_label(self.name)
+        self._label = label
         box.add(label)
 
         box.set_margin_top(18)
@@ -554,6 +555,7 @@ class MappingEntry(Gtk.ToggleButton):
             return
 
         self._name = mapping.name
+        self._label.set_label(self.name)
         self.show_active(True)
 
     def _on_combination_update(self, data: CombinationUpdate):

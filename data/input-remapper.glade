@@ -498,6 +498,8 @@ Shortcut: ctrl + del</property>
                       <object class="GtkLabel">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
+                        <property name="margin-top">6</property>
+                        <property name="margin-bottom">7</property>
                         <property name="label" translatable="yes">Autoload</property>
                       </object>
                       <packing>
@@ -733,9 +735,6 @@ Shortcut: ctrl + del</property>
                             <property name="spacing">6</property>
                             <property name="homogeneous">True</property>
                             <child>
-                              <placeholder/>
-                            </child>
-                            <child>
                               <object class="GtkButton" id="edit-combination-btn">
                                 <property name="label" translatable="yes">Advanced</property>
                                 <property name="visible">True</property>
@@ -834,6 +833,11 @@ Shortcut: ctrl + del</property>
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">No input recorded yet</property>
+                                <property name="justify">center</property>
+                                <property name="wrap">True</property>
+                                <property name="wrap-mode">word-char</property>
+                                <property name="width-chars">0</property>
+                                <property name="max-width-chars">33</property>
                               </object>
                               <packing>
                                 <property name="expand">True</property>
@@ -928,7 +932,6 @@ Shortcut: ctrl + del</property>
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="halign">center</property>
-                            <property name="margin-right">106</property>
                             <property name="margin-end">106</property>
                             <property name="row-spacing">6</property>
                             <property name="column-spacing">6</property>
@@ -1020,14 +1023,17 @@ Shortcut: ctrl + del</property>
                             <property name="can-focus">False</property>
                             <child>
                               <object class="GtkScrolledWindow" id="code_editor_container">
+                                <property name="width-request">400</property>
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
+                                <property name="halign">center</property>
                                 <property name="margin-top">6</property>
                                 <child>
                                   <object class="GtkSourceView" id="code_editor">
                                     <property name="visible">True</property>
                                     <property name="can-focus">True</property>
                                     <property name="tooltip-text" translatable="yes">What should be written. For example KEY_A</property>
+                                    <property name="valign">start</property>
                                     <property name="resize-mode">immediate</property>
                                     <property name="wrap-mode">word</property>
                                     <property name="left-margin">10</property>
