@@ -34,13 +34,11 @@ from inputremapper.gui.components import (
     MappingSelection,
     TargetSelection,
     Output,
-    PresetSelectionTitle,
-    EditorTitle,
+    Breadcrumbs,
     Stack,
     CodeEditor,
     RecordingToggle,
     StatusBar,
-    RecordingStatus,
     AutoloadSwitch,
     ReleaseCombinationSwitch,
     CombinationListbox,
@@ -148,10 +146,24 @@ class UserInterface:
         TargetSelection(message_broker, controller, self.get("target-selector"))
         Output(message_broker, controller, self.get("output"))
 
-        PresetSelectionTitle(
-            message_broker, controller, self.get("selected_device_name")
+        Breadcrumbs(
+            message_broker,
+            self.get("selected_device_name"),
+            show_device_group=True,
         )
-        EditorTitle(message_broker, controller, self.get("selected_preset_name"))
+        Breadcrumbs(
+            message_broker,
+            self.get("selected_preset_name"),
+            show_device_group=True,
+            show_preset=True,
+        )
+        Breadcrumbs(
+            message_broker,
+            self.get("selected_mapping_name"),
+            show_device_group=True,
+            show_preset=True,
+            show_mapping=True,
+        )
 
         Stack(message_broker, controller, self.get("main_stack"))
         RecordingToggle(message_broker, controller, self.get("key_recording_toggle"))
@@ -162,7 +174,6 @@ class UserInterface:
             self.get("error_status_icon"),
             self.get("warning_status_icon"),
         )
-        RecordingStatus(message_broker, self.get("recording_status"))
         AutoloadSwitch(message_broker, controller, self.get("preset_autoload_switch"))
         ReleaseCombinationSwitch(
             message_broker, controller, self.get("release-combination-switch")
@@ -320,7 +331,9 @@ class UserInterface:
 
     def update_combination_label(self, mapping: MappingData):
         """listens for mapping and updates the combination label"""
-        label: Gtk.Label = self.get("combination-label")
+        # TODO remove
+        return
+        label: Gtk.Label = self.get("selected_mapping_name")
         if mapping.event_combination.beautify() == label.get_label():
             return
         if mapping.event_combination == EventCombination.empty_combination():

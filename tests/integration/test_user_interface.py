@@ -95,13 +95,13 @@ class TestUserInterface(unittest.TestCase):
             )
         )
         gtk_iteration()
-        label: Gtk.Label = self.user_interface.get("combination-label")
+        label: Gtk.Label = self.user_interface.get("selected_mapping_name")
         self.assertEqual(label.get_text(), "a")
         self.assertEqual(label.get_opacity(), 1)
 
     def test_combination_label_shows_text_when_empty_mapping(self):
         self.message_broker.send(MappingData())
         gtk_iteration()
-        label: Gtk.Label = self.user_interface.get("combination-label")
+        label: Gtk.Label = self.user_interface.get("selected_mapping_name")
         self.assertEqual(label.get_text(), "No input recorded yet")
         self.assertEqual(label.get_opacity(), 0.4)

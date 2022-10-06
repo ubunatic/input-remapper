@@ -186,7 +186,8 @@
                           <object class="GtkLabel" id="selected_device_name">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Device Name</property>
+                            <property name="label" translatable="yes">selected_device_name</property>
+                            <property name="justify">center</property>
                             <attributes>
                               <attribute name="weight" value="bold"/>
                             </attributes>
@@ -365,7 +366,8 @@ Shortcut: ctrl + del</property>
                           <object class="GtkLabel" id="selected_preset_name">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Preset Name</property>
+                            <property name="label" translatable="yes">selected_preset_name</property>
+                            <property name="justify">center</property>
                             <attributes>
                               <attribute name="weight" value="bold"/>
                             </attributes>
@@ -697,46 +699,20 @@ Shortcut: ctrl + del</property>
                     <property name="margin-top">18</property>
                     <property name="orientation">vertical</property>
                     <child>
-                      <object class="GtkBox">
+                      <object class="GtkLabel" id="selected_mapping_name">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="halign">center</property>
                         <property name="margin-bottom">18</property>
-                        <child>
-                          <object class="GtkLabel" id="combination-label">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">No input recorded yet</property>
-                            <property name="wrap">True</property>
-                            <attributes>
-                              <attribute name="weight" value="bold"/>
-                            </attributes>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="recording_status">
-                            <property name="can-focus">False</property>
-                            <property name="opacity">0.50196078431372548</property>
-                            <property name="label" translatable="yes"> (recording ...)</property>
-                            <attributes>
-                              <attribute name="style" value="italic"/>
-                            </attributes>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
+                        <property name="label" translatable="yes">selected_mapping_name</property>
+                        <property name="justify">center</property>
+                        <property name="wrap">True</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                        </attributes>
                       </object>
                       <packing>
                         <property name="expand">False</property>
-                        <property name="fill">False</property>
+                        <property name="fill">True</property>
                         <property name="position">0</property>
                       </packing>
                     </child>
@@ -834,7 +810,6 @@ Shortcut: ctrl + del</property>
                                 <property name="receives-default">True</property>
                                 <property name="tooltip-text" translatable="yes">Save the entered name</property>
                                 <property name="halign">start</property>
-                                <property name="margin-left">6</property>
                                 <property name="image">save-icon1</property>
                               </object>
                               <packing>
@@ -891,7 +866,7 @@ Shortcut: ctrl + del</property>
                         <property name="can-focus">False</property>
                         <property name="orientation">vertical</property>
                         <child>
-                          <object class="GtkLabel" id="combination-label1">
+                          <object class="GtkLabel" id="selected_mapping_name1">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="margin-bottom">18</property>

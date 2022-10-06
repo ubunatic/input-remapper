@@ -339,47 +339,28 @@ class PresetEntry(Gtk.ToggleButton):
 
 
 # TODO test
-class PresetSelectionTitle:
-    """The title of the preset selection, which is the device name."""
+class Breadcrumbs:
+    """Writes a breadcrumbs string into a given label."""
 
     def __init__(
         self,
         message_broker: MessageBroker,
-        controller: Controller,
         label: Gtk.Label,
+        show_device_group: bool = False,
+        show_preset: bool = False,
+        show_mapping: bool = False,
     ):
         self._message_broker = message_broker
-        self._controller = controller
         self._gui = label
         self._connect_message_listener()
-        label.set_max_width_chars(50)
-        label.set_line_wrap(True)
-        label.set_line_wrap_mode(2)
 
-    def _connect_message_listener(self):
-        self._message_broker.subscribe(MessageType.group, self._on_group_changed)
-
-    def _on_group_changed(self, data: GroupData):
-        self._gui.set_label(data.group_key)
-
-
-# TODO test
-class EditorTitle:
-    """The title of the editor, which is the device and preset name."""
-
-    def __init__(
-        self,
-        message_broker: MessageBroker,
-        controller: Controller,
-        label: Gtk.Label,
-    ):
-        self._message_broker = message_broker
-        self._controller = controller
-        self._gui = label
-        self._connect_message_listener()
+        self.show_device_group = show_device_group
+        self.show_preset = show_preset
+        self.show_mapping = show_mapping
 
         self._group_key: str = ""
         self._preset_name: str = ""
+        self._mapping_name: str = ""
 
         label.set_max_width_chars(50)
         label.set_line_wrap(True)
@@ -388,6 +369,7 @@ class EditorTitle:
     def _connect_message_listener(self):
         self._message_broker.subscribe(MessageType.group, self._on_group_changed)
         self._message_broker.subscribe(MessageType.preset, self._on_preset_changed)
+        self._message_broker.subscribe(MessageType.mapping, self._on_mapping_changed)
 
     def _on_preset_changed(self, data: PresetData):
         self._preset_name = data.name or ""
@@ -397,8 +379,31 @@ class EditorTitle:
         self._group_key = data.group_key
         self._render()
 
+    def _on_mapping_changed(self, mapping: MappingData):
+        print("_on_mapping_changed", mapping)
+
+        if mapping.name:
+            self._mapping_name = mapping.name
+        elif mapping.event_combination != EventCombination.empty_combination():
+            self._mapping_name = mapping.event_combination.beautify()
+        else:
+            self._mapping_name = _("No input recorded yet")
+
+        self._render()
+
     def _render(self):
-        self._gui.set_label(f"{self._group_key} / {self._preset_name}")
+        label = []
+
+        if self.show_device_group:
+            label.append(self._group_key)
+
+        if self.show_preset:
+            label.append(self._preset_name)
+
+        if self.show_mapping:
+            label.append(self._mapping_name)
+
+        self._gui.set_label(" - ".join(label))
 
 
 class PresetSelection:
@@ -559,6 +564,8 @@ class MappingEntry(Gtk.ToggleButton):
 
 
 # TODO renaming mappings
+
+# TODO breadcrumbs on mapping page
 
 
 # TODO remove
@@ -866,47 +873,29 @@ class RecordingToggle:
         # be recorded, instead of causing the recording to stop.
         toggle.connect("key-press-event", lambda *args: Gdk.EVENT_STOP)
         self._message_broker.subscribe(
-            MessageType.recording_finished,
-            self._on_recording_finished,
+            MessageType.recording_finished, self._on_recording_finished
         )
+        self._reset_label()
+
+    def _reset_label(self):
+        self._update_label(_("Record"))
+
+    def _update_label(self, msg: str):
+        self._gui.set_label(msg)
 
     def _on_gtk_toggle(self, *__):
         if self._gui.get_active():
+            self._update_label(_("Recording…"))
             self._controller.start_key_recording()
         else:
+            self._reset_label()
             self._controller.stop_key_recording()
 
     def _on_recording_finished(self, __):
         logger.debug("finished recording")
         with HandlerDisabled(self._gui, self._on_gtk_toggle):
             self._gui.set_active(False)
-
-
-class RecordingStatus:
-    """Displays if keys are being recorded for a mapping."""
-
-    def __init__(
-        self,
-        message_broker: MessageBroker,
-        label: Gtk.Label,
-    ):
-        self._gui = label
-
-        message_broker.subscribe(
-            MessageType.recording_started,
-            self._on_recording_started,
-        )
-
-        message_broker.subscribe(
-            MessageType.recording_finished,
-            self._on_recording_finished,
-        )
-
-    def _on_recording_started(self, _):
-        self._gui.set_visible(True)
-
-    def _on_recording_finished(self, _):
-        self._gui.set_visible(False)
+            self._reset_label()
 
 
 class StatusBar:

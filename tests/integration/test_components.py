@@ -600,7 +600,7 @@ class TestRecordingToggle(ComponentBaseTest):
         )
 
     def assert_recording(self):
-        self.assertEqual(self.gui.get_label(), "Recording ...")
+        self.assertEqual(self.gui.get_label(), "Recording…")
         self.assertTrue(self.gui.get_active())
 
     def assert_not_recording(self):
